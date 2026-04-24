@@ -129,6 +129,7 @@ function cloneSeededState() {
 function createDefaultUiState() {
   return {
     activeListId: seededState.activeListId,
+    activeLeadId: null,
     archivedListIds: [],
     localLists: [],
     localLeads: [],
@@ -208,6 +209,7 @@ function mergeRuntimeData(remoteData) {
 
   if (!lists.find((list) => list.id === uiState.activeListId)) {
     uiState.activeListId = lists[0]?.id || null;
+    uiState.activeLeadId = null;
     saveUiState();
   }
 }
@@ -231,6 +233,33 @@ function hydrateCurrentUserUi() {
   const input = document.getElementById("currentUserIdInput");
   if (input) input.value = currentUserId;
   updateMessageNode("currentUserStatus", `Current workspace user: ${currentUserId}`, "success");
+}
+
+function updateWorkspaceStrip() {
+  const currentUserId = uiState.currentUserId || loadCurrentUserId();
+  const activeList = getActiveList();
+  const sourceMap = {
+    sheets: "Live Sheets",
+    api: "Live API",
+    demo: "Demo data",
+  };
+  const visibleLeads = getLeadsForActiveList();
+
+  document.getElementById("workspaceUserBadge").textContent = currentUserId;
+  document.getElementById("workspaceDataSource").textContent = sourceMap[uiState.syncMode] || "Live data";
+  document.getElementById("workspaceLastSync").textContent = uiState.lastSyncAt
+    ? `Last sync ${formatRunDate(uiState.lastSyncAt)}`
+    : "Waiting for first sync";
+
+  if (!activeList) {
+    document.getElementById("workspaceSelectedListHealth").textContent = "No list selected";
+    document.getElementById("workspaceSelectedListMeta").textContent = "Pick a saved list to inspect funnel quality.";
+    return;
+  }
+
+  const readiness = activeList.qualified >= 5 ? "Outreach-ready batch" : activeList.qualified >= 1 ? "Promising but small batch" : "Needs more qualifying";
+  document.getElementById("workspaceSelectedListHealth").textContent = readiness;
+  document.getElementById("workspaceSelectedListMeta").textContent = `${visibleLeads.length} visible leads, ${activeList.qualified} qualified, ${activeList.rejected} rejected.`;
 }
 
 async function syncFromApi() {
@@ -580,6 +609,20 @@ function getLeadsForActiveList() {
   });
 }
 
+function getSelectedLead(leads) {
+  return leads.find((lead) => lead.id === uiState.activeLeadId)
+    || runtimeData.leads.find((lead) => lead.id === uiState.activeLeadId)
+    || leads[0]
+    || runtimeData.leads.find((lead) => lead.listId === uiState.activeListId)
+    || null;
+}
+
+function selectLead(leadId) {
+  uiState.activeLeadId = leadId || null;
+  saveUiState();
+  renderLeads();
+}
+
 function updateHero() {
   const activeList = getActiveList();
   if (!activeList) return;
@@ -589,6 +632,7 @@ function updateHero() {
   document.getElementById("activeListMarket").textContent = `${titleCase(activeList.niche)} - ${activeList.city} - ${activeList.country}`;
   document.getElementById("activeListRun").textContent = formatRunDate(activeList.lastRun);
   document.getElementById("pipelineListTitle").textContent = `${activeList.name} funnel`;
+  document.getElementById("activeLeadSummary").textContent = `${activeList.city}, ${activeList.country} - ${titleCase(activeList.niche)} - ${activeList.status}`;
 }
 
 function updateMetrics() {
@@ -638,6 +682,7 @@ function renderSavedLists() {
     `;
     row.addEventListener("click", () => {
       uiState.activeListId = list.id;
+      uiState.activeLeadId = null;
       saveUiState();
       render();
     });
@@ -660,7 +705,8 @@ function renderLeads() {
   const leads = getLeadsForActiveList();
   tbody.innerHTML = "";
 
-  const selectedLead = leads[0] || runtimeData.leads.find((lead) => lead.listId === uiState.activeListId) || null;
+  const selectedLead = getSelectedLead(leads);
+  document.getElementById("visibleLeadCount").textContent = `${leads.length} lead${leads.length === 1 ? "" : "s"}`;
   updateLeadDetail(selectedLead);
 
   if (!leads.length) {
@@ -670,6 +716,9 @@ function renderLeads() {
 
   for (const lead of leads) {
     const row = document.createElement("tr");
+    if (selectedLead && selectedLead.id === lead.id) {
+      row.classList.add("active-row");
+    }
     row.innerHTML = `
       <td class="company-cell">
         <strong>${lead.company}</strong>
@@ -688,7 +737,7 @@ function renderLeads() {
       <td><span class="status-pill status-${lead.status}">${titleCase(lead.status)}</span></td>
       <td>${titleCase(lead.outreachReadiness)}</td>
     `;
-    row.addEventListener("click", () => updateLeadDetail(lead));
+    row.addEventListener("click", () => selectLead(lead.id));
     tbody.appendChild(row);
   }
 }
@@ -705,18 +754,43 @@ function updateLeadDetail(lead) {
     document.getElementById("detailAngle").textContent = "-";
     document.getElementById("detailValue").textContent = "-";
     document.getElementById("detailPersonalization").textContent = "-";
+    document.getElementById("detailSeoScore").textContent = "0";
+    document.getElementById("detailOverallScore").textContent = "0";
+    document.getElementById("detailCommercialFit").textContent = "0";
+    document.getElementById("detailContactConfidence").textContent = "0";
+    document.getElementById("detailOutreachReadiness").textContent = "Needs review";
+    document.getElementById("detailPaidAds").textContent = "Paid ads: unknown";
+    document.getElementById("detailSecondaryProblem").textContent = "Secondary issue not set";
+    document.getElementById("detailDecisionMaker").textContent = "No named contact yet";
+    document.getElementById("detailDecisionRole").textContent = "Needs contact enrichment";
+    document.getElementById("detailContactLine").textContent = "No direct contact captured";
+    document.getElementById("detailContactChannel").textContent = "Recommended channel not set";
     return;
   }
+  const activeList = getActiveList();
   document.getElementById("detailCompany").textContent = lead.company;
   document.getElementById("detailStatus").textContent = titleCase(lead.status);
   document.getElementById("detailWebsite").textContent = String(lead.website || "").replace(/^https?:\/\//, "");
-  document.getElementById("detailLocation").textContent = `${getActiveList()?.city || ""}, ${getActiveList()?.country || ""}`;
+  document.getElementById("detailLocation").textContent = `${activeList?.city || ""}, ${activeList?.country || ""}`;
   document.getElementById("detailPrimaryProblem").textContent = titleCase(lead.primaryProblem || "not set");
   document.getElementById("detailOffer").textContent = titleCase(lead.recommendedOffer || "not set");
   document.getElementById("detailReason").textContent = lead.whyItMatters || "No qualification reason recorded yet.";
   document.getElementById("detailAngle").textContent = lead.outreachAngle || "No outreach angle recorded yet.";
   document.getElementById("detailValue").textContent = lead.valueHypothesis || "No value hypothesis recorded yet.";
   document.getElementById("detailPersonalization").textContent = lead.firstLine || "No personalization generated yet.";
+  document.getElementById("detailSeoScore").textContent = String(lead.seoScore || 0);
+  document.getElementById("detailOverallScore").textContent = String(lead.overallScore || 0);
+  document.getElementById("detailCommercialFit").textContent = String(lead.commercialFit || 0);
+  document.getElementById("detailContactConfidence").textContent = String(lead.contactConfidence || 0);
+  document.getElementById("detailOutreachReadiness").textContent = `Outreach: ${titleCase(lead.outreachReadiness || "needs_review")}`;
+  document.getElementById("detailPaidAds").textContent = `Paid ads: ${lead.paidAdsDetected ? "detected" : "not detected"}`;
+  document.getElementById("detailSecondaryProblem").textContent = titleCase(lead.secondaryProblem || "secondary issue not set");
+  document.getElementById("detailDecisionMaker").textContent = lead.decisionMaker || "No named contact yet";
+  document.getElementById("detailDecisionRole").textContent = lead.role || "Needs contact enrichment";
+  document.getElementById("detailContactLine").textContent = [lead.email, lead.phone].filter(Boolean).join(" | ") || "No direct contact captured";
+  document.getElementById("detailContactChannel").textContent = lead.recommendedChannel
+    ? `Recommended channel: ${titleCase(lead.recommendedChannel)}`
+    : "Recommended channel not set";
 }
 
 async function createListFromForm(event) {
@@ -940,6 +1014,7 @@ function addDemoList() {
 
 function render() {
   if (!getActiveList()) return;
+  updateWorkspaceStrip();
   updateHero();
   updateMetrics();
   renderSavedLists();

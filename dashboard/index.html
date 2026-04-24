@@ -87,6 +87,24 @@
         </div>
       </header>
 
+      <section class="workspace-strip" aria-label="Workspace status">
+        <article class="workspace-card">
+          <span class="workspace-label">Current Workspace User</span>
+          <strong id="workspaceUserBadge">usr_mvp</strong>
+          <small>User-scoped lists and leads only</small>
+        </article>
+        <article class="workspace-card">
+          <span class="workspace-label">Data Source</span>
+          <strong id="workspaceDataSource">Demo data</strong>
+          <small id="workspaceLastSync">Waiting for first sync</small>
+        </article>
+        <article class="workspace-card workspace-card-highlight">
+          <span class="workspace-label">Selected List Health</span>
+          <strong id="workspaceSelectedListHealth">No list selected</strong>
+          <small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small>
+        </article>
+      </section>
+
       <section class="hero-grid" id="overview">
         <article class="hero-card hero-card-primary">
           <div class="hero-head">
@@ -278,6 +296,17 @@
           </div>
         </div>
 
+        <div class="lead-summary-bar">
+          <div>
+            <span class="workspace-label">Visible Leads</span>
+            <strong id="visibleLeadCount">0 leads</strong>
+          </div>
+          <div>
+            <span class="workspace-label">List Snapshot</span>
+            <strong id="activeLeadSummary">No active list selected yet.</strong>
+          </div>
+        </div>
+
         <div class="score-display">
           <span>Minimum visible score:</span>
           <strong id="scoreFilterValue">0</strong>
@@ -330,6 +359,31 @@
             </div>
           </dl>
 
+          <div class="detail-score-grid">
+            <article class="detail-score-card">
+              <span>SEO Need</span>
+              <strong id="detailSeoScore">0</strong>
+            </article>
+            <article class="detail-score-card">
+              <span>Overall Score</span>
+              <strong id="detailOverallScore">0</strong>
+            </article>
+            <article class="detail-score-card">
+              <span>Commercial Fit</span>
+              <strong id="detailCommercialFit">0</strong>
+            </article>
+            <article class="detail-score-card">
+              <span>Contact Confidence</span>
+              <strong id="detailContactConfidence">0</strong>
+            </article>
+          </div>
+
+          <div class="detail-chip-row">
+            <span class="detail-chip" id="detailOutreachReadiness">Needs review</span>
+            <span class="detail-chip" id="detailPaidAds">Paid ads: unknown</span>
+            <span class="detail-chip" id="detailSecondaryProblem">Secondary issue not set</span>
+          </div>
+
           <div class="detail-copy-grid">
             <div>
               <h3>Why this lead matters</h3>
@@ -346,6 +400,19 @@
             <div>
               <h3>First-line personalization</h3>
               <p id="detailPersonalization">Noticed the practice has strong local intent but thin treatment pages that likely cap organic visibility.</p>
+            </div>
+          </div>
+
+          <div class="detail-contact-grid">
+            <div class="detail-contact-card">
+              <h3>Decision Maker Snapshot</h3>
+              <p id="detailDecisionMaker">No named contact yet</p>
+              <small id="detailDecisionRole">Needs contact enrichment</small>
+            </div>
+            <div class="detail-contact-card">
+              <h3>Best Contact Path</h3>
+              <p id="detailContactLine">No direct contact captured</p>
+              <small id="detailContactChannel">Recommended channel not set</small>
             </div>
           </div>
         </article>

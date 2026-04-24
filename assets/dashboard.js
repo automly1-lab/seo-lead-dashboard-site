@@ -570,7 +570,7 @@ function buildSearchPayload(formValues) {
 }
 
 async function submitSearchToWebhook(searchPayload) {
-  const webhookUrl = loadWebhookUrl().trim();
+  const webhookUrl = (document.getElementById("webhookUrlInput")?.value || loadWebhookUrl()).trim();
   if (!webhookUrl) {
     updateMessageNode(
       "createSearchStatus",
@@ -580,18 +580,19 @@ async function submitSearchToWebhook(searchPayload) {
     return { ok: false, reason: "missing_webhook" };
   }
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=UTF-8",
-      Accept: "application/json, text/plain, */*",
-    },
-    body: JSON.stringify(searchPayload),
+  const body = new URLSearchParams();
+  Object.entries(searchPayload).forEach(([key, value]) => {
+    body.set(key, value == null ? "" : String(value));
   });
 
-  if (!response.ok) {
-    throw new Error(`submit-search ${response.status}`);
-  }
+  await fetch(webhookUrl, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: body.toString(),
+  });
 
   updateMessageNode(
     "createSearchStatus",

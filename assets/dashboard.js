@@ -1,6 +1,8 @@
 const STORAGE_KEY = "rankforge-dashboard-state-v3";
 const WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
 const DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
+const SHEET_ID = "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco";
+const DASHBOARD_SHEET_TABS = ["searches", "raw_prospects", "seo_audits", "contacts", "final_leads"];
 const DASHBOARD_API_URL = "/api/dashboard-data";
 const STATIC_DATA_URL = "/data/dashboard-data.json";
 
@@ -208,7 +210,20 @@ function updateMessageNode(id, message, tone = "") {
 }
 
 async function syncFromApi() {
-  updateDataStatus("Syncing API...");
+  updateDataStatus("Syncing live data...");
+  try {
+    const liveRuntime = await syncFromSheets();
+    uiState.lastSyncAt = new Date().toISOString();
+    uiState.syncMode = "sheets";
+    saveUiState();
+    mergeRuntimeData(liveRuntime);
+    render();
+    updateDataStatus(`Live Sheets synced - ${formatRunDate(uiState.lastSyncAt)}`);
+    return;
+  } catch {
+    // Fall back to API/static JSON.
+  }
+
   try {
     const response = await fetch(DASHBOARD_API_URL, {
       headers: { Accept: "application/json" },
@@ -256,6 +271,123 @@ function titleCase(value) {
   return String(value || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function safeNumber(value) {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) ? Math.round(parsed) : 0;
+}
+
+async function fetchSheetRows(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
+  const response = await fetch(url, {
+    headers: { Accept: "text/plain, application/json, */*" },
+  });
+  if (!response.ok) throw new Error(`sheet-${sheetName} ${response.status}`);
+  const payload = await response.text();
+  const cleaned = payload.replace(/^[\s\S]*?setResponse\(/, "").replace(/\);\s*$/, "");
+  const parsed = JSON.parse(cleaned);
+  const cols = (parsed.table?.cols || []).map((col) => col.label || col.id);
+  return (parsed.table?.rows || []).map((row) => {
+    const record = {};
+    const cells = row.c || [];
+    cols.forEach((key, index) => {
+      const cell = cells[index];
+      record[key] = !cell ? "" : cell.f || cell.v || "";
+    });
+    return record;
+  });
+}
+
+function buildRuntimeFromSheets(sheetData) {
+  const searches = sheetData.searches || [];
+  const rawProspects = sheetData.raw_prospects || [];
+  const seoAudits = sheetData.seo_audits || [];
+  const contacts = sheetData.contacts || [];
+  const finalLeads = sheetData.final_leads || [];
+
+  const contactByProspect = {};
+  for (const contact of contacts) {
+    const prospectId = contact.prospect_id;
+    if (!prospectId) continue;
+    const current = contactByProspect[prospectId];
+    if (!current || safeNumber(contact.contact_confidence_score) > safeNumber(current.contact_confidence_score)) {
+      contactByProspect[prospectId] = contact;
+    }
+  }
+
+  const auditsById = Object.fromEntries(seoAudits.filter((row) => row.audit_id).map((row) => [row.audit_id, row]));
+  const contactsById = Object.fromEntries(contacts.filter((row) => row.contact_id).map((row) => [row.contact_id, row]));
+
+  const lists = searches.map((search) => {
+    const searchId = search.search_id;
+    const searchProspects = rawProspects.filter((row) => row.search_id === searchId);
+    const searchAudits = seoAudits.filter((row) => row.search_id === searchId && row.status === "completed");
+    const searchContacts = contacts.filter((row) => row.search_id === searchId && row.status !== "pending");
+    const searchLeads = finalLeads.filter((row) => row.search_id === searchId);
+    return {
+      id: searchId,
+      name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
+      niche: search.niche || "",
+      businessType: search.business_type || "",
+      city: search.city || "",
+      country: search.country || "",
+      description: `${titleCase(search.niche)} opportunities for ${search.city}, kept as a persistent saved list.`,
+      status: search.status || "draft",
+      lastRun: search.completed_at || search.started_at || search.updated_at || search.created_at || "",
+      discovered: searchProspects.length,
+      audited: searchAudits.length,
+      enriched: searchContacts.length,
+      qualified: searchLeads.filter((lead) => (lead.qualification_status || lead.status) === "qualified").length,
+      rejected: searchLeads.filter((lead) => (lead.qualification_status || lead.status) === "rejected").length,
+      minSeoScore: safeNumber(search.min_audit_score || 55),
+      minLeadScore: safeNumber(search.min_lead_score || 70),
+      archived: false,
+    };
+  });
+
+  const leads = finalLeads.map((lead, index) => {
+    const audit = auditsById[lead.audit_id] || {};
+    const contact = contactsById[lead.primary_contact_id] || contactByProspect[lead.prospect_id] || {};
+    return {
+      id: lead.lead_id || `remote_lead_${index + 1}`,
+      listId: lead.search_id || audit.search_id || contact.search_id || "",
+      company: lead.company_name || audit.company_name || "Unknown company",
+      website: lead.website_url || audit.website_url || "",
+      decisionMaker: lead.decision_maker_name || contact.contact_name || null,
+      role: lead.decision_maker_role || contact.contact_role || null,
+      email: lead.decision_maker_email || contact.email || null,
+      phone: lead.decision_maker_phone || contact.phone || null,
+      seoScore: safeNumber(lead.seo_need_score),
+      overallScore: safeNumber(lead.overall_lead_score),
+      commercialFit: safeNumber(lead.commercial_fit_score),
+      contactConfidence: safeNumber(lead.contact_confidence_score),
+      status: lead.qualification_status || lead.status || "review_needed",
+      outreachReadiness: lead.outreach_readiness || "needs_review",
+      paidAdsDetected: String(lead.paid_ads_detected || audit.paid_ads_detected || "").toLowerCase() === "true",
+      primaryProblem: lead.primary_problem || "",
+      secondaryProblem: lead.secondary_problem || "",
+      whyItMatters: lead.qualification_reason || audit.audit_summary || "",
+      outreachAngle: lead.outreach_angle || audit.recommended_outreach_angle || "",
+      valueHypothesis: lead.client_value_hypothesis || "",
+      firstLine: lead.first_line_personalization || "",
+      recommendedOffer: lead.recommended_offer || "",
+      recommendedChannel: lead.recommended_channel || "",
+    };
+  });
+
+  return {
+    lists,
+    leads,
+    source: "google-sheets-live",
+  };
+}
+
+async function syncFromSheets() {
+  const results = await Promise.all(
+    DASHBOARD_SHEET_TABS.map(async (tab) => [tab, await fetchSheetRows(tab)]),
+  );
+  return buildRuntimeFromSheets(Object.fromEntries(results));
 }
 
 function slugify(value) {

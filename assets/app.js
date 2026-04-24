@@ -159,9 +159,18 @@ function mergeRuntime(remote) {
   appState.currentUserId = currentUserId;
   const archived = new Set(appState.archivedListIds);
   const localLists = (appState.localLists || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
-  const remoteLists = (remote.lists || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
+  const ownedListIds = new Set(localLists.map((item) => normalizeKey(item.id)).filter(Boolean));
+  const remoteLists = (remote.lists || []).filter((item) => {
+    const rowUserId = normalizeKey(item.userId || currentUserId);
+    const rowListId = normalizeKey(item.id);
+    return rowUserId === currentUserId || ownedListIds.has(rowListId);
+  });
   const localLeads = (appState.localLeads || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
-  const remoteLeads = (remote.leads || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
+  const remoteLeads = (remote.leads || []).filter((item) => {
+    const rowUserId = normalizeKey(item.userId || currentUserId);
+    const rowListId = normalizeKey(item.listId);
+    return rowUserId === currentUserId || ownedListIds.has(rowListId);
+  });
 
   runtimeData = {
     lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id).filter((item) => !archived.has(item.id)),

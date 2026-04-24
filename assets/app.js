@@ -44,6 +44,7 @@ function loadState() {
   if (!Array.isArray(state.localLists)) state.localLists = [];
   if (!Array.isArray(state.localLeads)) state.localLeads = [];
   if (!Array.isArray(state.archivedListIds)) state.archivedListIds = [];
+  if (!Array.isArray(state.deletedListIds)) state.deletedListIds = [];
   if (!state.remoteCache || typeof state.remoteCache !== "object") state.remoteCache = { lists: [], leads: [] };
   if (!Array.isArray(state.remoteCache.lists)) state.remoteCache.lists = [];
   if (!Array.isArray(state.remoteCache.leads)) state.remoteCache.leads = [];
@@ -164,14 +165,17 @@ function mergeRuntime(remote) {
   const currentUserId = getCurrentUserId();
   appState.currentUserId = currentUserId;
   const archived = new Set(appState.archivedListIds);
+  const deleted = new Set(appState.deletedListIds);
   const localLists = appState.localLists || [];
   const remoteLists = remote.lists || [];
   const localLeads = appState.localLeads || [];
   const remoteLeads = remote.leads || [];
 
   runtimeData = {
-    lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id).filter((item) => !archived.has(item.id)),
-    leads: uniqueBy([...remoteLeads, ...localLeads], (item) => item.id),
+    lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id)
+      .filter((item) => !archived.has(item.id) && !deleted.has(item.id)),
+    leads: uniqueBy([...remoteLeads, ...localLeads], (item) => item.id)
+      .filter((item) => !deleted.has(normalizeKey(item.listId))),
   };
 
   if (!runtimeData.lists.find((item) => item.id === appState.selectedListId)) {
@@ -725,6 +729,33 @@ function archiveSelectedList() {
   renderAll();
 }
 
+function deleteSelectedList() {
+  const selected = getSelectedList();
+  if (!selected) return;
+  const confirmed = window.confirm(`Delete "${selected.name}" from this workspace?`);
+  if (!confirmed) return;
+
+  const listId = normalizeKey(selected.id);
+  appState.deletedListIds = Array.from(new Set([...(appState.deletedListIds || []), listId]));
+  appState.archivedListIds = (appState.archivedListIds || []).filter((id) => normalizeKey(id) !== listId);
+  appState.localLists = (appState.localLists || []).filter((item) => normalizeKey(item.id) !== listId);
+  appState.localLeads = (appState.localLeads || []).filter((item) => normalizeKey(item.listId) !== listId);
+  appState.remoteCache = {
+    lists: (appState.remoteCache?.lists || []).filter((item) => normalizeKey(item.id) !== listId),
+    leads: (appState.remoteCache?.leads || []).filter((item) => normalizeKey(item.listId) !== listId),
+  };
+
+  if (normalizeKey(appState.selectedListId) === listId) {
+    appState.selectedListId = null;
+    appState.selectedLeadId = null;
+  }
+
+  saveState(appState);
+  mergeRuntime(appState.remoteCache || { lists: [], leads: [] });
+  renderAll();
+  updateStatus("dataStatus", "Selected list deleted from workspace", "success");
+}
+
 function exportCsv() {
   const selected = getSelectedList();
   const leads = getVisibleLeads();
@@ -974,6 +1005,7 @@ window.rankforgeApp = {
   rerunSelectedList,
   duplicateSelectedList,
   archiveSelectedList,
+  deleteSelectedList,
   exportCsv,
 };
 

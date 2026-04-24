@@ -11,11 +11,11 @@
   --ink-soft: #18253d;
   --muted: #667085;
   --muted-strong: #475467;
-  --accent: #155eef;
-  --accent-dark: #0b4fd6;
+  --accent: #165dff;
+  --accent-dark: #1447e6;
   --accent-soft: rgba(21, 94, 239, 0.08);
   --accent-soft-strong: rgba(21, 94, 239, 0.14);
-  --teal: #0f766e;
+  --teal: #0d9488;
   --green: #15803d;
   --amber: #b54708;
   --danger: #b42318;
@@ -86,7 +86,7 @@ select {
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #2c6df6, #0f766e);
+  background: linear-gradient(135deg, #2563eb, #0891b2);
   font-weight: 800;
   letter-spacing: 0.08em;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
@@ -343,6 +343,15 @@ select {
   letter-spacing: -0.03em;
 }
 
+.sidebar-panel h2,
+.panel h2,
+.hero-head h2,
+.topbar h1,
+.workspace-card strong,
+.metric-card strong {
+  text-wrap: balance;
+}
+
 .workspace-card small {
   color: var(--muted);
   line-height: 1.5;
@@ -406,6 +415,16 @@ select {
   color: #f8fbff;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   box-shadow: 0 12px 24px rgba(21, 94, 239, 0.22);
+}
+
+.button.danger {
+  color: #fff7f7;
+  background: linear-gradient(135deg, #dc2626, #b42318);
+  box-shadow: 0 10px 22px rgba(180, 35, 24, 0.18);
+}
+
+.button.danger:hover {
+  box-shadow: 0 14px 28px rgba(180, 35, 24, 0.24);
 }
 
 .button.ghost {
@@ -849,7 +868,7 @@ select:focus {
   width: 56px;
   height: 4px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--accent), var(--teal));
+  background: linear-gradient(135deg, var(--accent), #0ea5e9);
 }
 
 .metric-card p,

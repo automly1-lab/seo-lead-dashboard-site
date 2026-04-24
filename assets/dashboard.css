@@ -632,6 +632,66 @@ select {
   grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
 }
 
+.detail-hero-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(21, 94, 239, 0.08), rgba(13, 148, 136, 0.06)),
+    rgba(248, 250, 252, 0.92);
+}
+
+.detail-hero-copy h2 {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+
+.detail-hero-note {
+  max-width: 64ch;
+  margin: 14px 0 0;
+  color: var(--muted-strong);
+  line-height: 1.7;
+}
+
+.detail-hero-meta {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.detail-section {
+  margin-top: 22px;
+}
+
+.detail-section-framed {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(248,250,252,0.92));
+}
+
+.detail-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.detail-section-head h3 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.08;
+  font-family: "Manrope", "Inter", sans-serif;
+  letter-spacing: -0.04em;
+}
+
 .hero-card,
 .panel,
 .metric-card {
@@ -713,6 +773,13 @@ select {
   margin: 14px 0 0;
   color: var(--muted-strong);
   line-height: 1.65;
+}
+
+.hero-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .hero-stats {
@@ -1149,11 +1216,19 @@ select:focus {
   margin: 18px 0 0;
 }
 
+.detail-matrix-premium {
+  margin-top: 0;
+}
+
 .detail-copy-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-top: 18px;
+}
+
+.detail-copy-grid-premium {
+  margin-top: 0;
 }
 
 .detail-score-grid {
@@ -1163,12 +1238,23 @@ select:focus {
   margin-top: 18px;
 }
 
+.detail-score-grid-premium {
+  margin-top: 0;
+}
+
 .detail-score-card,
 .detail-contact-card {
   padding: 14px 16px;
   border-radius: 18px;
   background: rgba(248, 250, 252, 0.92);
   border: 1px solid var(--line);
+}
+
+.detail-score-card-primary {
+  background:
+    linear-gradient(180deg, rgba(21, 94, 239, 0.08), rgba(255, 255, 255, 0.86)),
+    rgba(248, 250, 252, 0.92);
+  border-color: rgba(21, 94, 239, 0.16);
 }
 
 .detail-score-card {
@@ -1191,11 +1277,22 @@ select:focus {
   font-family: "Manrope", "Inter", sans-serif;
 }
 
+.detail-score-card small {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .detail-chip-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
+}
+
+.detail-chip-row-spaced {
+  margin-top: 18px;
 }
 
 .detail-chip {
@@ -1223,11 +1320,24 @@ select:focus {
   line-height: 1.6;
 }
 
+.detail-story-card {
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(248, 250, 252, 0.82);
+}
+
 .detail-contact-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-top: 18px;
+}
+
+.detail-contact-grid-premium,
+.detail-action-grid-premium,
+.detail-bottom-grid-premium {
+  margin-top: 0;
 }
 
 .detail-action-grid,
@@ -1261,6 +1371,31 @@ select:focus {
   border-radius: 18px;
   background: rgba(248, 250, 252, 0.92);
   border: 1px solid var(--line);
+}
+
+.detail-side-stack {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.detail-side-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(248, 250, 252, 0.88);
+}
+
+.detail-side-card strong {
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.detail-side-card small {
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 .detail-action-card h3,
@@ -1423,6 +1558,15 @@ select:focus {
   .detail-matrix,
   .detail-copy-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-hero-panel {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .detail-hero-meta {
+    justify-items: start;
   }
 
   .filters {

@@ -61,6 +61,7 @@
           <div class="data-status" id="dataStatus">Local workspace</div>
           <button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button>
           <button class="button ghost" type="button" onclick="window.rankforgeApp.addDemoList()">Add Demo List</button>
+          <button class="button danger" type="button" onclick="window.rankforgeApp.deleteSelectedList()">Delete Selected List</button>
           <button class="button primary" type="button" onclick="document.getElementById('quickCreateForm').requestSubmit()">Create Search List</button>
         </div>
       </header>
@@ -98,6 +99,11 @@
             <div><dt>Last Run</dt><dd id="activeListRun">No run yet</dd></div>
             <div><dt>Persistence</dt><dd>Saved until manually archived</dd></div>
           </dl>
+          <div class="hero-card-actions">
+            <button class="button ghost small" type="button" onclick="window.rankforgeApp.duplicateSelectedList()">Duplicate</button>
+            <button class="button ghost small" type="button" onclick="window.rankforgeApp.archiveSelectedList()">Archive</button>
+            <button class="button danger small" type="button" onclick="window.rankforgeApp.deleteSelectedList()">Delete</button>
+          </div>
         </article>
 
         <article class="hero-card hero-card-secondary">

@@ -348,47 +348,62 @@
   <script src="../assets/dashboard.js?v=20260424-debug1"></script>
   <script>
     (function () {
-      const STORAGE_KEY = "rankforge-dashboard-state-v3";
-      const WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
-      const CURRENT_USER_STORAGE_KEY = "rankforge-current-user-id-v1";
-      const DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
+      var STORAGE_KEY = "rankforge-dashboard-state-v3";
+      var WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
+      var CURRENT_USER_STORAGE_KEY = "rankforge-current-user-id-v1";
+      var DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
 
-      function getSessionUserId() {
+      function byId(id) {
+        return document.getElementById(id);
+      }
+
+      function parseJson(raw, fallback) {
         try {
-          const session = JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
-          if (session && session.userId) {
-            localStorage.setItem(CURRENT_USER_STORAGE_KEY, session.userId);
-            return session.userId;
-          }
-        } catch (error) {}
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function currentUserId() {
+        var session = parseJson(localStorage.getItem("rankforge-auth-session-v1"), null);
+        if (session && session.userId) {
+          localStorage.setItem(CURRENT_USER_STORAGE_KEY, session.userId);
+          return session.userId;
+        }
         return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
       }
 
       function loadState() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          return raw ? JSON.parse(raw) : {};
-        } catch (error) {
-          return {};
-        }
+        var state = parseJson(localStorage.getItem(STORAGE_KEY), {});
+        if (!Array.isArray(state.localLists)) state.localLists = [];
+        if (!Array.isArray(state.localLeads)) state.localLeads = [];
+        if (!Array.isArray(state.archivedListIds)) state.archivedListIds = [];
+        state.currentUserId = currentUserId();
+        return state;
       }
 
       function saveState(state) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
-      function escapeHtml(value) {
-        return String(value == null ? "" : value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
+      function status(id, text) {
+        var node = byId(id);
+        if (node) node.textContent = text;
       }
 
-      function formatRunDate(value) {
+      function ensureWebhook() {
+        var current = (localStorage.getItem(WEBHOOK_STORAGE_KEY) || "").trim();
+        if (!current) {
+          current = DEFAULT_SEARCH_WEBHOOK_URL;
+          localStorage.setItem(WEBHOOK_STORAGE_KEY, current);
+        }
+        return current;
+      }
+
+      function formatDate(value) {
+        if (!value) return "No run yet";
         try {
-          if (!value) return "No run yet";
           return new Date(value).toLocaleString("en-GB", {
             day: "2-digit",
             month: "short",
@@ -400,163 +415,102 @@
         }
       }
 
-      function getListsForCurrentUser() {
-        const state = loadState();
-        const currentUserId = getSessionUserId();
-        const archived = Array.isArray(state.archivedListIds) ? state.archivedListIds : [];
-        const localLists = Array.isArray(state.localLists) ? state.localLists : [];
-        return localLists.filter(function (list) {
-          return archived.indexOf(list.id) === -1 && (list.userId || currentUserId) === currentUserId;
+      function renderFallback() {
+        var state = loadState();
+        var userId = state.currentUserId;
+        var lists = state.localLists.filter(function (item) {
+          return state.archivedListIds.indexOf(item.id) === -1 && (item.userId || userId) === userId;
         });
-      }
-
-      function getLeadsForCurrentUserList(listId) {
-        const state = loadState();
-        const currentUserId = getSessionUserId();
-        const localLeads = Array.isArray(state.localLeads) ? state.localLeads : [];
-        return localLeads.filter(function (lead) {
-          return lead.listId === listId && (lead.userId || currentUserId) === currentUserId;
+        var activeId = state.activeListId || (lists[0] && lists[0].id);
+        var activeList = null;
+        var i;
+        for (i = 0; i < lists.length; i += 1) {
+          if (lists[i].id === activeId) {
+            activeList = lists[i];
+            break;
+          }
+        }
+        if (!activeList && lists.length) activeList = lists[0];
+        var leads = state.localLeads.filter(function (lead) {
+          return activeList && lead.listId === activeList.id && (lead.userId || userId) === userId;
         });
-      }
 
-      function renderFallbackDashboard() {
-        const state = loadState();
-        const currentUserId = getSessionUserId();
-        const lists = getListsForCurrentUser();
-        const activeId = state.activeListId || (lists[0] && lists[0].id);
-        const activeList = lists.filter(function (list) { return list.id === activeId; })[0] || lists[0] || null;
-        const leads = activeList ? getLeadsForCurrentUserList(activeList.id) : [];
-        const tbody = document.querySelector("#savedListsTable tbody");
-        const leadsBody = document.querySelector("#leadsTable tbody");
-
-        const metricSavedLists = document.getElementById("metricSavedLists");
-        const metricQualified = document.getElementById("metricQualified");
-        const metricReviewNeeded = document.getElementById("metricReviewNeeded");
-        const metricAverageScore = document.getElementById("metricAverageScore");
-        const workspaceUserBadge = document.getElementById("workspaceUserBadge");
-        const workspaceDataSource = document.getElementById("workspaceDataSource");
-        const workspaceLastSync = document.getElementById("workspaceLastSync");
-        const activeListName = document.getElementById("activeListName");
-        const activeListStatus = document.getElementById("activeListStatus");
-        const activeListDescription = document.getElementById("activeListDescription");
-        const activeListMarket = document.getElementById("activeListMarket");
-        const activeListRun = document.getElementById("activeListRun");
-        const visibleLeadCount = document.getElementById("visibleLeadCount");
-        const activeLeadSummary = document.getElementById("activeLeadSummary");
-        const pipelineDiscovered = document.getElementById("pipelineDiscovered");
-        const pipelineAudited = document.getElementById("pipelineAudited");
-        const pipelineEnriched = document.getElementById("pipelineEnriched");
-        const pipelineQualified = document.getElementById("pipelineQualified");
-        const pipelineRejected = document.getElementById("pipelineRejected");
-        const workspaceSelectedListHealth = document.getElementById("workspaceSelectedListHealth");
-        const workspaceSelectedListMeta = document.getElementById("workspaceSelectedListMeta");
-
-        if (workspaceUserBadge) workspaceUserBadge.textContent = currentUserId;
-        if (workspaceDataSource) workspaceDataSource.textContent = "Local workspace state";
-        if (workspaceLastSync) workspaceLastSync.textContent = "Rendered from fallback controller";
-
-        if (metricSavedLists) metricSavedLists.textContent = String(lists.length);
-        if (metricQualified) {
-          metricQualified.textContent = String(lists.reduce(function (sum, list) { return sum + Number(list.qualified || 0); }, 0));
+        if (byId("workspaceUserBadge")) byId("workspaceUserBadge").textContent = userId;
+        if (byId("workspaceDataSource")) byId("workspaceDataSource").textContent = "Fallback local state";
+        if (byId("workspaceLastSync")) byId("workspaceLastSync").textContent = "Fallback controls active";
+        if (byId("metricSavedLists")) byId("metricSavedLists").textContent = String(lists.length);
+        if (byId("metricQualified")) {
+          var q = 0;
+          for (i = 0; i < lists.length; i += 1) q += Number(lists[i].qualified || 0);
+          byId("metricQualified").textContent = String(q);
         }
-        if (metricReviewNeeded) {
-          const reviewCount = lists.reduce(function (sum, list) {
-            return sum + Math.max(Number(list.audited || 0) - Number(list.qualified || 0) - Number(list.rejected || 0), 0);
-          }, 0);
-          metricReviewNeeded.textContent = String(reviewCount);
-        }
-        if (metricAverageScore) {
-          const allLeads = (Array.isArray(state.localLeads) ? state.localLeads : []).filter(function (lead) {
-            return (lead.userId || currentUserId) === currentUserId;
-          });
-          const avg = allLeads.length ? Math.round(allLeads.reduce(function (sum, lead) { return sum + Number(lead.overallScore || 0); }, 0) / allLeads.length) : 0;
-          metricAverageScore.textContent = String(avg);
+        if (byId("metricReviewNeeded")) byId("metricReviewNeeded").textContent = "0";
+        if (byId("metricAverageScore")) {
+          var total = 0;
+          var count = 0;
+          for (i = 0; i < state.localLeads.length; i += 1) {
+            if ((state.localLeads[i].userId || userId) === userId) {
+              total += Number(state.localLeads[i].overallScore || 0);
+              count += 1;
+            }
+          }
+          byId("metricAverageScore").textContent = String(count ? Math.round(total / count) : 0);
         }
 
-        if (activeListName) activeListName.textContent = activeList ? activeList.name : "No saved list yet";
-        if (activeListStatus) activeListStatus.textContent = activeList ? activeList.status : "empty";
-        if (activeListDescription) activeListDescription.textContent = activeList ? activeList.description : "Create a list to start building the workspace.";
-        if (activeListMarket) activeListMarket.textContent = activeList ? [activeList.niche, activeList.city, activeList.country].join(" - ") : "-";
-        if (activeListRun) activeListRun.textContent = activeList ? formatRunDate(activeList.lastRun) : "No run yet";
-        if (visibleLeadCount) visibleLeadCount.textContent = String(leads.length) + " leads";
-        if (activeLeadSummary) activeLeadSummary.textContent = activeList ? [activeList.city, activeList.country, activeList.status].join(" - ") : "No active list selected yet.";
-        if (pipelineDiscovered) pipelineDiscovered.textContent = activeList ? String(activeList.discovered || 0) : "0";
-        if (pipelineAudited) pipelineAudited.textContent = activeList ? String(activeList.audited || 0) : "0";
-        if (pipelineEnriched) pipelineEnriched.textContent = activeList ? String(activeList.enriched || 0) : "0";
-        if (pipelineQualified) pipelineQualified.textContent = activeList ? String(activeList.qualified || 0) : "0";
-        if (pipelineRejected) pipelineRejected.textContent = activeList ? String(activeList.rejected || 0) : "0";
-        if (workspaceSelectedListHealth) workspaceSelectedListHealth.textContent = activeList ? "Workspace list loaded" : "No list selected";
-        if (workspaceSelectedListMeta) workspaceSelectedListMeta.textContent = activeList ? ((activeList.qualified || 0) + " qualified, " + (activeList.rejected || 0) + " rejected.") : "Pick a saved list to inspect funnel quality.";
+        if (activeList) {
+          if (byId("activeListName")) byId("activeListName").textContent = activeList.name;
+          if (byId("activeListStatus")) byId("activeListStatus").textContent = activeList.status || "queued";
+          if (byId("activeListDescription")) byId("activeListDescription").textContent = activeList.description || "Saved search list in workspace.";
+          if (byId("activeListMarket")) byId("activeListMarket").textContent = [activeList.niche, activeList.city, activeList.country].join(" - ");
+          if (byId("activeListRun")) byId("activeListRun").textContent = formatDate(activeList.lastRun);
+          if (byId("pipelineDiscovered")) byId("pipelineDiscovered").textContent = String(activeList.discovered || 0);
+          if (byId("pipelineAudited")) byId("pipelineAudited").textContent = String(activeList.audited || 0);
+          if (byId("pipelineEnriched")) byId("pipelineEnriched").textContent = String(activeList.enriched || 0);
+          if (byId("pipelineQualified")) byId("pipelineQualified").textContent = String(activeList.qualified || 0);
+          if (byId("pipelineRejected")) byId("pipelineRejected").textContent = String(activeList.rejected || 0);
+          if (byId("visibleLeadCount")) byId("visibleLeadCount").textContent = String(leads.length) + " leads";
+          if (byId("activeLeadSummary")) byId("activeLeadSummary").textContent = activeList.city + ", " + activeList.country + " - " + activeList.status;
+          if (byId("workspaceSelectedListHealth")) byId("workspaceSelectedListHealth").textContent = "Local list loaded";
+          if (byId("workspaceSelectedListMeta")) byId("workspaceSelectedListMeta").textContent = String(activeList.qualified || 0) + " qualified, " + String(activeList.rejected || 0) + " rejected.";
+        }
 
-        if (tbody) {
+        var listBody = document.querySelector("#savedListsTable tbody");
+        if (listBody) {
           if (!lists.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Bu user icin henuz kayitli liste yok.</td></tr>';
+            listBody.innerHTML = '<tr><td colspan="5" class="empty-state">No local lists yet.</td></tr>';
           } else {
-            tbody.innerHTML = lists.slice(0, 5).map(function (list) {
-              return '<tr>' +
-                '<td><span class="list-name">' + escapeHtml(list.name) + '</span></td>' +
-                '<td>' + escapeHtml([list.niche, list.city].join(" - ")) + '</td>' +
-                '<td><span class="status-pill status-qualified">' + escapeHtml(list.status || "draft") + '</span></td>' +
-                '<td>' + escapeHtml(formatRunDate(list.lastRun)) + '</td>' +
-                '<td>' + escapeHtml(String(list.qualified || 0)) + '</td>' +
-              '</tr>';
-            }).join("");
+            listBody.innerHTML = "";
+            for (i = 0; i < Math.min(lists.length, 5); i += 1) {
+              listBody.innerHTML += "<tr><td><span class='list-name'>" + lists[i].name + "</span></td><td>" + lists[i].niche + " - " + lists[i].city + "</td><td><span class='status-pill status-qualified'>" + (lists[i].status || "queued") + "</span></td><td>" + formatDate(lists[i].lastRun) + "</td><td>" + String(lists[i].qualified || 0) + "</td></tr>";
+            }
           }
         }
 
-        if (leadsBody) {
+        var leadBody = document.querySelector("#leadsTable tbody");
+        if (leadBody) {
           if (!leads.length) {
-            leadsBody.innerHTML = '<tr><td colspan="5" class="empty-state">Bu liste icin gosterilecek lead bulunamadi.</td></tr>';
+            leadBody.innerHTML = '<tr><td colspan="5" class="empty-state">No visible leads for this local list yet.</td></tr>';
           } else {
-            leadsBody.innerHTML = leads.slice(0, 6).map(function (lead) {
-              return '<tr>' +
-                '<td class="company-cell"><strong>' + escapeHtml(lead.company || "Unknown company") + '</strong><span>' + escapeHtml((lead.website || "").replace(/^https?:\\/\\//, "")) + '</span></td>' +
-                '<td><strong>' + escapeHtml(lead.decisionMaker || "No named contact yet") + '</strong><span class="status-note">' + escapeHtml(lead.role || "Needs enrichment / review") + '</span></td>' +
-                '<td class="contact-stack"><span>' + escapeHtml(lead.email || "No email") + '</span><span>' + escapeHtml(lead.phone || "No phone") + '</span></td>' +
-                '<td><span class="score-pill">' + escapeHtml(String(lead.overallScore || 0)) + '</span></td>' +
-                '<td><span class="status-pill status-qualified">' + escapeHtml(lead.status || "review_needed") + '</span></td>' +
-              '</tr>';
-            }).join("");
+            leadBody.innerHTML = "";
+            for (i = 0; i < Math.min(leads.length, 6); i += 1) {
+              leadBody.innerHTML += "<tr><td class='company-cell'><strong>" + (leads[i].company || "Unknown company") + "</strong><span>" + (leads[i].website || "") + "</span></td><td><strong>" + (leads[i].decisionMaker || "No named contact yet") + "</strong><span class='status-note'>" + (leads[i].role || "Needs review") + "</span></td><td class='contact-stack'><span>" + (leads[i].email || "No email") + "</span><span>" + (leads[i].phone || "No phone") + "</span></td><td><span class='score-pill'>" + String(leads[i].overallScore || 0) + "</span></td><td><span class='status-pill status-qualified'>" + (leads[i].status || "review_needed") + "</span></td></tr>";
+            }
           }
         }
       }
 
-      function updateStatus(id, message) {
-        const node = document.getElementById(id);
-        if (node) node.textContent = message;
-      }
-
-      function ensureWebhook() {
-        const current = (localStorage.getItem(WEBHOOK_STORAGE_KEY) || "").trim();
-        if (current) return current;
-        localStorage.setItem(WEBHOOK_STORAGE_KEY, DEFAULT_SEARCH_WEBHOOK_URL);
-        return DEFAULT_SEARCH_WEBHOOK_URL;
-      }
-
-      function saveWebhookDirect(event) {
-        event && event.preventDefault && event.preventDefault();
-        const input = document.getElementById("webhookUrlInput");
-        const value = (input && input.value || "").trim() || DEFAULT_SEARCH_WEBHOOK_URL;
-        localStorage.setItem(WEBHOOK_STORAGE_KEY, value);
-        if (input) input.value = value;
-        updateStatus("webhookStatus", "Webhook kaydedildi.");
-        return false;
-      }
-
-      function createListRecord(values) {
-        const state = loadState();
-        const currentUserId = getSessionUserId();
-        const localLists = Array.isArray(state.localLists) ? state.localLists : [];
-        const id = "list_" + Date.now();
-        localLists.unshift({
+      function addList(values) {
+        var state = loadState();
+        var id = "list_" + Date.now();
+        state.localLists.unshift({
           id: id,
-          userId: currentUserId,
+          userId: state.currentUserId,
           name: values.name,
           niche: values.niche,
           businessType: values.businessType,
           city: values.city,
           country: values.country,
-          description: values.description || (values.niche + " opportunities saved for later review and reruns."),
+          description: values.description || "Saved search list in workspace.",
           status: values.status || "queued",
           lastRun: new Date().toISOString(),
           discovered: values.discovered || 0,
@@ -569,24 +523,30 @@
           archived: false,
           isRemote: false
         });
-
-        state.localLists = localLists;
-        state.localLeads = Array.isArray(state.localLeads) ? state.localLeads : [];
-        state.archivedListIds = Array.isArray(state.archivedListIds) ? state.archivedListIds : [];
         state.activeListId = id;
-        state.currentUserId = currentUserId;
         saveState(state);
-        return { id, currentUserId };
+        return { id: id, userId: state.currentUserId };
       }
 
-      function addDemoDirect() {
-        const created = createListRecord({
+      function saveWebhook(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var input = byId("webhookUrlInput");
+        var value = ((input && input.value) || "").trim() || DEFAULT_SEARCH_WEBHOOK_URL;
+        localStorage.setItem(WEBHOOK_STORAGE_KEY, value);
+        if (input) input.value = value;
+        status("webhookStatus", "Webhook saved.");
+        return false;
+      }
+
+      function addDemo(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var created = addList({
           name: "Berlin Roofers - Expansion Batch",
           niche: "roof repair",
           businessType: "roofing company",
           city: "Berlin",
           country: "Germany",
-          description: "Saved expansion list for local roof repair companies that can be revisited later without losing prior runs.",
+          description: "Saved expansion list for local roof repair companies.",
           status: "completed",
           discovered: 27,
           audited: 18,
@@ -596,75 +556,58 @@
           minSeoScore: 57,
           minLeadScore: 71
         });
-
-        const state = loadState();
-        state.localLeads = Array.isArray(state.localLeads) ? state.localLeads : [];
+        var state = loadState();
         state.localLeads.push({
           id: "lead_" + Date.now(),
           listId: created.id,
-          userId: created.currentUserId,
+          userId: created.userId,
           company: "NordDach Berlin",
           website: "https://norddach-berlin.de",
           decisionMaker: "Managing Director",
           role: "Managing Director",
           email: "info@norddach-berlin.de",
           phone: "+49 30 5554 8821",
-          seoScore: 77,
           overallScore: 79,
-          commercialFit: 74,
-          contactConfidence: 75,
-          status: "qualified",
-          outreachReadiness: "ready",
-          paidAdsDetected: false,
-          primaryProblem: "Weak local service architecture",
-          secondaryProblem: "Thin location intent coverage",
-          whyItMatters: "Good fit for local service SEO and already reachable with a usable contact path.",
-          outreachAngle: "Offer a local service-page expansion with stronger metadata and map-supporting content.",
-          valueHypothesis: "A tighter service architecture should increase organic visibility for emergency and repair intent.",
-          firstLine: "Saw clear roofing-service intent but a site structure that likely limits local organic capture.",
-          recommendedOffer: "Local SEO audit",
-          recommendedChannel: "email"
+          status: "qualified"
         });
         saveState(state);
-        renderFallbackDashboard();
-        updateStatus("dataStatus", "Demo list added");
+        renderFallback();
+        status("dataStatus", "Demo list added");
+        return false;
       }
 
-      function buildPayload() {
-        return {
+      function submitCreate(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var payload = {
           search_id: "srch_" + Date.now(),
-          user_id: getSessionUserId(),
+          user_id: currentUserId(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           status: "active",
-          search_name: document.getElementById("searchNameInput")?.value.trim() || "",
-          niche: document.getElementById("nicheInput")?.value.trim() || "",
-          business_type: document.getElementById("businessTypeInput")?.value.trim() || "",
-          city: document.getElementById("cityInput")?.value.trim() || "",
-          country: document.getElementById("countryInput")?.value.trim() || "",
-          primary_keyword: document.getElementById("nicheInput")?.value.trim() || "",
+          search_name: ((byId("searchNameInput") && byId("searchNameInput").value) || "").trim(),
+          niche: ((byId("nicheInput") && byId("nicheInput").value) || "").trim(),
+          business_type: ((byId("businessTypeInput") && byId("businessTypeInput").value) || "").trim(),
+          city: ((byId("cityInput") && byId("cityInput").value) || "").trim(),
+          country: ((byId("countryInput") && byId("countryInput").value) || "").trim(),
+          primary_keyword: ((byId("nicheInput") && byId("nicheInput").value) || "").trim(),
           secondary_keywords: "",
           discovery_query_limit: "1",
           discovery_page_limit: "1",
           max_results_requested: "20",
-          min_audit_score: String(document.getElementById("seoThresholdInput")?.value || 60),
-          min_lead_score: String(document.getElementById("leadThresholdInput")?.value || 70),
+          min_audit_score: String((byId("seoThresholdInput") && byId("seoThresholdInput").value) || 60),
+          min_lead_score: String((byId("leadThresholdInput") && byId("leadThresholdInput").value) || 70),
           started_at: "",
           completed_at: "",
           failed_at: "",
           failure_reason: ""
         };
-      }
 
-      async function submitQuickCreateDirect(event) {
-        event && event.preventDefault && event.preventDefault();
-        const payload = buildPayload();
         if (!payload.search_name || !payload.niche || !payload.business_type || !payload.city || !payload.country) {
-          updateStatus("createSearchStatus", "Formu doldurman gerekiyor.");
+          status("createSearchStatus", "Please fill all required fields.");
           return false;
         }
 
-        createListRecord({
+        addList({
           name: payload.search_name,
           niche: payload.niche,
           businessType: payload.business_type,
@@ -674,60 +617,61 @@
           minLeadScore: Number(payload.min_lead_score),
           status: "queued"
         });
-
-        const webhook = ensureWebhook();
-        const body = new URLSearchParams();
-        Object.keys(payload).forEach((key) => body.set(key, String(payload[key] == null ? "" : payload[key])));
+        renderFallback();
+        status("createSearchStatus", "List created locally. Sending to n8n...");
 
         try {
-          await fetch(webhook, {
+          var webhook = ensureWebhook();
+          var body = new URLSearchParams();
+          Object.keys(payload).forEach(function (key) {
+            body.set(key, payload[key] == null ? "" : String(payload[key]));
+          });
+          fetch(webhook, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
             body: body.toString()
+          }).then(function () {
+            status("createSearchStatus", "List created and webhook sent.");
+          }).catch(function () {
+            status("createSearchStatus", "List created locally, webhook send failed.");
           });
-          updateStatus("createSearchStatus", "Liste olusturuldu. Dashboard yenileniyor...");
         } catch (error) {
-          updateStatus("createSearchStatus", "Liste local kaydedildi ama webhook gonderimi basarisiz.");
+          status("createSearchStatus", "List created locally, webhook send failed.");
         }
-
-        setTimeout(function () {
-          renderFallbackDashboard();
-        }, 300);
         return false;
       }
 
-      function syncDirect() {
-        renderFallbackDashboard();
-        updateStatus("dataStatus", "Fallback sync refreshed local workspace");
+      function handleCreateButton(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        return submitCreate(event);
       }
 
-      window.rankforgeDashboardActions = Object.assign({}, window.rankforgeDashboardActions || {}, {
-        syncSheets: syncDirect,
-        addDemoList: addDemoDirect,
-        handleCreateListButtonClick: function () {
-          const form = document.getElementById("quickCreateForm");
-          if (form && typeof form.requestSubmit === "function") {
-            form.requestSubmit();
-          } else if (form) {
-            submitQuickCreateDirect({ preventDefault: function () {} });
-          }
-        },
-        submitQuickCreateForm: submitQuickCreateDirect,
-        saveWebhook: saveWebhookDirect
-      });
-
-      document.getElementById("syncSheetsButton") && (document.getElementById("syncSheetsButton").onclick = syncDirect);
-      document.getElementById("seedListsButton") && (document.getElementById("seedListsButton").onclick = addDemoDirect);
-      document.getElementById("createListButton") && (document.getElementById("createListButton").onclick = window.rankforgeDashboardActions.handleCreateListButtonClick);
-      document.getElementById("quickCreateForm") && (document.getElementById("quickCreateForm").onsubmit = submitQuickCreateDirect);
-      document.getElementById("saveWebhookButton") && (document.getElementById("saveWebhookButton").onclick = saveWebhookDirect);
-      document.getElementById("webhookConfigForm") && (document.getElementById("webhookConfigForm").onsubmit = saveWebhookDirect);
-      const webhookInput = document.getElementById("webhookUrlInput");
-      if (webhookInput) {
-        webhookInput.value = ensureWebhook();
+      function sync(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        renderFallback();
+        status("dataStatus", "Fallback sync complete");
+        return false;
       }
-      renderFallbackDashboard();
+
+      var webhookInput = byId("webhookUrlInput");
+      if (webhookInput) webhookInput.value = ensureWebhook();
+      if (byId("syncSheetsButton")) byId("syncSheetsButton").onclick = sync;
+      if (byId("seedListsButton")) byId("seedListsButton").onclick = addDemo;
+      if (byId("createListButton")) byId("createListButton").onclick = handleCreateButton;
+      if (byId("quickCreateForm")) byId("quickCreateForm").onsubmit = submitCreate;
+      if (byId("saveWebhookButton")) byId("saveWebhookButton").onclick = saveWebhook;
+      if (byId("webhookConfigForm")) byId("webhookConfigForm").onsubmit = saveWebhook;
+
+      window.rankforgeDashboardActions = {
+        syncSheets: sync,
+        addDemoList: addDemo,
+        handleCreateListButtonClick: handleCreateButton,
+        submitQuickCreateForm: submitCreate,
+        saveWebhook: saveWebhook
+      };
+
+      renderFallback();
     })();
   </script>
 </body>

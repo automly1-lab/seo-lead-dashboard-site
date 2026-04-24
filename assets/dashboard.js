@@ -198,6 +198,15 @@ function ensureWebhookUrl() {
 
 function loadCurrentUserId() {
   try {
+    const authSession = window.rankforgeAuth?.getSession?.();
+    if (authSession?.userId) {
+      localStorage.setItem(CURRENT_USER_STORAGE_KEY, authSession.userId);
+      return authSession.userId;
+    }
+  } catch {
+    // Ignore auth lookup issues and fall back to storage.
+  }
+  try {
     return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
   } catch {
     return "usr_mvp";
@@ -222,7 +231,8 @@ function buildDemoRuntimeData() {
 function mergeRuntimeData(remoteData) {
   const baseData = remoteData?.lists?.length ? remoteData : buildDemoRuntimeData();
   const archived = new Set(uiState.archivedListIds || []);
-  const currentUserId = uiState.currentUserId || loadCurrentUserId();
+  const currentUserId = loadCurrentUserId();
+  uiState.currentUserId = currentUserId;
   const lists = [...(uiState.localLists || []), ...baseData.lists].filter((list) => !archived.has(list.id) && (list.userId || currentUserId) === currentUserId);
   const leads = [...(uiState.localLeads || []), ...baseData.leads].filter((lead) => !archived.has(lead.listId) && (lead.userId || currentUserId) === currentUserId);
 
@@ -1062,7 +1072,8 @@ function saveWebhookFromInput(event) {
 
 function saveCurrentUserFromInput() {
   const input = document.getElementById("currentUserIdInput");
-  const currentUserId = String(input?.value || "").trim() || "usr_mvp";
+  const authUserId = window.rankforgeAuth?.getSession?.()?.userId;
+  const currentUserId = authUserId || String(input?.value || "").trim() || "usr_mvp";
   uiState.currentUserId = currentUserId;
   saveCurrentUserId(currentUserId);
   saveUiState();
@@ -1221,6 +1232,8 @@ function render() {
 const uiState = loadUiState();
 let runtimeData = buildDemoRuntimeData();
 applyRouteSelectionFromUrl();
+uiState.currentUserId = loadCurrentUserId();
+saveUiState();
 
 document.getElementById("quickCreateForm")?.addEventListener("submit", createListFromForm);
 document.getElementById("createListButton")?.addEventListener("click", () => {
@@ -1249,7 +1262,6 @@ document.getElementById("paidAdsFilter")?.addEventListener("change", renderLeads
 
 mergeRuntimeData(runtimeData);
 hydrateWebhookUi();
-uiState.currentUserId = uiState.currentUserId || loadCurrentUserId();
 hydrateCurrentUserUi();
 render();
 syncFromApi();

@@ -1267,6 +1267,20 @@ function render() {
   }
 }
 
+window.rankforgeDashboardActions = {
+  syncSheets: () => syncFromApi(),
+  addDemoList: () => addDemoList(),
+  handleCreateListButtonClick: () => handleCreateListButtonClick(),
+  submitQuickCreateForm: (event) => {
+    createListFromForm(event);
+    return false;
+  },
+  saveWebhook: (event) => {
+    saveWebhookFromInput(event);
+    return false;
+  },
+};
+
 const uiState = loadUiState();
 let runtimeData = buildDemoRuntimeData();
 applyRouteSelectionFromUrl();

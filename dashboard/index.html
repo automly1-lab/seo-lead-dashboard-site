@@ -75,9 +75,9 @@
 
         <div class="topbar-actions">
           <div class="data-status" id="dataStatus">Demo data</div>
-          <button class="button ghost" id="syncSheetsButton" type="button">Sync Sheets</button>
-          <button class="button ghost" id="seedListsButton" type="button">Add Demo List</button>
-          <button class="button primary" id="createListButton" type="button">Create Search List</button>
+          <button class="button ghost" id="syncSheetsButton" type="button" onclick="window.rankforgeDashboardActions?.syncSheets()">Sync Sheets</button>
+          <button class="button ghost" id="seedListsButton" type="button" onclick="window.rankforgeDashboardActions?.addDemoList()">Add Demo List</button>
+          <button class="button primary" id="createListButton" type="button" onclick="window.rankforgeDashboardActions?.handleCreateListButtonClick()">Create Search List</button>
         </div>
       </header>
 
@@ -142,7 +142,7 @@
 
         <article class="hero-card hero-card-secondary">
           <p class="panel-eyebrow">Create New Saved List</p>
-          <form class="quick-create-form" id="quickCreateForm">
+          <form class="quick-create-form" id="quickCreateForm" onsubmit="return window.rankforgeDashboardActions?.submitQuickCreateForm(event)">
             <label>
               <span>List Name</span>
               <input id="searchNameInput" name="search_name" type="text" placeholder="Miami Restoration Companies">

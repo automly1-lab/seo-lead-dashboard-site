@@ -20,14 +20,14 @@
         <a href="../lead-detail/">Lead Detail</a>
       </nav>
       <section class="sidebar-panel">
-        <p class="panel-eyebrow">Retention Rule</p>
-        <h2>Saved lists stay visible.</h2>
-        <p>Once a user creates a list, it remains in the workspace until it is manually archived.</p>
+        <p class="panel-eyebrow">Workspace Rule</p>
+        <h2>Lists persist until archived.</h2>
+        <p>Search batches stay available for later review, reruns, and exports.</p>
       </section>
       <form class="sidebar-panel sidebar-panel-muted" onsubmit="return window.rankforgeApp.saveWebhook(event)">
         <p class="panel-eyebrow">n8n Connection</p>
         <h2>Search submit webhook</h2>
-        <p>Use a public n8n webhook so dashboard-created lists are written into the live pipeline.</p>
+        <p>Connect a public n8n webhook so new searches enter the live pipeline immediately.</p>
         <div class="webhook-config">
           <label><span>Webhook URL</span><input id="webhookUrlInput" type="text" placeholder="https://your-n8n.app/webhook/create-search"></label>
           <button class="button ghost button-block" type="submit">Save Webhook</button>
@@ -37,7 +37,7 @@
       <section class="sidebar-panel sidebar-panel-muted">
         <p class="panel-eyebrow">Workspace Scope</p>
         <h2>User-visible boundary</h2>
-        <p>The signed-in user only sees their own searches and leads.</p>
+        <p>Every signed-in user sees only their own searches, leads, and saved lists.</p>
         <div class="webhook-config">
           <label><span>Current User ID</span><input id="currentUserIdInput" type="text" readonly></label>
           <p class="webhook-note" id="currentUserStatus">Signed-in workspace user not loaded yet.</p>
@@ -48,9 +48,9 @@
     <main class="dashboard-main">
       <header class="topbar">
         <div>
-          <p class="kicker">SEO Agency Command Center</p>
-          <h1>Main Dashboard</h1>
-          <p class="topbar-copy">See what matters first: active lists, strong leads, and whether the workspace is healthy enough for outreach.</p>
+          <p class="kicker">RankForge Workspace</p>
+          <h1>Lead intelligence at a glance</h1>
+          <p class="topbar-copy">Track search batches, see where the strongest opportunities are forming, and keep outreach work focused on the right accounts.</p>
           <div class="topbar-insight-row">
             <span class="topbar-insight" id="topbarInsightOne">Persistent saved lists</span>
             <span class="topbar-insight" id="topbarInsightTwo">User-scoped lead visibility</span>
@@ -87,7 +87,7 @@
         <article class="hero-card hero-card-primary">
           <div class="hero-head">
             <div>
-              <p class="panel-eyebrow">Active Workspace</p>
+              <p class="panel-eyebrow">Active Saved List</p>
               <h2 id="activeListName">No saved list yet</h2>
             </div>
             <span class="pill" id="activeListStatus">empty</span>
@@ -101,7 +101,7 @@
         </article>
 
         <article class="hero-card hero-card-secondary">
-          <p class="panel-eyebrow">Create New Saved List</p>
+          <p class="panel-eyebrow">Create Search Batch</p>
           <form class="quick-create-form" id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)">
             <label><span>List Name</span><input id="searchNameInput" type="text" placeholder="Miami Restoration Companies"></label>
             <div class="grid-two">
@@ -116,23 +116,23 @@
               <label><span>Min SEO Score</span><input id="seoThresholdInput" type="number" min="0" max="100" value="60"></label>
               <label><span>Min Lead Score</span><input id="leadThresholdInput" type="number" min="0" max="100" value="70"></label>
             </div>
-            <p class="form-status" id="createSearchStatus">Create a saved list and send it into n8n.</p>
-            <button class="button primary button-block" type="submit">Save List to Dashboard</button>
+            <p class="form-status" id="createSearchStatus">Create a saved list and push it into the search workflow.</p>
+            <button class="button primary button-block" type="submit">Create Search Batch</button>
           </form>
         </article>
       </section>
 
       <section class="metrics-grid">
-        <article class="metric-card"><p>Saved Lists</p><strong id="metricSavedLists">0</strong><span>Persistent search jobs kept in workspace</span></article>
-        <article class="metric-card"><p>Qualified Leads</p><strong id="metricQualified">0</strong><span>Ready or near-ready outreach opportunities</span></article>
-        <article class="metric-card"><p>Review Needed</p><strong id="metricReviewNeeded">0</strong><span>Good opportunities waiting on manual review</span></article>
-        <article class="metric-card"><p>Average Lead Score</p><strong id="metricAverageScore">0</strong><span>Overall quality across visible saved lists</span></article>
+        <article class="metric-card"><p>Saved Lists</p><strong id="metricSavedLists">0</strong><span>Persistent market batches in this workspace</span></article>
+        <article class="metric-card"><p>Qualified Leads</p><strong id="metricQualified">0</strong><span>Leads that are ready or close to ready</span></article>
+        <article class="metric-card"><p>Review Needed</p><strong id="metricReviewNeeded">0</strong><span>Opportunities that still need manual judgement</span></article>
+        <article class="metric-card"><p>Average Lead Score</p><strong id="metricAverageScore">0</strong><span>Average score across currently visible leads</span></article>
       </section>
 
       <section class="content-grid">
         <article class="panel panel-wide">
           <div class="panel-header">
-            <div><p class="panel-eyebrow">Recent Saved Lists</p><h2>Keep the dashboard lightweight</h2></div>
+            <div><p class="panel-eyebrow">Recent Saved Lists</p><h2>Current search batches</h2></div>
             <div class="panel-actions"><a class="button ghost small" href="../lists/">Open Full Lists View</a></div>
           </div>
           <div class="saved-list-table-wrap">
@@ -143,7 +143,7 @@
           </div>
         </article>
         <article class="panel">
-          <div class="panel-header"><div><p class="panel-eyebrow">Selected List Funnel</p><h2 id="pipelineListTitle">Selected list funnel</h2></div></div>
+          <div class="panel-header"><div><p class="panel-eyebrow">Selected List Funnel</p><h2 id="pipelineListTitle">Selected batch funnel</h2></div></div>
           <div class="pipeline-stack" id="pipeline">
             <div class="pipeline-step"><span>Discovered</span><strong id="pipelineDiscovered">0</strong></div>
             <div class="pipeline-step"><span>Audited</span><strong id="pipelineAudited">0</strong></div>
@@ -156,7 +156,7 @@
 
       <section class="panel">
         <div class="panel-header">
-          <div><p class="panel-eyebrow">Recent Leads</p><h2>Lead snapshot</h2></div>
+          <div><p class="panel-eyebrow">Recent Leads</p><h2>Live lead snapshot</h2></div>
           <div class="panel-actions"><a class="button ghost small" href="../leads/">Open Leads View</a></div>
         </div>
         <div class="lead-summary-bar">

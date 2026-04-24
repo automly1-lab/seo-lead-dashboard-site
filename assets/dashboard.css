@@ -1,18 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap");
+
 :root {
-  --bg: #f5f7fb;
+  --bg: #f3f6fb;
   --paper: #ffffff;
-  --surface: #fbfcfe;
-  --surface-2: #eef3fb;
-  --line: rgba(27, 39, 61, 0.1);
-  --ink: #152033;
-  --muted: #64748b;
-  --accent: #0f766e;
-  --accent-dark: #115e59;
-  --olive: #1d4ed8;
+  --surface: #f8fafc;
+  --surface-2: #eef4fb;
+  --line: rgba(15, 23, 42, 0.09);
+  --line-strong: rgba(15, 23, 42, 0.14);
+  --ink: #0f172a;
+  --ink-soft: #18253d;
+  --muted: #667085;
+  --muted-strong: #475467;
+  --accent: #155eef;
+  --accent-dark: #0b4fd6;
+  --accent-soft: rgba(21, 94, 239, 0.08);
+  --teal: #0f766e;
   --green: #15803d;
-  --gold: #b7791f;
+  --amber: #b54708;
   --danger: #b42318;
-  --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --shadow: 0 22px 50px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
 * {
@@ -21,12 +28,12 @@
 
 body.dashboard-body {
   margin: 0;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.1), transparent 28%),
-    radial-gradient(circle at top right, rgba(29, 78, 216, 0.08), transparent 24%),
-    linear-gradient(180deg, #f8fbff 0%, #f2f6fb 100%);
+    radial-gradient(circle at top left, rgba(21, 94, 239, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.05), transparent 20%),
+    linear-gradient(180deg, #f8fbfe 0%, #f3f6fb 100%);
 }
 
 a {
@@ -51,14 +58,14 @@ select {
   top: 0;
   display: grid;
   align-content: start;
-  gap: 18px;
+  gap: 14px;
   min-height: 100vh;
-  padding: 24px 20px;
+  padding: 24px 18px;
   background:
-    linear-gradient(180deg, rgba(12, 20, 33, 0.98), rgba(15, 23, 42, 0.98)),
-    linear-gradient(135deg, rgba(15, 118, 110, 0.18), transparent 45%);
-  color: #eff6ff;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+    radial-gradient(circle at top left, rgba(21, 94, 239, 0.22), transparent 24%),
+    linear-gradient(180deg, #0b1220 0%, #111827 100%);
+  color: #edf2fb;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .brand {
@@ -70,12 +77,13 @@ select {
 .brand-mark {
   display: inline-grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #14b8a6, #1d4ed8);
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2c6df6, #0f766e);
   font-weight: 800;
   letter-spacing: 0.08em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .brand-copy {
@@ -85,6 +93,8 @@ select {
 
 .brand-copy strong {
   font-size: 18px;
+  font-family: "Manrope", "Inter", sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .brand-copy small {
@@ -101,9 +111,11 @@ select {
 
 .sidebar-nav a {
   padding: 12px 14px;
-  border-radius: 12px;
-  color: rgba(239, 246, 255, 0.74);
-  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+  border-radius: 14px;
+  color: rgba(237, 242, 251, 0.72);
+  font-weight: 600;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease, border 160ms ease;
+  border: 1px solid transparent;
 }
 
 .sidebar-nav a:hover,
@@ -111,25 +123,30 @@ select {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
   transform: translateX(2px);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-panel {
-  padding: 16px;
+  padding: 15px 16px;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.045);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .sidebar-panel h2 {
   margin: 0 0 8px;
-  font-size: 20px;
-  line-height: 1.12;
+  font-size: 18px;
+  line-height: 1.18;
+  font-family: "Manrope", "Inter", sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .sidebar-panel p {
   margin: 0;
-  color: rgba(239, 246, 255, 0.72);
-  line-height: 1.55;
+  color: rgba(237, 242, 251, 0.68);
+  line-height: 1.58;
+  font-size: 14px;
 }
 
 .sidebar-panel-muted {
@@ -149,7 +166,7 @@ select {
 .dashboard-main {
   display: grid;
   gap: 22px;
-  padding: 28px 30px 34px;
+  padding: 30px 34px 40px;
 }
 
 .topbar {
@@ -163,26 +180,27 @@ select {
 .panel-eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: clamp(34px, 4vw, 52px);
-  line-height: 1;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-  letter-spacing: -0.04em;
+  font-size: clamp(34px, 4vw, 54px);
+  line-height: 0.96;
+  font-family: "Manrope", "Inter", sans-serif;
+  letter-spacing: -0.05em;
+  color: var(--ink);
 }
 
 .topbar-copy {
-  max-width: 760px;
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.55;
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: var(--muted-strong);
+  font-size: 16px;
+  line-height: 1.65;
 }
 
 .topbar-insight-row {
@@ -196,13 +214,14 @@ select {
   display: inline-flex;
   align-items: center;
   min-height: 36px;
-  padding: 8px 12px;
+  padding: 8px 13px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(27, 39, 61, 0.08);
-  color: var(--ink);
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 12px;
   font-weight: 700;
+  box-shadow: var(--shadow-soft);
 }
 
 .topbar-actions,
@@ -279,17 +298,17 @@ select {
 
 .workspace-card {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: rgba(255, 253, 248, 0.82);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.92));
   box-shadow: var(--shadow);
 }
 
 .workspace-card strong {
   font-size: 24px;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: "Manrope", "Inter", sans-serif;
   letter-spacing: -0.03em;
 }
 
@@ -300,8 +319,8 @@ select {
 
 .workspace-card-highlight {
   background:
-    linear-gradient(135deg, rgba(184, 92, 56, 0.08), rgba(63, 92, 72, 0.08)),
-    rgba(255, 251, 245, 0.98);
+    linear-gradient(135deg, rgba(21, 94, 239, 0.08), rgba(15, 118, 110, 0.08)),
+    rgba(255, 255, 255, 0.98);
 }
 
 .sidebar-panel-auth {
@@ -342,10 +361,10 @@ select {
   min-height: 44px;
   padding: 12px 18px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease, border 160ms ease;
+  transition: transform 160ms ease, background 160ms ease, border 160ms ease, box-shadow 160ms ease;
 }
 
 .button:hover {
@@ -353,14 +372,15 @@ select {
 }
 
 .button.primary {
-  color: #f8fffe;
+  color: #f8fbff;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 12px 24px rgba(21, 94, 239, 0.22);
 }
 
 .button.ghost {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.66);
-  border-color: rgba(27, 39, 61, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--line);
 }
 
 .button.small {
@@ -375,10 +395,10 @@ select {
   min-height: 44px;
   padding: 0 14px;
   border: 1px solid rgba(58, 46, 33, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.56);
-  color: var(--muted);
-  font-size: 13px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--muted-strong);
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -561,8 +581,8 @@ select {
 .panel,
 .metric-card {
   border: 1px solid var(--line);
-  border-radius: 26px;
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow);
 }
 
@@ -573,16 +593,16 @@ select {
 
 .hero-card-primary {
   background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(29, 78, 216, 0.06)),
+    linear-gradient(135deg, rgba(21, 94, 239, 0.08), rgba(15, 118, 110, 0.06)),
     rgba(255, 255, 255, 0.98);
-  border-color: rgba(15, 118, 110, 0.16);
+  border-color: rgba(21, 94, 239, 0.14);
 }
 
 .hero-card-secondary {
   background:
-    linear-gradient(180deg, rgba(29, 78, 216, 0.04), rgba(255, 255, 255, 0.62)),
+    linear-gradient(180deg, rgba(21, 94, 239, 0.035), rgba(255, 255, 255, 0.66)),
     rgba(255, 255, 255, 0.98);
-  border-color: rgba(29, 78, 216, 0.12);
+  border-color: rgba(21, 94, 239, 0.1);
 }
 
 .hero-head,
@@ -596,10 +616,11 @@ select {
 .hero-head h2,
 .panel h2 {
   margin: 0;
-  font-size: clamp(24px, 2.8vw, 36px);
+  font-size: clamp(24px, 2.8vw, 34px);
   line-height: 1.08;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-  letter-spacing: -0.03em;
+  font-family: "Manrope", "Inter", sans-serif;
+  letter-spacing: -0.04em;
+  color: var(--ink);
 }
 
 .pill {
@@ -611,20 +632,20 @@ select {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: rgba(63, 92, 72, 0.12);
-  color: var(--olive);
+  background: rgba(21, 94, 239, 0.09);
+  color: var(--accent-dark);
 }
 
 .pill-soft {
-  background: rgba(184, 92, 56, 0.12);
-  color: var(--accent-dark);
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--teal);
 }
 
 .hero-description,
 .panel-copy {
   margin: 14px 0 0;
-  color: var(--muted);
-  line-height: 1.6;
+  color: var(--muted-strong);
+  line-height: 1.65;
 }
 
 .hero-stats {
@@ -638,8 +659,8 @@ select {
 .detail-matrix div {
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid var(--line);
 }
 
 .hero-stats dt,
@@ -698,10 +719,18 @@ input[type="number"],
 select {
   min-height: 46px;
   padding: 12px 14px;
-  border: 1px solid rgba(58, 46, 33, 0.14);
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.96);
   color: var(--ink);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(21, 94, 239, 0.45);
+  box-shadow: 0 0 0 4px rgba(21, 94, 239, 0.08);
 }
 
 .form-status,
@@ -756,7 +785,7 @@ select {
   height: 92px;
   border-radius: 999px;
   content: "";
-  background: radial-gradient(circle, rgba(15, 118, 110, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(21, 94, 239, 0.1), transparent 72%);
 }
 
 .metric-card p,
@@ -774,7 +803,7 @@ select {
 
 .metric-card strong {
   font-size: clamp(28px, 3.2vw, 42px);
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: "Manrope", "Inter", sans-serif;
   letter-spacing: -0.04em;
 }
 
@@ -790,9 +819,9 @@ select {
 
 .table-shell {
   margin-top: 18px;
-  border: 1px solid rgba(27, 39, 61, 0.08);
+  border: 1px solid var(--line);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.88);
   overflow: hidden;
 }
 
@@ -832,8 +861,8 @@ select {
 .list-context-card {
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid var(--line);
 }
 
 .list-context-card strong {
@@ -849,8 +878,8 @@ select {
 
 .data-table th,
 .data-table td {
-  padding: 16px 12px;
-  border-bottom: 1px solid rgba(58, 46, 33, 0.08);
+  padding: 16px 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   text-align: left;
   vertical-align: top;
 }
@@ -870,7 +899,7 @@ select {
 
 .data-table tbody tr:hover,
 .data-table tbody tr.active-row {
-  background: rgba(29, 78, 216, 0.06);
+  background: rgba(21, 94, 239, 0.05);
 }
 
 .data-table tbody tr.active-row {
@@ -906,8 +935,8 @@ select {
   align-items: center;
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid var(--line);
 }
 
 .pipeline-step span {
@@ -917,7 +946,7 @@ select {
 
 .pipeline-step strong {
   font-size: 28px;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: "Manrope", "Inter", sans-serif;
 }
 
 .filters {
@@ -927,11 +956,11 @@ select {
 
 .filters-shell {
   padding: 14px;
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  border: 1px solid var(--line);
   border-radius: 20px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.52)),
-    rgba(246, 239, 226, 0.72);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.66)),
+    rgba(248, 250, 252, 0.88);
 }
 
 .leads-panel .panel-header {
@@ -944,9 +973,9 @@ select {
   gap: 8px;
   min-height: 46px;
   padding: 0 12px;
-  border: 1px solid rgba(58, 46, 33, 0.12);
+  border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .toggle-label span {
@@ -971,9 +1000,9 @@ select {
   gap: 12px;
   margin-top: 16px;
   padding: 14px 16px;
-  border: 1px solid rgba(27, 39, 61, 0.08);
+  border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(248, 251, 255, 0.88);
+  background: rgba(248, 250, 252, 0.92);
 }
 
 .lead-summary-bar strong {
@@ -989,8 +1018,8 @@ select {
   min-width: 52px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(63, 92, 72, 0.1);
-  color: var(--olive);
+  background: rgba(21, 94, 239, 0.08);
+  color: var(--accent-dark);
   font-weight: 800;
 }
 
@@ -1007,18 +1036,19 @@ select {
 }
 
 .status-qualified {
-  background: rgba(92, 139, 91, 0.14);
-  color: #2d6735;
+  background: rgba(21, 128, 61, 0.12);
+  color: #166534;
 }
 
-.status-review_needed {
-  background: rgba(191, 141, 61, 0.16);
-  color: #8b6519;
+.status-review_needed,
+.status-review {
+  background: rgba(181, 71, 8, 0.12);
+  color: #9a3412;
 }
 
 .status-rejected {
-  background: rgba(166, 63, 52, 0.14);
-  color: #8a2f27;
+  background: rgba(180, 35, 24, 0.1);
+  color: #b42318;
 }
 
 .detail-matrix {
@@ -1046,8 +1076,8 @@ select {
 .detail-contact-card {
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid var(--line);
 }
 
 .detail-score-card span {
@@ -1063,7 +1093,7 @@ select {
   display: block;
   margin-top: 8px;
   font-size: 30px;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  font-family: "Manrope", "Inter", sans-serif;
 }
 
 .detail-chip-row {
@@ -1079,9 +1109,9 @@ select {
   min-height: 38px;
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(58, 46, 33, 0.1);
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--ink);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink-soft);
   font-size: 13px;
   font-weight: 700;
 }
@@ -1133,8 +1163,8 @@ select {
 .detail-list-card {
   padding: 16px 18px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid var(--line);
 }
 
 .detail-action-card h3,
@@ -1162,7 +1192,7 @@ select {
 #detailWebsite {
   color: var(--accent-dark);
   text-decoration: underline;
-  text-decoration-color: rgba(139, 63, 29, 0.28);
+  text-decoration-color: rgba(21, 94, 239, 0.24);
   text-underline-offset: 3px;
 }
 
@@ -1198,9 +1228,9 @@ select {
   padding: 16px 18px;
   border-radius: 18px;
   background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(29, 78, 216, 0.08)),
+    linear-gradient(135deg, rgba(21, 94, 239, 0.08), rgba(15, 118, 110, 0.05)),
     rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(27, 39, 61, 0.08);
+  border: 1px solid var(--line);
   margin-top: 18px;
 }
 

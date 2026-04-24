@@ -15,7 +15,7 @@
     </aside>
     <main class="dashboard-main">
       <header class="topbar">
-        <div><p class="kicker">Lead Workspace</p><h1>Qualified and Review Queue</h1><p class="topbar-copy">This page is for evaluating leads, filtering by readiness, and deciding what should be exported.</p></div>
+        <div><p class="kicker">Lead Workspace</p><h1>Review and export leads</h1><p class="topbar-copy">Filter the current batch, compare quality quickly, and move only the strongest opportunities into outreach.</p></div>
         <div class="topbar-actions"><div class="data-status" id="dataStatus">Local workspace</div><button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button><a class="button primary" href="../lead-detail/">Open Lead Detail</a></div>
       </header>
       <section class="workspace-strip">
@@ -25,7 +25,7 @@
       </section>
       <section class="panel leads-panel">
         <div class="panel-header">
-          <div><p class="panel-eyebrow">Lead Intelligence Table</p><h2>Leads inside the selected saved list</h2></div>
+          <div><p class="panel-eyebrow">Lead Intelligence Table</p><h2>Leads in the selected list</h2></div>
           <div class="filters">
             <label><span>Status</span><select id="qualificationFilter" onchange="window.rankforgeApp.refresh()"><option value="all">All</option><option value="qualified">Qualified</option><option value="review_needed">Review Needed</option><option value="rejected">Rejected</option></select></label>
             <label><span>Min Score</span><input id="scoreFilter" type="range" min="0" max="100" value="0" oninput="document.getElementById('scoreFilterValue').textContent=this.value;window.rankforgeApp.refresh()"></label>
@@ -50,7 +50,7 @@
           <div class="panel-header"><div><p class="panel-eyebrow">Current Export Scope</p><h2 id="exportTargetList">No selected list</h2></div></div>
           <div class="export-summary-card export-summary-card-inline"><span class="workspace-label">Current Export Scope</span><strong id="exportTargetListMirror">No selected list</strong><small id="exportTargetMeta">0 visible leads ready for export.</small></div>
           <button class="button primary button-block" type="button" onclick="window.rankforgeApp.exportCsv()">Export Selected List CSV</button>
-          <p class="form-status" id="exportStatus">CSV export uses the currently visible leads in the selected saved list.</p>
+          <p class="form-status" id="exportStatus">CSV export uses the leads currently visible in this workspace view.</p>
         </article>
         <article class="panel panel-compact">
           <div class="panel-header"><div><p class="panel-eyebrow">Next View</p><h2>Open the selected lead detail</h2></div></div>

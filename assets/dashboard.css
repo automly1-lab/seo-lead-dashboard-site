@@ -765,6 +765,14 @@ select {
   margin-top: 18px;
 }
 
+.detail-action-grid,
+.detail-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
 .detail-contact-card h3 {
   margin: 0 0 10px;
   font-size: 16px;
@@ -780,6 +788,43 @@ select {
   margin-top: 8px;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.detail-action-card,
+.detail-list-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(58, 46, 33, 0.08);
+}
+
+.detail-action-card h3,
+.detail-list-card h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.detail-action-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.detail-bullet-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.detail-bullet-list li + li {
+  margin-top: 8px;
+}
+
+#detailWebsite {
+  color: var(--accent-dark);
+  text-decoration: underline;
+  text-decoration-color: rgba(139, 63, 29, 0.28);
+  text-underline-offset: 3px;
 }
 
 .export-list {
@@ -825,7 +870,9 @@ select {
   .workspace-strip,
   .detail-score-grid,
   .lead-summary-bar,
-  .detail-contact-grid {
+  .detail-contact-grid,
+  .detail-action-grid,
+  .detail-bottom-grid {
     grid-template-columns: 1fr;
   }
 }

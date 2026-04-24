@@ -609,12 +609,50 @@ function getLeadsForActiveList() {
   });
 }
 
+function compactText(value, fallback = "Not set") {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
 function getSelectedLead(leads) {
   return leads.find((lead) => lead.id === uiState.activeLeadId)
     || runtimeData.leads.find((lead) => lead.id === uiState.activeLeadId)
     || leads[0]
     || runtimeData.leads.find((lead) => lead.listId === uiState.activeListId)
     || null;
+}
+
+function buildSignalItems(lead) {
+  const items = [
+    `${lead.seoScore || 0}/100 SEO need score`,
+    `${lead.overallScore || 0}/100 overall lead score`,
+    lead.primaryProblem ? `Primary issue: ${titleCase(lead.primaryProblem)}` : "Primary issue not classified yet",
+    lead.secondaryProblem ? `Secondary issue: ${titleCase(lead.secondaryProblem)}` : "Secondary issue not classified yet",
+    lead.paidAdsDetected ? "Paid ads detected, suggesting active acquisition budget" : "No paid ads signal detected yet",
+    lead.email || lead.phone ? "At least one direct contact signal is available" : "No direct contact signal captured yet",
+  ];
+  return items;
+}
+
+function buildPlaybookItems(lead) {
+  const channel = lead.recommendedChannel ? titleCase(lead.recommendedChannel) : "Email or phone";
+  return [
+    compactText(lead.outreachAngle, "Define a tighter outreach angle before contact."),
+    compactText(lead.valueHypothesis, "Clarify the business case for SEO before outreach."),
+    `Recommended channel: ${channel}`,
+    compactText(lead.firstLine, "Prepare a first-line personalization before sending outreach."),
+  ];
+}
+
+function renderDetailList(targetId, items) {
+  const node = document.getElementById(targetId);
+  if (!node) return;
+  node.innerHTML = "";
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.textContent = item;
+    node.appendChild(li);
+  }
 }
 
 function selectLead(leadId) {
@@ -743,10 +781,12 @@ function renderLeads() {
 }
 
 function updateLeadDetail(lead) {
+  const websiteNode = document.getElementById("detailWebsite");
   if (!lead) {
     document.getElementById("detailCompany").textContent = "No lead selected";
     document.getElementById("detailStatus").textContent = "empty";
-    document.getElementById("detailWebsite").textContent = "-";
+    websiteNode.textContent = "-";
+    websiteNode.setAttribute("href", "#");
     document.getElementById("detailLocation").textContent = "-";
     document.getElementById("detailPrimaryProblem").textContent = "-";
     document.getElementById("detailOffer").textContent = "-";
@@ -765,12 +805,17 @@ function updateLeadDetail(lead) {
     document.getElementById("detailDecisionRole").textContent = "Needs contact enrichment";
     document.getElementById("detailContactLine").textContent = "No direct contact captured";
     document.getElementById("detailContactChannel").textContent = "Recommended channel not set";
+    document.getElementById("detailNextAction").textContent = "Review contact path and choose the cleanest outreach angle.";
+    document.getElementById("detailRiskNote").textContent = "No major risk recorded yet.";
+    renderDetailList("detailSignalList", ["Waiting for lead data"]);
+    renderDetailList("detailPlaybookList", ["Choose a lead to generate recommendations."]);
     return;
   }
   const activeList = getActiveList();
   document.getElementById("detailCompany").textContent = lead.company;
   document.getElementById("detailStatus").textContent = titleCase(lead.status);
-  document.getElementById("detailWebsite").textContent = String(lead.website || "").replace(/^https?:\/\//, "");
+  websiteNode.textContent = String(lead.website || "").replace(/^https?:\/\//, "");
+  websiteNode.setAttribute("href", lead.website || "#");
   document.getElementById("detailLocation").textContent = `${activeList?.city || ""}, ${activeList?.country || ""}`;
   document.getElementById("detailPrimaryProblem").textContent = titleCase(lead.primaryProblem || "not set");
   document.getElementById("detailOffer").textContent = titleCase(lead.recommendedOffer || "not set");
@@ -791,6 +836,16 @@ function updateLeadDetail(lead) {
   document.getElementById("detailContactChannel").textContent = lead.recommendedChannel
     ? `Recommended channel: ${titleCase(lead.recommendedChannel)}`
     : "Recommended channel not set";
+  document.getElementById("detailNextAction").textContent = lead.email || lead.phone
+    ? `Reach out via ${titleCase(lead.recommendedChannel || (lead.email ? "email" : "phone"))} with the selected SEO angle.`
+    : "Prioritize manual contact enrichment before outreach.";
+  document.getElementById("detailRiskNote").textContent = !lead.email && !lead.phone
+    ? "Main risk: contact path is still weak, so outreach readiness is limited."
+    : lead.status === "review_needed"
+      ? "Main risk: lead quality is promising, but it still needs manual review before full outreach."
+      : "Main risk is moderate; focus on message quality and offer fit.";
+  renderDetailList("detailSignalList", buildSignalItems(lead));
+  renderDetailList("detailPlaybookList", buildPlaybookItems(lead));
 }
 
 async function createListFromForm(event) {

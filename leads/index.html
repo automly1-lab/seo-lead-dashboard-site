@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankForge Intelligence | Leads</title>
+  <meta name="description" content="Review, filter, and export leads inside RankForge Intelligence.">
+  <link rel="stylesheet" href="../assets/site-enhancements.css">
+  <link rel="stylesheet" href="../assets/dashboard.css">
+</head>
+<body class="dashboard-body app-page-leads">
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">RF</span>
+        <span class="brand-copy">
+          <strong>RankForge</strong>
+          <small>SEO Intelligence</small>
+        </span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a href="../dashboard/">Dashboard</a>
+        <a href="../lists/">Saved Lists</a>
+        <a class="active" href="../leads/">Leads</a>
+        <a href="../lead-detail/">Lead Detail</a>
+      </nav>
+
+      <section class="sidebar-panel">
+        <p class="panel-eyebrow">Why This Page</p>
+        <h2>Review the actual work queue.</h2>
+        <p>Filtering, score review, and export live here so the main dashboard stays clean.</p>
+      </section>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="topbar">
+        <div>
+          <p class="kicker">Lead Workspace</p>
+          <h1>Qualified and Review Queue</h1>
+          <p class="topbar-copy">This page is for evaluating leads, filtering by readiness, and deciding what should be exported or escalated.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="data-status" id="dataStatus">Demo data</div>
+          <button class="button ghost" id="syncSheetsButton" type="button">Sync Sheets</button>
+          <a class="button ghost" href="../lists/">Open Lists</a>
+          <a class="button primary" href="../lead-detail/">Open Lead Detail</a>
+        </div>
+      </header>
+
+      <section class="workspace-strip">
+        <article class="workspace-card">
+          <span class="workspace-label">Current Workspace User</span>
+          <strong id="workspaceUserBadge">usr_mvp</strong>
+          <small>User-scoped lists and leads only</small>
+        </article>
+        <article class="workspace-card">
+          <span class="workspace-label">Data Source</span>
+          <strong id="workspaceDataSource">Demo data</strong>
+          <small id="workspaceLastSync">Waiting for first sync</small>
+        </article>
+        <article class="workspace-card workspace-card-highlight">
+          <span class="workspace-label">Selected List Health</span>
+          <strong id="workspaceSelectedListHealth">No list selected</strong>
+          <small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small>
+        </article>
+      </section>
+
+      <section class="panel leads-panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Lead Intelligence Table</p>
+            <h2>Leads inside the selected saved list</h2>
+          </div>
+
+          <div class="filters-shell">
+            <div class="filters">
+              <label>
+                <span>Status</span>
+                <select id="qualificationFilter">
+                  <option value="all">All</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="review_needed">Review Needed</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </label>
+              <label>
+                <span>Min Score</span>
+                <input id="scoreFilter" type="range" min="0" max="100" value="0">
+              </label>
+              <label class="toggle-label">
+                <input id="contactReadyFilter" type="checkbox">
+                <span>Only contact-ready</span>
+              </label>
+              <label class="toggle-label">
+                <input id="paidAdsFilter" type="checkbox">
+                <span>Paid ads signal</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="lead-summary-bar">
+          <div>
+            <span class="workspace-label">Visible Leads</span>
+            <strong id="visibleLeadCount">0 leads</strong>
+          </div>
+          <div>
+            <span class="workspace-label">List Snapshot</span>
+            <strong id="activeLeadSummary">No active list selected yet.</strong>
+          </div>
+        </div>
+
+        <div class="score-display">
+          <span>Minimum visible score:</span>
+          <strong id="scoreFilterValue">0</strong>
+        </div>
+
+        <div class="saved-list-table-wrap">
+          <table class="data-table leads-table" id="leadsTable">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Decision Maker</th>
+                <th>Contact</th>
+                <th>SEO Score</th>
+                <th>Overall</th>
+                <th>Status</th>
+                <th>Outreach</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="detail-grid">
+        <article class="panel panel-compact">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Current Export Scope</p>
+              <h2 id="exportTargetList">No selected list</h2>
+            </div>
+          </div>
+          <div class="export-summary-card export-summary-card-inline">
+            <span class="workspace-label">Current Export Scope</span>
+            <strong id="exportTargetListMirror">No selected list</strong>
+            <small id="exportTargetMeta">0 visible leads ready for export.</small>
+          </div>
+          <ul class="export-list">
+            <li>
+              <strong>Qualified Leads CSV</strong>
+              <span>Export only outreach-ready companies from the selected saved list.</span>
+            </li>
+            <li>
+              <strong>Review Queue</strong>
+              <span>Keep borderline companies attached to the same list for future review.</span>
+            </li>
+          </ul>
+          <button class="button primary button-block" id="exportSelectedListButton" type="button">Export Selected List CSV</button>
+          <p class="form-status" id="exportStatus">CSV export uses the currently visible leads in the selected saved list.</p>
+        </article>
+
+        <article class="panel panel-compact">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Next View</p>
+              <h2>Open the selected lead detail</h2>
+            </div>
+          </div>
+          <p class="panel-copy">Use the detailed view when you want the reasoning, playbook, and next action in one place.</p>
+          <a class="button primary button-block" href="../lead-detail/">Open Lead Detail Page</a>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../assets/dashboard.js"></script>
+</body>
+</html>

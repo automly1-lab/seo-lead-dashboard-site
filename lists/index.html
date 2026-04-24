@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankForge Intelligence | Saved Lists</title>
+  <meta name="description" content="Manage persistent saved search lists for RankForge Intelligence.">
+  <link rel="stylesheet" href="../assets/site-enhancements.css">
+  <link rel="stylesheet" href="../assets/dashboard.css">
+</head>
+<body class="dashboard-body app-page-lists">
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">RF</span>
+        <span class="brand-copy">
+          <strong>RankForge</strong>
+          <small>SEO Intelligence</small>
+        </span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a href="../dashboard/">Dashboard</a>
+        <a class="active" href="../lists/">Saved Lists</a>
+        <a href="../leads/">Leads</a>
+        <a href="../lead-detail/">Lead Detail</a>
+      </nav>
+
+      <section class="sidebar-panel">
+        <p class="panel-eyebrow">Why This Page</p>
+        <h2>Manage saved list inventory.</h2>
+        <p>This is the place for reruns, duplicates, archive actions, and persistent search tracking.</p>
+      </section>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="topbar">
+        <div>
+          <p class="kicker">Saved List Library</p>
+          <h1>Persistent Search Lists</h1>
+          <p class="topbar-copy">Each search stays visible over time. Use this page to manage the list layer without mixing it with lead review.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="data-status" id="dataStatus">Demo data</div>
+          <button class="button ghost" id="syncSheetsButton" type="button">Sync Sheets</button>
+          <a class="button primary" href="../dashboard/">Back to Dashboard</a>
+        </div>
+      </header>
+
+      <section class="workspace-strip">
+        <article class="workspace-card">
+          <span class="workspace-label">Current Workspace User</span>
+          <strong id="workspaceUserBadge">usr_mvp</strong>
+          <small>User-scoped lists and leads only</small>
+        </article>
+        <article class="workspace-card">
+          <span class="workspace-label">Data Source</span>
+          <strong id="workspaceDataSource">Demo data</strong>
+          <small id="workspaceLastSync">Waiting for first sync</small>
+        </article>
+        <article class="workspace-card workspace-card-highlight">
+          <span class="workspace-label">Selected List Health</span>
+          <strong id="workspaceSelectedListHealth">No list selected</strong>
+          <small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel panel-wide">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Saved Search Lists</p>
+              <h2>Persistent list library</h2>
+            </div>
+            <div class="panel-actions">
+              <button class="button ghost small" type="button" id="rerunListButton">Rerun Selected</button>
+              <button class="button ghost small" type="button" id="duplicateListButton">Duplicate</button>
+              <button class="button ghost small" type="button" id="archiveListButton">Archive</button>
+            </div>
+          </div>
+
+          <p class="panel-copy">Users can come back later and reopen the same list. Lists remain visible with their status, latest run, and cumulative results.</p>
+
+          <div class="list-context-strip">
+            <div class="list-context-card">
+              <span class="workspace-label">Selected Thresholds</span>
+              <strong id="listThresholdSummary">SEO 0 / Lead 0</strong>
+            </div>
+            <div class="list-context-card">
+              <span class="workspace-label">Current Coverage</span>
+              <strong id="listCoverageSummary">0 discovered / 0 audited</strong>
+            </div>
+            <div class="list-context-card">
+              <span class="workspace-label">Qualification Mix</span>
+              <strong id="listQualificationSummary">0 qualified / 0 rejected</strong>
+            </div>
+          </div>
+
+          <div class="saved-list-table-wrap">
+            <table class="data-table" id="savedListsTable">
+              <thead>
+                <tr>
+                  <th>List</th>
+                  <th>Market</th>
+                  <th>Status</th>
+                  <th>Last Run</th>
+                  <th>Discovered</th>
+                  <th>Qualified</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Pipeline</p>
+              <h2 id="pipelineListTitle">Selected list funnel</h2>
+            </div>
+          </div>
+          <div class="pipeline-stack" id="pipeline">
+            <div class="pipeline-step">
+              <span>Discovered</span>
+              <strong id="pipelineDiscovered">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Audited</span>
+              <strong id="pipelineAudited">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Enriched</span>
+              <strong id="pipelineEnriched">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Qualified</span>
+              <strong id="pipelineQualified">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Rejected</span>
+              <strong id="pipelineRejected">0</strong>
+            </div>
+          </div>
+          <div class="panel-actions top-space">
+            <a class="button ghost small" href="../leads/">Go to Leads Workspace</a>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../assets/dashboard.js"></script>
+</body>
+</html>

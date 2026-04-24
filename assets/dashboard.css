@@ -218,6 +218,34 @@ select {
   gap: 18px;
 }
 
+.cta-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cta-panel {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.58)),
+    rgba(255, 250, 241, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.cta-panel strong {
+  font-size: 24px;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.cta-panel small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .workspace-card {
   display: grid;
   gap: 8px;
@@ -320,6 +348,10 @@ select {
 
 .detail-grid {
   grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.8fr);
+}
+
+.detail-grid-single {
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.7fr);
 }
 
 .hero-card,
@@ -914,6 +946,14 @@ select {
   margin-top: 18px;
 }
 
+.export-summary-card-inline {
+  margin-top: 0;
+}
+
+.top-space {
+  margin-top: 18px;
+}
+
 .export-summary-card strong {
   font-size: 20px;
 }
@@ -938,6 +978,7 @@ select {
   .detail-grid,
   .metrics-grid,
   .workspace-strip,
+  .cta-strip,
   .list-context-strip,
   .detail-score-grid,
   .lead-summary-bar,

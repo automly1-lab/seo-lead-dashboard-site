@@ -6,6 +6,11 @@ const SHEET_ID = "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco";
 const DASHBOARD_SHEET_TABS = ["searches", "raw_prospects", "seo_audits", "contacts", "final_leads"];
 const DASHBOARD_API_URL = "/api/dashboard-data";
 const STATIC_DATA_URL = "/data/dashboard-data.json";
+const currentPath = window.location.pathname;
+const CURRENT_PAGE = currentPath.includes("/lead-detail/") ? "lead-detail"
+  : currentPath.includes("/leads/") ? "leads"
+    : currentPath.includes("/lists/") ? "lists"
+      : "dashboard";
 
 const seededState = {
   lists: [
@@ -159,6 +164,17 @@ function saveUiState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(uiState));
 }
 
+function getQueryParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function applyRouteSelectionFromUrl() {
+  const listId = getQueryParam("list");
+  const leadId = getQueryParam("lead");
+  if (listId) uiState.activeListId = listId;
+  if (leadId) uiState.activeLeadId = leadId;
+}
+
 function loadWebhookUrl() {
   try {
     return localStorage.getItem(WEBHOOK_STORAGE_KEY) || DEFAULT_SEARCH_WEBHOOK_URL;
@@ -232,10 +248,13 @@ function hydrateCurrentUserUi() {
   const currentUserId = uiState.currentUserId || loadCurrentUserId();
   const input = document.getElementById("currentUserIdInput");
   if (input) input.value = currentUserId;
-  updateMessageNode("currentUserStatus", `Current workspace user: ${currentUserId}`, "success");
+  if (document.getElementById("currentUserStatus")) {
+    updateMessageNode("currentUserStatus", `Current workspace user: ${currentUserId}`, "success");
+  }
 }
 
 function updateWorkspaceStrip() {
+  if (!document.getElementById("workspaceUserBadge")) return;
   const currentUserId = uiState.currentUserId || loadCurrentUserId();
   const activeList = getActiveList();
   const sourceMap = {
@@ -312,12 +331,15 @@ async function syncFromApi() {
 }
 
 function formatRunDate(iso) {
+  if (!iso) return "No run yet";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "No run yet";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 function titleCase(value) {
@@ -594,10 +616,10 @@ function getLeadsForActiveList() {
   const activeList = getActiveList();
   if (!activeList) return [];
 
-  const statusFilter = document.getElementById("qualificationFilter").value;
-  const scoreFilter = Number(document.getElementById("scoreFilter").value || 0);
-  const contactReadyOnly = document.getElementById("contactReadyFilter").checked;
-  const paidAdsOnly = document.getElementById("paidAdsFilter").checked;
+  const statusFilter = document.getElementById("qualificationFilter")?.value || "all";
+  const scoreFilter = Number(document.getElementById("scoreFilter")?.value || 0);
+  const contactReadyOnly = document.getElementById("contactReadyFilter")?.checked || false;
+  const paidAdsOnly = document.getElementById("paidAdsFilter")?.checked || false;
 
   return runtimeData.leads.filter((lead) => {
     if (lead.listId !== activeList.id) return false;
@@ -607,6 +629,24 @@ function getLeadsForActiveList() {
     if (paidAdsOnly && !lead.paidAdsDetected) return false;
     return true;
   });
+}
+
+function renderStandaloneLeadDetail() {
+  if (!document.getElementById("detailWebsite")) return;
+  const leads = getLeadsForActiveList();
+  const selectedLead = getSelectedLead(leads);
+  if (document.getElementById("exportTargetList")) {
+    document.getElementById("exportTargetList").textContent = getActiveList()?.name || "No selected list";
+  }
+  if (document.getElementById("exportTargetListMirror")) {
+    document.getElementById("exportTargetListMirror").textContent = getActiveList()?.name || "No selected list";
+  }
+  if (document.getElementById("exportTargetMeta")) {
+    document.getElementById("exportTargetMeta").textContent = getActiveList()
+      ? `${leads.length} visible leads from ${titleCase(getActiveList().niche)} in ${getActiveList().city}.`
+      : "0 visible leads ready for export.";
+  }
+  updateLeadDetail(selectedLead);
 }
 
 function compactText(value, fallback = "Not set") {
@@ -662,6 +702,7 @@ function selectLead(leadId) {
 }
 
 function updateHero() {
+  if (!document.getElementById("activeListName")) return;
   const activeList = getActiveList();
   if (!activeList) return;
   document.getElementById("activeListName").textContent = activeList.name;
@@ -671,15 +712,28 @@ function updateHero() {
   document.getElementById("activeListRun").textContent = formatRunDate(activeList.lastRun);
   document.getElementById("pipelineListTitle").textContent = `${activeList.name} funnel`;
   document.getElementById("activeLeadSummary").textContent = `${activeList.city}, ${activeList.country} - ${titleCase(activeList.niche)} - ${activeList.status}`;
-  document.getElementById("topbarInsightOne").textContent = `${activeList.name} stays visible until archived`;
-  document.getElementById("topbarInsightTwo").textContent = `Workspace scoped to ${uiState.currentUserId || loadCurrentUserId()}`;
-  document.getElementById("topbarInsightThree").textContent = `Min thresholds: SEO ${activeList.minSeoScore} / Lead ${activeList.minLeadScore}`;
-  document.getElementById("listThresholdSummary").textContent = `SEO ${activeList.minSeoScore} / Lead ${activeList.minLeadScore}`;
-  document.getElementById("listCoverageSummary").textContent = `${activeList.discovered} discovered / ${activeList.audited} audited`;
-  document.getElementById("listQualificationSummary").textContent = `${activeList.qualified} qualified / ${activeList.rejected} rejected`;
+  if (document.getElementById("topbarInsightOne")) {
+    document.getElementById("topbarInsightOne").textContent = `${activeList.name} stays visible until archived`;
+  }
+  if (document.getElementById("topbarInsightTwo")) {
+    document.getElementById("topbarInsightTwo").textContent = `Workspace scoped to ${uiState.currentUserId || loadCurrentUserId()}`;
+  }
+  if (document.getElementById("topbarInsightThree")) {
+    document.getElementById("topbarInsightThree").textContent = `Min thresholds: SEO ${activeList.minSeoScore} / Lead ${activeList.minLeadScore}`;
+  }
+  if (document.getElementById("listThresholdSummary")) {
+    document.getElementById("listThresholdSummary").textContent = `SEO ${activeList.minSeoScore} / Lead ${activeList.minLeadScore}`;
+  }
+  if (document.getElementById("listCoverageSummary")) {
+    document.getElementById("listCoverageSummary").textContent = `${activeList.discovered} discovered / ${activeList.audited} audited`;
+  }
+  if (document.getElementById("listQualificationSummary")) {
+    document.getElementById("listQualificationSummary").textContent = `${activeList.qualified} qualified / ${activeList.rejected} rejected`;
+  }
 }
 
 function updateMetrics() {
+  if (!document.getElementById("metricSavedLists")) return;
   const lists = getVisibleLists();
   const leads = runtimeData.leads.filter((lead) => lists.some((list) => list.id === lead.listId));
   const qualified = leads.filter((lead) => lead.status === "qualified");
@@ -694,15 +748,17 @@ function updateMetrics() {
 
 function renderSavedLists() {
   const tbody = document.querySelector("#savedListsTable tbody");
+  if (!tbody) return;
   const lists = getVisibleLists();
   tbody.innerHTML = "";
+  const visibleLists = CURRENT_PAGE === "dashboard" ? lists.slice(0, 5) : lists;
 
-  if (!lists.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Bu user icin henuz kayitli liste yok.</td></tr>';
+  if (!visibleLists.length) {
+    tbody.innerHTML = `<tr><td colspan="${CURRENT_PAGE === "dashboard" ? 5 : 6}" class="empty-state">Bu user icin henuz kayitli liste yok.</td></tr>`;
     return;
   }
 
-  for (const list of lists) {
+  for (const list of visibleLists) {
     const statusClass =
       list.status === "completed" || list.status === "qualified"
         ? "qualified"
@@ -713,7 +769,16 @@ function renderSavedLists() {
             : "qualified";
     const row = document.createElement("tr");
     row.className = list.id === uiState.activeListId ? "active-row" : "";
-    row.innerHTML = `
+    row.innerHTML = CURRENT_PAGE === "dashboard" ? `
+      <td>
+        <span class="list-name">${list.name}</span>
+        <span class="list-subline">${titleCase(list.businessType)}</span>
+      </td>
+      <td>${titleCase(list.niche)} - ${list.city}</td>
+      <td><span class="status-pill status-${statusClass}">${titleCase(list.status)}</span></td>
+      <td>${formatRunDate(list.lastRun)}</td>
+      <td>${list.qualified}</td>
+    ` : `
       <td>
         <span class="list-name">${list.name}</span>
         <span class="list-subline">${titleCase(list.businessType)}</span>
@@ -728,6 +793,10 @@ function renderSavedLists() {
       uiState.activeListId = list.id;
       uiState.activeLeadId = null;
       saveUiState();
+      if (CURRENT_PAGE === "dashboard") {
+        window.location.href = new URL(`../lists/?list=${encodeURIComponent(list.id)}`, window.location.href).toString();
+        return;
+      }
       render();
     });
     tbody.appendChild(row);
@@ -735,6 +804,7 @@ function renderSavedLists() {
 }
 
 function renderPipeline() {
+  if (!document.getElementById("pipelineDiscovered")) return;
   const activeList = getActiveList();
   if (!activeList) return;
   document.getElementById("pipelineDiscovered").textContent = activeList.discovered;
@@ -746,29 +816,53 @@ function renderPipeline() {
 
 function renderLeads() {
   const tbody = document.querySelector("#leadsTable tbody");
+  if (!tbody) return;
   const leads = getLeadsForActiveList();
   const activeList = getActiveList();
   tbody.innerHTML = "";
 
   const selectedLead = getSelectedLead(leads);
   document.getElementById("visibleLeadCount").textContent = `${leads.length} lead${leads.length === 1 ? "" : "s"}`;
-  document.getElementById("exportTargetList").textContent = activeList ? activeList.name : "No selected list";
-  document.getElementById("exportTargetMeta").textContent = activeList
-    ? `${leads.length} visible leads from ${titleCase(activeList.niche)} in ${activeList.city}.`
-    : "0 visible leads ready for export.";
+  if (document.getElementById("exportTargetList")) {
+    document.getElementById("exportTargetList").textContent = activeList ? activeList.name : "No selected list";
+  }
+  if (document.getElementById("exportTargetListMirror")) {
+    document.getElementById("exportTargetListMirror").textContent = activeList ? activeList.name : "No selected list";
+  }
+  if (document.getElementById("exportTargetMeta")) {
+    document.getElementById("exportTargetMeta").textContent = activeList
+      ? `${leads.length} visible leads from ${titleCase(activeList.niche)} in ${activeList.city}.`
+      : "0 visible leads ready for export.";
+  }
   updateLeadDetail(selectedLead);
+  const visibleLeads = CURRENT_PAGE === "dashboard" ? leads.slice(0, 6) : leads;
 
-  if (!leads.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Bu liste icin gosterilecek lead bulunamadi.</td></tr>';
+  if (!visibleLeads.length) {
+    tbody.innerHTML = `<tr><td colspan="${CURRENT_PAGE === "dashboard" ? 5 : 7}" class="empty-state">Bu liste icin gosterilecek lead bulunamadi.</td></tr>`;
     return;
   }
 
-  for (const lead of leads) {
+  for (const lead of visibleLeads) {
     const row = document.createElement("tr");
     if (selectedLead && selectedLead.id === lead.id) {
       row.classList.add("active-row");
     }
-    row.innerHTML = `
+    row.innerHTML = CURRENT_PAGE === "dashboard" ? `
+      <td class="company-cell">
+        <strong>${lead.company}</strong>
+        <span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span>
+      </td>
+      <td>
+        <strong>${lead.decisionMaker || "No named contact yet"}</strong>
+        <span class="status-note">${lead.role || "Needs enrichment / review"}</span>
+      </td>
+      <td class="contact-stack">
+        <span>${lead.email || "No email"}</span>
+        <span>${lead.phone || "No phone"}</span>
+      </td>
+      <td><span class="score-pill">${lead.overallScore}</span></td>
+      <td><span class="status-pill status-${lead.status}">${titleCase(lead.status)}</span></td>
+    ` : `
       <td class="company-cell">
         <strong>${lead.company}</strong>
         <span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span>
@@ -786,13 +880,19 @@ function renderLeads() {
       <td><span class="status-pill status-${lead.status}">${titleCase(lead.status)}</span></td>
       <td>${titleCase(lead.outreachReadiness)}</td>
     `;
-    row.addEventListener("click", () => selectLead(lead.id));
+    row.addEventListener("click", () => {
+      selectLead(lead.id);
+      if (CURRENT_PAGE !== "lead-detail") {
+        window.location.href = new URL(`../lead-detail/?list=${encodeURIComponent(lead.listId)}&lead=${encodeURIComponent(lead.id)}`, window.location.href).toString();
+      }
+    });
     tbody.appendChild(row);
   }
 }
 
 function updateLeadDetail(lead) {
   const websiteNode = document.getElementById("detailWebsite");
+  if (!websiteNode) return;
   if (!lead) {
     document.getElementById("detailCompany").textContent = "No lead selected";
     document.getElementById("detailStatus").textContent = "empty";
@@ -1086,31 +1186,39 @@ function render() {
   renderSavedLists();
   renderPipeline();
   renderLeads();
-  document.getElementById("scoreFilterValue").textContent = document.getElementById("scoreFilter").value;
+  renderStandaloneLeadDetail();
+  const scoreInput = document.getElementById("scoreFilter");
+  const scoreValue = document.getElementById("scoreFilterValue");
+  if (scoreInput && scoreValue) {
+    scoreValue.textContent = scoreInput.value;
+  }
 }
 
 const uiState = loadUiState();
 let runtimeData = buildDemoRuntimeData();
+applyRouteSelectionFromUrl();
 
-document.getElementById("quickCreateForm").addEventListener("submit", createListFromForm);
-document.getElementById("createListButton").addEventListener("click", () => {
-  document.getElementById("searchNameInput").focus();
+document.getElementById("quickCreateForm")?.addEventListener("submit", createListFromForm);
+document.getElementById("createListButton")?.addEventListener("click", () => {
+  document.getElementById("searchNameInput")?.focus();
 });
-document.getElementById("syncSheetsButton").addEventListener("click", syncFromApi);
-document.getElementById("seedListsButton").addEventListener("click", addDemoList);
-document.getElementById("saveWebhookButton").addEventListener("click", saveWebhookFromInput);
-document.getElementById("saveCurrentUserButton").addEventListener("click", saveCurrentUserFromInput);
-document.getElementById("rerunListButton").addEventListener("click", rerunSelectedList);
-document.getElementById("duplicateListButton").addEventListener("click", duplicateSelectedList);
-document.getElementById("archiveListButton").addEventListener("click", archiveSelectedList);
-document.getElementById("exportSelectedListButton").addEventListener("click", exportSelectedListCsv);
-document.getElementById("qualificationFilter").addEventListener("change", renderLeads);
-document.getElementById("scoreFilter").addEventListener("input", () => {
-  document.getElementById("scoreFilterValue").textContent = document.getElementById("scoreFilter").value;
+document.getElementById("syncSheetsButton")?.addEventListener("click", syncFromApi);
+document.getElementById("seedListsButton")?.addEventListener("click", addDemoList);
+document.getElementById("saveWebhookButton")?.addEventListener("click", saveWebhookFromInput);
+document.getElementById("saveCurrentUserButton")?.addEventListener("click", saveCurrentUserFromInput);
+document.getElementById("rerunListButton")?.addEventListener("click", rerunSelectedList);
+document.getElementById("duplicateListButton")?.addEventListener("click", duplicateSelectedList);
+document.getElementById("archiveListButton")?.addEventListener("click", archiveSelectedList);
+document.getElementById("exportSelectedListButton")?.addEventListener("click", exportSelectedListCsv);
+document.getElementById("qualificationFilter")?.addEventListener("change", renderLeads);
+document.getElementById("scoreFilter")?.addEventListener("input", () => {
+  const scoreInput = document.getElementById("scoreFilter");
+  const scoreValue = document.getElementById("scoreFilterValue");
+  if (scoreInput && scoreValue) scoreValue.textContent = scoreInput.value;
   renderLeads();
 });
-document.getElementById("contactReadyFilter").addEventListener("change", renderLeads);
-document.getElementById("paidAdsFilter").addEventListener("change", renderLeads);
+document.getElementById("contactReadyFilter")?.addEventListener("change", renderLeads);
+document.getElementById("paidAdsFilter")?.addEventListener("change", renderLeads);
 
 mergeRuntimeData(runtimeData);
 hydrateWebhookUi();

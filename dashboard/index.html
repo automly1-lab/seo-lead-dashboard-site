@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence | SEO Lead Dashboard</title>
-  <meta name="description" content="RankForge Intelligence dashboard for SEO agencies to manage saved lead lists, score SEO opportunities, and review qualified outreach-ready companies.">
+  <meta name="description" content="RankForge Intelligence dashboard for SEO agencies to monitor saved lists, qualified leads, and pipeline activity without overwhelming the operator.">
   <link rel="stylesheet" href="../assets/site-enhancements.css">
   <link rel="stylesheet" href="../assets/dashboard.css">
 </head>
-<body class="dashboard-body">
+<body class="dashboard-body app-page-dashboard">
   <div class="dashboard-shell">
     <aside class="sidebar">
       <a class="brand" href="../index.html">
@@ -20,26 +20,16 @@
       </a>
 
       <nav class="sidebar-nav" aria-label="Primary">
-        <a class="active" href="#overview">Dashboard</a>
-        <a href="#saved-lists">Saved Lists</a>
-        <a href="#qualified-leads">Qualified Leads</a>
-        <a href="#pipeline">Pipeline</a>
-        <a href="#exports">Exports</a>
+        <a class="active" href="../dashboard/">Dashboard</a>
+        <a href="../lists/">Saved Lists</a>
+        <a href="../leads/">Leads</a>
+        <a href="../lead-detail/">Lead Detail</a>
       </nav>
 
       <section class="sidebar-panel">
         <p class="panel-eyebrow">Retention Rule</p>
         <h2>Saved lists stay visible.</h2>
-        <p>Once a user creates a list, it remains in the dashboard until it is manually archived. Re-running a list updates it; it does not erase it.</p>
-      </section>
-
-      <section class="sidebar-panel sidebar-panel-muted">
-        <p class="panel-eyebrow">Agency Operating View</p>
-        <ul class="sidebar-points">
-          <li>Search jobs are persistent records.</li>
-          <li>Qualified leads remain attached to their source list.</li>
-          <li>Review-needed leads are kept for later follow-up.</li>
-        </ul>
+        <p>Once a user creates a list, it remains in the workspace until it is manually archived. Re-running updates the same list record.</p>
       </section>
 
       <section class="sidebar-panel sidebar-panel-muted">
@@ -76,7 +66,7 @@
         <div>
           <p class="kicker">SEO Agency Command Center</p>
           <h1>Main Dashboard</h1>
-          <p class="topbar-copy">Track saved prospect lists, monitor SEO opportunity quality, and keep outreach-ready leads accessible over time.</p>
+          <p class="topbar-copy">See what matters first: active lists, strong leads, and whether the workspace is healthy enough for outreach.</p>
           <div class="topbar-insight-row">
             <span class="topbar-insight" id="topbarInsightOne">Persistent saved lists</span>
             <span class="topbar-insight" id="topbarInsightTwo">User-scoped lead visibility</span>
@@ -204,36 +194,37 @@
         </article>
       </section>
 
+      <section class="cta-strip">
+        <a class="cta-panel" href="../lists/">
+          <span class="workspace-label">Next Step</span>
+          <strong>Open Saved Lists</strong>
+          <small>Manage reruns, duplicates, archive actions, and list health.</small>
+        </a>
+        <a class="cta-panel" href="../leads/">
+          <span class="workspace-label">Work Queue</span>
+          <strong>Open Leads Workspace</strong>
+          <small>Filter, export, and review the actual outreach list away from the dashboard.</small>
+        </a>
+        <a class="cta-panel" href="../lead-detail/">
+          <span class="workspace-label">Deep Review</span>
+          <strong>Open Lead Detail</strong>
+          <small>Inspect a selected lead’s reasoning, contact path, and next action.</small>
+        </a>
+      </section>
+
       <section class="content-grid">
-        <article class="panel panel-wide" id="saved-lists">
+        <article class="panel panel-wide">
           <div class="panel-header">
             <div>
-              <p class="panel-eyebrow">Saved Search Lists</p>
-              <h2>Persistent list library</h2>
+              <p class="panel-eyebrow">Recent Saved Lists</p>
+              <h2>Keep the dashboard lightweight</h2>
             </div>
             <div class="panel-actions">
-              <button class="button ghost small" type="button" id="rerunListButton">Rerun Selected</button>
-              <button class="button ghost small" type="button" id="duplicateListButton">Duplicate</button>
-              <button class="button ghost small" type="button" id="archiveListButton">Archive</button>
+              <a class="button ghost small" href="../lists/">Open Full Lists View</a>
             </div>
           </div>
 
-          <p class="panel-copy">Users can come back later and reopen the same list. Lists remain visible with their status, latest run, and cumulative results.</p>
-
-          <div class="list-context-strip">
-            <div class="list-context-card">
-              <span class="workspace-label">Selected Thresholds</span>
-              <strong id="listThresholdSummary">SEO 0 / Lead 0</strong>
-            </div>
-            <div class="list-context-card">
-              <span class="workspace-label">Current Coverage</span>
-              <strong id="listCoverageSummary">0 discovered / 0 audited</strong>
-            </div>
-            <div class="list-context-card">
-              <span class="workspace-label">Qualification Mix</span>
-              <strong id="listQualificationSummary">0 qualified / 0 rejected</strong>
-            </div>
-          </div>
+          <p class="panel-copy">This page only shows the latest workspace context. Full list management lives in the dedicated Saved Lists page.</p>
 
           <div class="saved-list-table-wrap">
             <table class="data-table" id="savedListsTable">
@@ -243,7 +234,6 @@
                   <th>Market</th>
                   <th>Status</th>
                   <th>Last Run</th>
-                  <th>Discovered</th>
                   <th>Qualified</th>
                 </tr>
               </thead>
@@ -255,7 +245,7 @@
         <article class="panel">
           <div class="panel-header">
             <div>
-              <p class="panel-eyebrow">Pipeline</p>
+              <p class="panel-eyebrow">Selected List Funnel</p>
               <h2 id="pipelineListTitle">Selected list funnel</h2>
             </div>
           </div>
@@ -284,37 +274,14 @@
         </article>
       </section>
 
-      <section class="panel leads-panel" id="qualified-leads">
+      <section class="panel">
         <div class="panel-header">
           <div>
-            <p class="panel-eyebrow">Lead Intelligence Table</p>
-            <h2>Leads inside the selected saved list</h2>
+            <p class="panel-eyebrow">Recent Leads</p>
+            <h2>Lead view is now a separate workspace</h2>
           </div>
-
-          <div class="filters-shell">
-            <div class="filters">
-              <label>
-                <span>Status</span>
-                <select id="qualificationFilter">
-                  <option value="all">All</option>
-                  <option value="qualified">Qualified</option>
-                  <option value="review_needed">Review Needed</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </label>
-              <label>
-                <span>Min Score</span>
-                <input id="scoreFilter" type="range" min="0" max="100" value="0">
-              </label>
-              <label class="toggle-label">
-                <input id="contactReadyFilter" type="checkbox">
-                <span>Only contact-ready</span>
-              </label>
-              <label class="toggle-label">
-                <input id="paidAdsFilter" type="checkbox">
-                <span>Paid ads signal</span>
-              </label>
-            </div>
+          <div class="panel-actions">
+            <a class="button ghost small" href="../leads/">Open Leads View</a>
           </div>
         </div>
 
@@ -329,11 +296,6 @@
           </div>
         </div>
 
-        <div class="score-display">
-          <span>Minimum visible score:</span>
-          <strong id="scoreFilterValue">0</strong>
-        </div>
-
         <div class="saved-list-table-wrap">
           <table class="data-table leads-table" id="leadsTable">
             <thead>
@@ -341,159 +303,13 @@
                 <th>Company</th>
                 <th>Decision Maker</th>
                 <th>Contact</th>
-                <th>SEO Score</th>
                 <th>Overall</th>
                 <th>Status</th>
-                <th>Outreach</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
-      </section>
-
-      <section class="detail-grid">
-        <article class="panel">
-          <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Selected Lead Detail</p>
-              <h2 id="detailCompany">Dental Smiles London | Euston Practice</h2>
-            </div>
-            <span class="pill pill-soft" id="detailStatus">qualified</span>
-          </div>
-
-          <dl class="detail-matrix">
-            <div>
-              <dt>Website</dt>
-              <dd><a id="detailWebsite" href="#" target="_blank" rel="noreferrer">dentalsmileslondon.co.uk</a></dd>
-            </div>
-            <div>
-              <dt>Location</dt>
-              <dd id="detailLocation">London, United Kingdom</dd>
-            </div>
-            <div>
-              <dt>Primary Problem</dt>
-              <dd id="detailPrimaryProblem">Weak local SEO execution</dd>
-            </div>
-            <div>
-              <dt>Recommended Offer</dt>
-              <dd id="detailOffer">Local SEO audit</dd>
-            </div>
-          </dl>
-
-          <div class="detail-score-grid">
-            <article class="detail-score-card">
-              <span>SEO Need</span>
-              <strong id="detailSeoScore">0</strong>
-            </article>
-            <article class="detail-score-card">
-              <span>Overall Score</span>
-              <strong id="detailOverallScore">0</strong>
-            </article>
-            <article class="detail-score-card">
-              <span>Commercial Fit</span>
-              <strong id="detailCommercialFit">0</strong>
-            </article>
-            <article class="detail-score-card">
-              <span>Contact Confidence</span>
-              <strong id="detailContactConfidence">0</strong>
-            </article>
-          </div>
-
-          <div class="detail-chip-row">
-            <span class="detail-chip" id="detailOutreachReadiness">Needs review</span>
-            <span class="detail-chip" id="detailPaidAds">Paid ads: unknown</span>
-            <span class="detail-chip" id="detailSecondaryProblem">Secondary issue not set</span>
-          </div>
-
-          <div class="detail-copy-grid">
-            <div>
-              <h3>Why this lead matters</h3>
-              <p id="detailReason">Strong local business fit, visible SEO weaknesses, and usable contact signals make this list entry outreach-ready.</p>
-            </div>
-            <div>
-              <h3>Outreach angle</h3>
-              <p id="detailAngle">Lead with missed service-page coverage and local ranking opportunity.</p>
-            </div>
-            <div>
-              <h3>Client value hypothesis</h3>
-              <p id="detailValue">A focused local SEO rebuild should convert existing paid demand into more cost-efficient organic leads.</p>
-            </div>
-            <div>
-              <h3>First-line personalization</h3>
-              <p id="detailPersonalization">Noticed the practice has strong local intent but thin treatment pages that likely cap organic visibility.</p>
-            </div>
-          </div>
-
-          <div class="detail-contact-grid">
-            <div class="detail-contact-card">
-              <h3>Decision Maker Snapshot</h3>
-              <p id="detailDecisionMaker">No named contact yet</p>
-              <small id="detailDecisionRole">Needs contact enrichment</small>
-            </div>
-            <div class="detail-contact-card">
-              <h3>Best Contact Path</h3>
-              <p id="detailContactLine">No direct contact captured</p>
-              <small id="detailContactChannel">Recommended channel not set</small>
-            </div>
-          </div>
-
-          <div class="detail-action-grid">
-            <div class="detail-action-card">
-              <h3>Next Best Action</h3>
-              <p id="detailNextAction">Review contact path and choose the cleanest outreach angle.</p>
-            </div>
-            <div class="detail-action-card">
-              <h3>Lead Risk</h3>
-              <p id="detailRiskNote">No major risk recorded yet.</p>
-            </div>
-          </div>
-
-          <div class="detail-bottom-grid">
-            <div class="detail-list-card">
-              <h3>Signal Checklist</h3>
-              <ul class="detail-bullet-list" id="detailSignalList">
-                <li>Waiting for lead data</li>
-              </ul>
-            </div>
-            <div class="detail-list-card">
-              <h3>Outreach Playbook</h3>
-              <ul class="detail-bullet-list" id="detailPlaybookList">
-                <li>Choose a lead to generate recommendations.</li>
-              </ul>
-            </div>
-          </div>
-        </article>
-
-        <article class="panel panel-compact" id="exports">
-          <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Exports</p>
-              <h2>List-aware handoff</h2>
-            </div>
-          </div>
-          <div class="export-summary-card">
-            <span class="workspace-label">Current Export Scope</span>
-            <strong id="exportTargetList">No selected list</strong>
-            <small id="exportTargetMeta">0 visible leads ready for export.</small>
-          </div>
-          <ul class="export-list">
-            <li>
-              <strong>Qualified Leads CSV</strong>
-              <span>Export only outreach-ready companies from the selected saved list.</span>
-            </li>
-            <li>
-              <strong>Review Queue</strong>
-              <span>Keep borderline companies attached to the same list for future review.</span>
-            </li>
-            <li>
-              <strong>Full Intelligence Export</strong>
-              <span>Include scoring reasons, outreach angle, and paid-ads signal.</span>
-            </li>
-          </ul>
-          <button class="button primary button-block" id="exportSelectedListButton" type="button">Export Selected List CSV</button>
-          <p class="form-status" id="exportStatus">CSV export uses the currently visible leads in the selected saved list.</p>
-        </article>
       </section>
     </main>
   </div>

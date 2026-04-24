@@ -1,18 +1,18 @@
 :root {
-  --bg: #f3efe6;
-  --paper: #fffaf1;
-  --surface: #fffdf8;
-  --surface-2: #f6efe2;
-  --line: rgba(58, 46, 33, 0.12);
-  --ink: #1f211d;
-  --muted: #6b665c;
-  --accent: #b85c38;
-  --accent-dark: #8b3f1d;
-  --olive: #3f5c48;
-  --green: #5c8b5b;
-  --gold: #bf8d3d;
-  --danger: #a63f34;
-  --shadow: 0 18px 42px rgba(34, 27, 18, 0.12);
+  --bg: #f5f7fb;
+  --paper: #ffffff;
+  --surface: #fbfcfe;
+  --surface-2: #eef3fb;
+  --line: rgba(27, 39, 61, 0.1);
+  --ink: #152033;
+  --muted: #64748b;
+  --accent: #0f766e;
+  --accent-dark: #115e59;
+  --olive: #1d4ed8;
+  --green: #15803d;
+  --gold: #b7791f;
+  --danger: #b42318;
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -24,9 +24,9 @@ body.dashboard-body {
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(184, 92, 56, 0.16), transparent 28%),
-    radial-gradient(circle at top right, rgba(63, 92, 72, 0.12), transparent 24%),
-    linear-gradient(180deg, #f7f1e6 0%, #f1ebdf 100%);
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.1), transparent 28%),
+    radial-gradient(circle at top right, rgba(29, 78, 216, 0.08), transparent 24%),
+    linear-gradient(180deg, #f8fbff 0%, #f2f6fb 100%);
 }
 
 a {
@@ -55,10 +55,10 @@ select {
   min-height: 100vh;
   padding: 28px 22px;
   background:
-    linear-gradient(180deg, rgba(36, 34, 29, 0.98), rgba(28, 26, 22, 0.98)),
-    linear-gradient(135deg, rgba(184, 92, 56, 0.2), transparent 40%);
-  color: #f8f2e7;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+    linear-gradient(180deg, rgba(12, 20, 33, 0.98), rgba(15, 23, 42, 0.98)),
+    linear-gradient(135deg, rgba(15, 118, 110, 0.18), transparent 45%);
+  color: #eff6ff;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .brand {
@@ -73,7 +73,7 @@ select {
   width: 48px;
   height: 48px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #c66c47, #7f3f25);
+  background: linear-gradient(135deg, #14b8a6, #1d4ed8);
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -88,7 +88,7 @@ select {
 }
 
 .brand-copy small {
-  color: rgba(248, 242, 231, 0.66);
+  color: rgba(239, 246, 255, 0.62);
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -102,20 +102,20 @@ select {
 .sidebar-nav a {
   padding: 12px 14px;
   border-radius: 12px;
-  color: rgba(248, 242, 231, 0.72);
+  color: rgba(239, 246, 255, 0.74);
   transition: background 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .sidebar-nav a:hover,
 .sidebar-nav a.active {
   background: rgba(255, 255, 255, 0.08);
-  color: #fff6eb;
+  color: #ffffff;
   transform: translateX(2px);
 }
 
 .sidebar-panel {
   padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.06);
 }
@@ -128,7 +128,7 @@ select {
 
 .sidebar-panel p {
   margin: 0;
-  color: rgba(248, 242, 231, 0.72);
+  color: rgba(239, 246, 255, 0.72);
   line-height: 1.55;
 }
 
@@ -139,7 +139,7 @@ select {
 .sidebar-points {
   margin: 0;
   padding-left: 18px;
-  color: rgba(248, 242, 231, 0.72);
+  color: rgba(239, 246, 255, 0.72);
 }
 
 .sidebar-points li + li {
@@ -172,8 +172,9 @@ select {
 .topbar h1 {
   margin: 0;
   font-size: clamp(34px, 4vw, 52px);
-  line-height: 0.98;
-  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  letter-spacing: -0.04em;
 }
 
 .topbar-copy {
@@ -197,8 +198,8 @@ select {
   min-height: 36px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(58, 46, 33, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(27, 39, 61, 0.08);
   color: var(--ink);
   font-size: 13px;
   font-weight: 700;
@@ -238,7 +239,8 @@ select {
 
 .cta-panel strong {
   font-size: 24px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .cta-panel small {
@@ -258,7 +260,8 @@ select {
 
 .workspace-card strong {
   font-size: 24px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .workspace-card small {
@@ -298,14 +301,14 @@ select {
 }
 
 .button.primary {
-  color: #fff7f0;
+  color: #f8fffe;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
 }
 
 .button.ghost {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.42);
-  border-color: rgba(58, 46, 33, 0.12);
+  background: rgba(255, 255, 255, 0.66);
+  border-color: rgba(27, 39, 61, 0.08);
 }
 
 .button.small {
@@ -359,7 +362,7 @@ select {
 .metric-card {
   border: 1px solid var(--line);
   border-radius: 26px;
-  background: rgba(255, 253, 248, 0.92);
+  background: rgba(255, 255, 255, 0.92);
   box-shadow: var(--shadow);
 }
 
@@ -370,14 +373,14 @@ select {
 
 .hero-card-primary {
   background:
-    linear-gradient(135deg, rgba(63, 92, 72, 0.14), rgba(191, 141, 61, 0.08)),
-    rgba(255, 250, 241, 0.96);
+    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(29, 78, 216, 0.06)),
+    rgba(255, 255, 255, 0.98);
 }
 
 .hero-card-secondary {
   background:
-    linear-gradient(180deg, rgba(184, 92, 56, 0.06), rgba(255, 255, 255, 0.42)),
-    rgba(255, 251, 245, 0.96);
+    linear-gradient(180deg, rgba(29, 78, 216, 0.04), rgba(255, 255, 255, 0.62)),
+    rgba(255, 255, 255, 0.98);
 }
 
 .hero-head,
@@ -392,8 +395,9 @@ select {
 .panel h2 {
   margin: 0;
   font-size: clamp(24px, 2.8vw, 36px);
-  line-height: 1.05;
-  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.08;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .pill {
@@ -555,7 +559,8 @@ select {
 
 .metric-card strong {
   font-size: clamp(28px, 3.2vw, 42px);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  letter-spacing: -0.04em;
 }
 
 .metric-card span {
@@ -663,7 +668,7 @@ select {
 
 .pipeline-step strong {
   font-size: 28px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 
 .filters {
@@ -805,7 +810,7 @@ select {
   display: block;
   margin-top: 8px;
   font-size: 30px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 
 .detail-chip-row {

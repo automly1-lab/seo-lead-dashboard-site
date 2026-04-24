@@ -378,6 +378,28 @@ async function fetchSheetRows(sheetName) {
   });
 }
 
+async function fetchSheetRowsSafe(sheetName) {
+  try {
+    const rows = await fetchSheetRows(sheetName);
+    return { ok: true, sheetName, rows };
+  } catch (error) {
+    return {
+      ok: false,
+      sheetName,
+      rows: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function fetchStaticDashboardData() {
+  const response = await fetch("../data/dashboard-data.json", {
+    headers: { Accept: "application/json, text/plain, */*" },
+  });
+  if (!response.ok) throw new Error("static-dashboard-data");
+  return response.json();
+}
+
 function buildRemoteData(data) {
   const searches = data.searches || [];
   const rawProspects = data.raw_prospects || [];
@@ -499,19 +521,48 @@ async function syncSheets(event) {
   if (event) event.preventDefault();
   updateStatus("dataStatus", "Syncing sheets...", "");
   try {
-    const [raw_prospects, searches, seo_audits, contacts, final_leads] = await Promise.all([
-      fetchSheetRows("raw_prospects"),
-      fetchSheetRows("searches"),
-      fetchSheetRows("seo_audits"),
-      fetchSheetRows("contacts"),
-      fetchSheetRows("final_leads"),
+    const results = await Promise.all([
+      fetchSheetRowsSafe("raw_prospects"),
+      fetchSheetRowsSafe("searches"),
+      fetchSheetRowsSafe("seo_audits"),
+      fetchSheetRowsSafe("contacts"),
+      fetchSheetRowsSafe("final_leads"),
     ]);
+
+    const map = Object.fromEntries(results.map((item) => [item.sheetName, item]));
+    const failedSheets = results.filter((item) => !item.ok).map((item) => item.sheetName);
+    const hasCoreData = (map.searches?.rows?.length || 0) > 0 || (map.seo_audits?.rows?.length || 0) > 0 || (map.final_leads?.rows?.length || 0) > 0;
+
+    if (hasCoreData) {
+      appState.lastSyncAt = new Date().toISOString();
+      appState.syncMode = "sheets";
+      saveState(appState);
+      mergeRuntime(buildRemoteData({
+        raw_prospects: map.raw_prospects?.rows || [],
+        searches: map.searches?.rows || [],
+        seo_audits: map.seo_audits?.rows || [],
+        contacts: map.contacts?.rows || [],
+        final_leads: map.final_leads?.rows || [],
+      }));
+      renderAll();
+      if (failedSheets.length) {
+        updateStatus("dataStatus", `Partial sync: ${failedSheets.join(", ")} failed`, "error");
+      } else {
+        updateStatus("dataStatus", "Live Sheets synced", "success");
+      }
+      return false;
+    }
+
+    const staticData = await fetchStaticDashboardData();
     appState.lastSyncAt = new Date().toISOString();
-    appState.syncMode = "sheets";
+    appState.syncMode = "local";
     saveState(appState);
-    mergeRuntime(buildRemoteData({ raw_prospects, searches, seo_audits, contacts, final_leads }));
+    mergeRuntime({
+      lists: staticData.lists || [],
+      leads: staticData.leads || [],
+    });
     renderAll();
-    updateStatus("dataStatus", "Live Sheets synced", "success");
+    updateStatus("dataStatus", "Sheets unavailable, static workspace shown", "error");
   } catch {
     mergeRuntime(runtimeData);
     renderAll();

@@ -139,6 +139,26 @@
       "minSeoScore": 60,
       "minLeadScore": 70,
       "archived": false
+    },
+    {
+      "id": "srch_accounting_poznan_1777056064366",
+      "userId": "usr_demo_owner",
+      "name": "accounting",
+      "niche": "accountants",
+      "businessType": "accountants",
+      "city": "Poznan",
+      "country": "Poland",
+      "description": "Accountants opportunities for Poznan, kept as a persistent saved list.",
+      "status": "active",
+      "lastRun": "2026-04-24T18:41:09.487Z",
+      "discovered": 0,
+      "audited": 0,
+      "enriched": 0,
+      "qualified": 0,
+      "rejected": 0,
+      "minSeoScore": 60,
+      "minLeadScore": 70,
+      "archived": false
     }
   ],
   "leads": [],

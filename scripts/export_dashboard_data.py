@@ -139,8 +139,35 @@ def build_runtime_data(sheet_data):
             "recommendedChannel": "email" if contact.get("email") else ("phone" if contact.get("phone") else ""),
         })
 
-    lists = []
+    def search_signature(search):
+        parts = [
+            search.get("user_id") or "usr_mvp",
+            search.get("search_name"),
+            search.get("niche"),
+            search.get("business_type"),
+            search.get("city"),
+            search.get("country"),
+        ]
+        return "|".join(str(part or "").strip().lower() for part in parts)
+
+    def search_updated_at(search):
+        return (
+            search.get("completed_at")
+            or search.get("started_at")
+            or search.get("updated_at")
+            or search.get("created_at")
+            or ""
+        )
+
+    latest_search_by_signature = {}
     for search in searches:
+        signature = search_signature(search)
+        existing = latest_search_by_signature.get(signature)
+        if not existing or str(search_updated_at(search)) >= str(search_updated_at(existing)):
+            latest_search_by_signature[signature] = search
+
+    lists = []
+    for search in latest_search_by_signature.values():
         search_id = search.get("search_id")
         search_prospects = [row for row in raw_prospects if row.get("search_id") == search_id]
         search_audits = [row for row in seo_audits if row.get("search_id") == search_id and row.get("status") == "completed"]
@@ -160,17 +187,24 @@ def build_runtime_data(sheet_data):
             "discovered": len(search_prospects),
             "audited": len(search_audits),
             "enriched": len(search_contacts),
-            "qualified": len([lead for lead in search_leads if lead.get("qualification_status") == "qualified"]),
-            "rejected": len([lead for lead in search_leads if lead.get("qualification_status") == "rejected"]),
+            "qualified": len([lead for lead in search_leads if str(lead.get("status") or lead.get("qualification_status") or "").lower() == "qualified"]),
+            "rejected": len([lead for lead in search_leads if str(lead.get("status") or lead.get("qualification_status") or "").lower() == "rejected"]),
             "minSeoScore": safe_number(search.get("min_audit_score") or 55),
             "minLeadScore": safe_number(search.get("min_lead_score") or 70),
             "archived": False,
         })
 
+    lists.sort(key=lambda item: str(item.get("lastRun") or ""), reverse=True)
+
     return {
         "lists": lists,
         "leads": leads,
         "source": "github-static-refresh",
+        "meta": {
+            "search_rows_read": len(searches),
+            "unique_lists_exported": len(lists),
+            "duplicate_search_rows_removed": max(len(searches) - len(lists), 0),
+        },
     }
 
 

@@ -51,9 +51,9 @@ select {
   top: 0;
   display: grid;
   align-content: start;
-  gap: 22px;
+  gap: 18px;
   min-height: 100vh;
-  padding: 28px 22px;
+  padding: 24px 20px;
   background:
     linear-gradient(180deg, rgba(12, 20, 33, 0.98), rgba(15, 23, 42, 0.98)),
     linear-gradient(135deg, rgba(15, 118, 110, 0.18), transparent 45%);
@@ -114,10 +114,10 @@ select {
 }
 
 .sidebar-panel {
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.06);
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .sidebar-panel h2 {
@@ -149,7 +149,7 @@ select {
 .dashboard-main {
   display: grid;
   gap: 22px;
-  padding: 28px;
+  padding: 28px 30px 34px;
 }
 
 .topbar {
@@ -217,6 +217,35 @@ select {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
+}
+
+.page-intro-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.page-intro-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.82)),
+    rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.page-intro-card strong {
+  font-size: 24px;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.page-intro-card small {
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 .cta-strip {
@@ -541,7 +570,7 @@ select {
 .metric-card {
   display: grid;
   gap: 10px;
-  padding: 22px;
+  padding: 24px;
 }
 
 .metric-card p,
@@ -573,6 +602,40 @@ select {
   margin-top: 18px;
 }
 
+.table-shell {
+  margin-top: 18px;
+  border: 1px solid rgba(27, 39, 61, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: end;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(27, 39, 61, 0.08);
+  background:
+    linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 0.8)),
+    rgba(255, 255, 255, 0.92);
+}
+
+.table-toolbar strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.table-toolbar small {
+  max-width: 360px;
+  color: var(--muted);
+  line-height: 1.5;
+  text-align: right;
+}
+
 .list-context-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -600,7 +663,7 @@ select {
 
 .data-table th,
 .data-table td {
-  padding: 14px 10px;
+  padding: 16px 12px;
   border-bottom: 1px solid rgba(58, 46, 33, 0.08);
   text-align: left;
   vertical-align: top;
@@ -616,12 +679,12 @@ select {
 
 .data-table tbody tr {
   cursor: pointer;
-  transition: background 160ms ease;
+  transition: background 160ms ease, transform 160ms ease;
 }
 
 .data-table tbody tr:hover,
 .data-table tbody tr.active-row {
-  background: rgba(191, 141, 61, 0.08);
+  background: rgba(29, 78, 216, 0.06);
 }
 
 .data-table tbody tr.active-row {
@@ -683,6 +746,10 @@ select {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.52)),
     rgba(246, 239, 226, 0.72);
+}
+
+.leads-panel .panel-header {
+  align-items: stretch;
 }
 
 .toggle-label {
@@ -983,6 +1050,7 @@ select {
   .detail-grid,
   .metrics-grid,
   .workspace-strip,
+  .page-intro-strip,
   .cta-strip,
   .list-context-strip,
   .detail-score-grid,
@@ -1004,6 +1072,16 @@ select {
   .hero-head {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .table-toolbar {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .table-toolbar small {
+    max-width: none;
+    text-align: left;
   }
 
   .hero-stats,

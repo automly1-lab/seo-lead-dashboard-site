@@ -39,6 +39,11 @@
           <p class="kicker">Lead Workspace</p>
           <h1>Qualified and Review Queue</h1>
           <p class="topbar-copy">This page is for evaluating leads, filtering by readiness, and deciding what should be exported or escalated.</p>
+          <div class="topbar-insight-row">
+            <span class="topbar-insight">Filter by readiness</span>
+            <span class="topbar-insight">Export only what matters</span>
+            <span class="topbar-insight">Keep review work separate from dashboard</span>
+          </div>
         </div>
         <div class="topbar-actions">
           <div class="data-status" id="dataStatus">Demo data</div>
@@ -47,6 +52,19 @@
           <a class="button primary" href="../lead-detail/">Open Lead Detail</a>
         </div>
       </header>
+
+      <section class="page-intro-strip">
+        <article class="page-intro-card">
+          <span class="workspace-label">What happens here</span>
+          <strong>Work the actual queue</strong>
+          <small>This is the focused sales-intelligence workspace for filtering, selecting, and exporting the leads that deserve attention.</small>
+        </article>
+        <article class="page-intro-card">
+          <span class="workspace-label">Operator goal</span>
+          <strong>Move from noise to action</strong>
+          <small>Use score, contact readiness, and paid ads signals to narrow the list into something the agency can actually outreach.</small>
+        </article>
+      </section>
 
       <section class="workspace-strip">
         <article class="workspace-card">
@@ -116,7 +134,15 @@
           <strong id="scoreFilterValue">0</strong>
         </div>
 
-        <div class="saved-list-table-wrap">
+        <div class="table-shell">
+          <div class="table-toolbar">
+            <div>
+              <span class="workspace-label">Review Table</span>
+              <strong>Lead queue for the selected list</strong>
+            </div>
+            <small>Click any row to open the dedicated lead detail page with rationale and next action.</small>
+          </div>
+          <div class="saved-list-table-wrap">
           <table class="data-table leads-table" id="leadsTable">
             <thead>
               <tr>
@@ -131,6 +157,7 @@
             </thead>
             <tbody></tbody>
           </table>
+          </div>
         </div>
       </section>
 

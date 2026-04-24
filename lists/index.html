@@ -39,6 +39,11 @@
           <p class="kicker">Saved List Library</p>
           <h1>Persistent Search Lists</h1>
           <p class="topbar-copy">Each search stays visible over time. Use this page to manage the list layer without mixing it with lead review.</p>
+          <div class="topbar-insight-row">
+            <span class="topbar-insight">Persistent search memory</span>
+            <span class="topbar-insight">Rerun without losing history</span>
+            <span class="topbar-insight">One workspace, many market batches</span>
+          </div>
         </div>
         <div class="topbar-actions">
           <div class="data-status" id="dataStatus">Demo data</div>
@@ -46,6 +51,19 @@
           <a class="button primary" href="../dashboard/">Back to Dashboard</a>
         </div>
       </header>
+
+      <section class="page-intro-strip">
+        <article class="page-intro-card">
+          <span class="workspace-label">What happens here</span>
+          <strong>Manage list inventory</strong>
+          <small>Use this page to choose which markets stay active, which ones get rerun, and which ones should be archived.</small>
+        </article>
+        <article class="page-intro-card">
+          <span class="workspace-label">Operator goal</span>
+          <strong>Keep the library clean</strong>
+          <small>Lists should stay persistent, but the working set should still feel intentional and easy to review.</small>
+        </article>
+      </section>
 
       <section class="workspace-strip">
         <article class="workspace-card">
@@ -96,7 +114,15 @@
             </div>
           </div>
 
-          <div class="saved-list-table-wrap">
+          <div class="table-shell">
+            <div class="table-toolbar">
+              <div>
+                <span class="workspace-label">Library View</span>
+                <strong>Saved market batches</strong>
+              </div>
+              <small>Choose one list to inspect its funnel and move into lead review.</small>
+            </div>
+            <div class="saved-list-table-wrap">
             <table class="data-table" id="savedListsTable">
               <thead>
                 <tr>
@@ -110,6 +136,7 @@
               </thead>
               <tbody></tbody>
             </table>
+            </div>
           </div>
         </article>
 

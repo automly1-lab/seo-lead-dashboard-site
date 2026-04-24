@@ -1,4 +1,5 @@
 const STORAGE_KEY = "rankforge-dashboard-state-v3";
+const WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
 const DASHBOARD_API_URL = "/api/dashboard-data";
 const STATIC_DATA_URL = "/data/dashboard-data.json";
 
@@ -152,6 +153,18 @@ function saveUiState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(uiState));
 }
 
+function loadWebhookUrl() {
+  try {
+    return localStorage.getItem(WEBHOOK_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveWebhookUrl(url) {
+  localStorage.setItem(WEBHOOK_STORAGE_KEY, url);
+}
+
 function buildDemoRuntimeData() {
   const cloned = cloneSeededState();
   return {
@@ -182,6 +195,15 @@ function mergeRuntimeData(remoteData) {
 function updateDataStatus(message) {
   const node = document.getElementById("dataStatus");
   if (node) node.textContent = message;
+}
+
+function updateMessageNode(id, message, tone = "") {
+  const node = document.getElementById(id);
+  if (!node) return;
+  node.textContent = message;
+  node.classList.remove("is-success", "is-error");
+  if (tone === "success") node.classList.add("is-success");
+  if (tone === "error") node.classList.add("is-error");
 }
 
 async function syncFromApi() {
@@ -233,6 +255,90 @@ function titleCase(value) {
   return String(value || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 48);
+}
+
+function createSearchRecordId(name, city) {
+  return `srch_${slugify(name)}_${slugify(city)}_${Date.now()}`;
+}
+
+function buildSearchPayload(formValues) {
+  const createdAt = new Date().toISOString();
+  const primaryKeyword = `${formValues.niche} ${formValues.city}`.trim();
+  return {
+    search_id: createSearchRecordId(formValues.name, formValues.city),
+    user_id: "usr_dashboard",
+    created_at: createdAt,
+    updated_at: createdAt,
+    status: "active",
+    search_name: formValues.name,
+    niche: formValues.niche,
+    business_type: formValues.businessType,
+    city: formValues.city,
+    country: formValues.country,
+    primary_keyword: primaryKeyword,
+    secondary_keywords: "",
+    discovery_query_limit: 1,
+    discovery_page_limit: 1,
+    max_results_requested: 20,
+    min_audit_score: formValues.minSeoScore,
+    min_lead_score: formValues.minLeadScore,
+    started_at: "",
+    completed_at: "",
+    failed_at: "",
+    failure_reason: "",
+  };
+}
+
+async function submitSearchToWebhook(searchPayload) {
+  const webhookUrl = loadWebhookUrl().trim();
+  if (!webhookUrl) {
+    updateMessageNode(
+      "createSearchStatus",
+      "Liste kaydedildi ama henuz n8n webhook bagli degil. Webhook URL eklenince yeni listeler canli pipeline'a da gider.",
+      "error",
+    );
+    return { ok: false, reason: "missing_webhook" };
+  }
+
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/plain, */*",
+    },
+    body: JSON.stringify(searchPayload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`submit-search ${response.status}`);
+  }
+
+  updateMessageNode(
+    "createSearchStatus",
+    "Liste dashboard'a kaydedildi ve n8n workflow'una gonderildi. Birazdan sync edince searches tab'inda gorunmeli.",
+    "success",
+  );
+
+  return { ok: true };
+}
+
+function hydrateWebhookUi() {
+  const webhookUrl = loadWebhookUrl();
+  const input = document.getElementById("webhookUrlInput");
+  if (input) input.value = webhookUrl;
+  if (webhookUrl) {
+    updateMessageNode("webhookStatus", "Webhook bagli. Dashboard'dan olusturulan listeler n8n'e gonderilecek.", "success");
+  } else {
+    updateMessageNode("webhookStatus", "Webhook not connected yet.", "");
+  }
 }
 
 function getVisibleLists() {
@@ -292,6 +398,14 @@ function renderSavedLists() {
   tbody.innerHTML = "";
 
   for (const list of lists) {
+    const statusClass =
+      list.status === "completed" || list.status === "qualified"
+        ? "qualified"
+        : list.status === "reviewing" || list.status === "review_needed"
+          ? "review_needed"
+          : list.status === "draft" || list.status === "submission_failed"
+            ? "rejected"
+            : "qualified";
     const row = document.createElement("tr");
     row.className = list.id === uiState.activeListId ? "active-row" : "";
     row.innerHTML = `
@@ -300,7 +414,7 @@ function renderSavedLists() {
         <span class="list-subline">${titleCase(list.businessType)}</span>
       </td>
       <td>${titleCase(list.niche)} - ${list.city}</td>
-      <td><span class="status-pill status-${list.status === "completed" ? "qualified" : list.status === "reviewing" ? "review_needed" : "qualified"}">${titleCase(list.status)}</span></td>
+      <td><span class="status-pill status-${statusClass}">${titleCase(list.status)}</span></td>
       <td>${formatRunDate(list.lastRun)}</td>
       <td>${list.discovered}</td>
       <td>${list.qualified}</td>
@@ -371,7 +485,7 @@ function updateLeadDetail(lead) {
   document.getElementById("detailPersonalization").textContent = lead.firstLine || "No personalization generated yet.";
 }
 
-function createListFromForm(event) {
+async function createListFromForm(event) {
   event.preventDefault();
   const name = document.getElementById("searchNameInput").value.trim();
   const niche = document.getElementById("nicheInput").value.trim();
@@ -382,7 +496,17 @@ function createListFromForm(event) {
   const minLeadScore = Number(document.getElementById("leadThresholdInput").value || 70);
   if (!name || !niche || !businessType || !city || !country) return;
 
-  const id = `list_${Date.now()}`;
+  const searchPayload = buildSearchPayload({
+    name,
+    niche,
+    businessType,
+    city,
+    country,
+    minSeoScore,
+    minLeadScore,
+  });
+
+  const id = searchPayload.search_id;
   uiState.localLists.unshift({
     id,
     name,
@@ -391,7 +515,7 @@ function createListFromForm(event) {
     city,
     country,
     description: `${titleCase(niche)} opportunities saved for later review and reruns.`,
-    status: "draft",
+    status: loadWebhookUrl().trim() ? "queued" : "draft",
     lastRun: new Date().toISOString(),
     discovered: 0,
     audited: 0,
@@ -406,8 +530,35 @@ function createListFromForm(event) {
   uiState.activeListId = id;
   saveUiState();
   mergeRuntimeData(runtimeData);
-  event.target.reset();
   render();
+  try {
+    await submitSearchToWebhook(searchPayload);
+  } catch (error) {
+    updateMessageNode(
+      "createSearchStatus",
+      "Liste dashboard'a kaydedildi ama n8n'e gonderilemedi. Webhook URL veya CORS ayarini kontrol et.",
+      "error",
+    );
+    const localList = uiState.localLists.find((list) => list.id === id);
+    if (localList) localList.status = "draft";
+    saveUiState();
+    mergeRuntimeData(runtimeData);
+    render();
+    console.error(error);
+  }
+  event.target.reset();
+  if (loadWebhookUrl().trim()) {
+    window.setTimeout(() => {
+      syncFromApi();
+    }, 2500);
+  }
+}
+
+function saveWebhookFromInput() {
+  const input = document.getElementById("webhookUrlInput");
+  const webhookUrl = input?.value.trim() || "";
+  saveWebhookUrl(webhookUrl);
+  hydrateWebhookUi();
 }
 
 function rerunSelectedList() {
@@ -521,6 +672,7 @@ document.getElementById("createListButton").addEventListener("click", () => {
 });
 document.getElementById("syncSheetsButton").addEventListener("click", syncFromApi);
 document.getElementById("seedListsButton").addEventListener("click", addDemoList);
+document.getElementById("saveWebhookButton").addEventListener("click", saveWebhookFromInput);
 document.getElementById("rerunListButton").addEventListener("click", rerunSelectedList);
 document.getElementById("duplicateListButton").addEventListener("click", duplicateSelectedList);
 document.getElementById("archiveListButton").addEventListener("click", archiveSelectedList);
@@ -533,5 +685,6 @@ document.getElementById("contactReadyFilter").addEventListener("change", renderL
 document.getElementById("paidAdsFilter").addEventListener("change", renderLeads);
 
 mergeRuntimeData(runtimeData);
+hydrateWebhookUi();
 render();
 syncFromApi();

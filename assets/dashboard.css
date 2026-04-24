@@ -366,14 +366,22 @@ select {
   gap: 12px;
 }
 
+.webhook-config {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
 .quick-create-form label,
-.filters label {
+.filters label,
+.webhook-config label {
   display: grid;
   gap: 6px;
 }
 
 .quick-create-form span,
-.filters span {
+.filters span,
+.webhook-config span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
@@ -396,6 +404,24 @@ select {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.78);
   color: var(--ink);
+}
+
+.form-status,
+.webhook-note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 13px;
+}
+
+.form-status.is-success,
+.webhook-note.is-success {
+  color: #2d6735;
+}
+
+.form-status.is-error,
+.webhook-note.is-error {
+  color: #8a2f27;
 }
 
 .grid-two {

@@ -41,6 +41,20 @@
           <li>Review-needed leads are kept for later follow-up.</li>
         </ul>
       </section>
+
+      <section class="sidebar-panel sidebar-panel-muted">
+        <p class="panel-eyebrow">n8n Connection</p>
+        <h2>Search submit webhook</h2>
+        <p>Connect one public n8n webhook URL so dashboard-created lists are written into the live search pipeline.</p>
+        <div class="webhook-config">
+          <label>
+            <span>Webhook URL</span>
+            <input id="webhookUrlInput" type="text" placeholder="https://your-n8n.app/webhook/create-search">
+          </label>
+          <button class="button ghost button-block" id="saveWebhookButton" type="button">Save Webhook</button>
+          <p class="webhook-note" id="webhookStatus">Webhook not connected yet.</p>
+        </div>
+      </section>
     </aside>
 
     <main class="dashboard-main">
@@ -124,6 +138,7 @@
                 <input id="leadThresholdInput" name="min_lead_score" type="number" min="0" max="100" value="70">
               </label>
             </div>
+            <p class="form-status" id="createSearchStatus">Saving a list keeps it visible. Connecting the webhook also sends it into the live n8n workflow.</p>
             <button class="button primary button-block" type="submit">Save List to Dashboard</button>
           </form>
         </article>

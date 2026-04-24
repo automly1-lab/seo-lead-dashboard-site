@@ -346,5 +346,242 @@
 
   <script src="../assets/auth.js?v=20260424-auth2"></script>
   <script src="../assets/dashboard.js?v=20260424-debug1"></script>
+  <script>
+    (function () {
+      const STORAGE_KEY = "rankforge-dashboard-state-v3";
+      const WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
+      const CURRENT_USER_STORAGE_KEY = "rankforge-current-user-id-v1";
+      const DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
+
+      function getSessionUserId() {
+        try {
+          const session = JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
+          if (session && session.userId) {
+            localStorage.setItem(CURRENT_USER_STORAGE_KEY, session.userId);
+            return session.userId;
+          }
+        } catch (error) {}
+        return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function saveState(state) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function updateStatus(id, message) {
+        const node = document.getElementById(id);
+        if (node) node.textContent = message;
+      }
+
+      function ensureWebhook() {
+        const current = (localStorage.getItem(WEBHOOK_STORAGE_KEY) || "").trim();
+        if (current) return current;
+        localStorage.setItem(WEBHOOK_STORAGE_KEY, DEFAULT_SEARCH_WEBHOOK_URL);
+        return DEFAULT_SEARCH_WEBHOOK_URL;
+      }
+
+      function saveWebhookDirect(event) {
+        event && event.preventDefault && event.preventDefault();
+        const input = document.getElementById("webhookUrlInput");
+        const value = (input && input.value || "").trim() || DEFAULT_SEARCH_WEBHOOK_URL;
+        localStorage.setItem(WEBHOOK_STORAGE_KEY, value);
+        if (input) input.value = value;
+        updateStatus("webhookStatus", "Webhook kaydedildi.");
+        return false;
+      }
+
+      function createListRecord(values) {
+        const state = loadState();
+        const currentUserId = getSessionUserId();
+        const localLists = Array.isArray(state.localLists) ? state.localLists : [];
+        const id = "list_" + Date.now();
+        localLists.unshift({
+          id: id,
+          userId: currentUserId,
+          name: values.name,
+          niche: values.niche,
+          businessType: values.businessType,
+          city: values.city,
+          country: values.country,
+          description: values.description || (values.niche + " opportunities saved for later review and reruns."),
+          status: values.status || "queued",
+          lastRun: new Date().toISOString(),
+          discovered: values.discovered || 0,
+          audited: values.audited || 0,
+          enriched: values.enriched || 0,
+          qualified: values.qualified || 0,
+          rejected: values.rejected || 0,
+          minSeoScore: values.minSeoScore || 60,
+          minLeadScore: values.minLeadScore || 70,
+          archived: false,
+          isRemote: false
+        });
+
+        state.localLists = localLists;
+        state.localLeads = Array.isArray(state.localLeads) ? state.localLeads : [];
+        state.archivedListIds = Array.isArray(state.archivedListIds) ? state.archivedListIds : [];
+        state.activeListId = id;
+        state.currentUserId = currentUserId;
+        saveState(state);
+        return { id, currentUserId };
+      }
+
+      function addDemoDirect() {
+        const created = createListRecord({
+          name: "Berlin Roofers - Expansion Batch",
+          niche: "roof repair",
+          businessType: "roofing company",
+          city: "Berlin",
+          country: "Germany",
+          description: "Saved expansion list for local roof repair companies that can be revisited later without losing prior runs.",
+          status: "completed",
+          discovered: 27,
+          audited: 18,
+          enriched: 10,
+          qualified: 4,
+          rejected: 7,
+          minSeoScore: 57,
+          minLeadScore: 71
+        });
+
+        const state = loadState();
+        state.localLeads = Array.isArray(state.localLeads) ? state.localLeads : [];
+        state.localLeads.push({
+          id: "lead_" + Date.now(),
+          listId: created.id,
+          userId: created.currentUserId,
+          company: "NordDach Berlin",
+          website: "https://norddach-berlin.de",
+          decisionMaker: "Managing Director",
+          role: "Managing Director",
+          email: "info@norddach-berlin.de",
+          phone: "+49 30 5554 8821",
+          seoScore: 77,
+          overallScore: 79,
+          commercialFit: 74,
+          contactConfidence: 75,
+          status: "qualified",
+          outreachReadiness: "ready",
+          paidAdsDetected: false,
+          primaryProblem: "Weak local service architecture",
+          secondaryProblem: "Thin location intent coverage",
+          whyItMatters: "Good fit for local service SEO and already reachable with a usable contact path.",
+          outreachAngle: "Offer a local service-page expansion with stronger metadata and map-supporting content.",
+          valueHypothesis: "A tighter service architecture should increase organic visibility for emergency and repair intent.",
+          firstLine: "Saw clear roofing-service intent but a site structure that likely limits local organic capture.",
+          recommendedOffer: "Local SEO audit",
+          recommendedChannel: "email"
+        });
+        saveState(state);
+        window.location.reload();
+      }
+
+      function buildPayload() {
+        return {
+          search_id: "srch_" + Date.now(),
+          user_id: getSessionUserId(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: "active",
+          search_name: document.getElementById("searchNameInput")?.value.trim() || "",
+          niche: document.getElementById("nicheInput")?.value.trim() || "",
+          business_type: document.getElementById("businessTypeInput")?.value.trim() || "",
+          city: document.getElementById("cityInput")?.value.trim() || "",
+          country: document.getElementById("countryInput")?.value.trim() || "",
+          primary_keyword: document.getElementById("nicheInput")?.value.trim() || "",
+          secondary_keywords: "",
+          discovery_query_limit: "1",
+          discovery_page_limit: "1",
+          max_results_requested: "20",
+          min_audit_score: String(document.getElementById("seoThresholdInput")?.value || 60),
+          min_lead_score: String(document.getElementById("leadThresholdInput")?.value || 70),
+          started_at: "",
+          completed_at: "",
+          failed_at: "",
+          failure_reason: ""
+        };
+      }
+
+      async function submitQuickCreateDirect(event) {
+        event && event.preventDefault && event.preventDefault();
+        const payload = buildPayload();
+        if (!payload.search_name || !payload.niche || !payload.business_type || !payload.city || !payload.country) {
+          updateStatus("createSearchStatus", "Formu doldurman gerekiyor.");
+          return false;
+        }
+
+        createListRecord({
+          name: payload.search_name,
+          niche: payload.niche,
+          businessType: payload.business_type,
+          city: payload.city,
+          country: payload.country,
+          minSeoScore: Number(payload.min_audit_score),
+          minLeadScore: Number(payload.min_lead_score),
+          status: "queued"
+        });
+
+        const webhook = ensureWebhook();
+        const body = new URLSearchParams();
+        Object.keys(payload).forEach((key) => body.set(key, String(payload[key] == null ? "" : payload[key])));
+
+        try {
+          await fetch(webhook, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: body.toString()
+          });
+          updateStatus("createSearchStatus", "Liste olusturuldu. Dashboard yenileniyor...");
+        } catch (error) {
+          updateStatus("createSearchStatus", "Liste local kaydedildi ama webhook gonderimi basarisiz.");
+        }
+
+        setTimeout(function () {
+          window.location.reload();
+        }, 700);
+        return false;
+      }
+
+      function syncDirect() {
+        window.location.reload();
+      }
+
+      window.rankforgeDashboardActions = Object.assign({}, window.rankforgeDashboardActions || {}, {
+        syncSheets: syncDirect,
+        addDemoList: addDemoDirect,
+        handleCreateListButtonClick: function () {
+          const form = document.getElementById("quickCreateForm");
+          if (form && typeof form.requestSubmit === "function") {
+            form.requestSubmit();
+          } else if (form) {
+            submitQuickCreateDirect({ preventDefault: function () {} });
+          }
+        },
+        submitQuickCreateForm: submitQuickCreateDirect,
+        saveWebhook: saveWebhookDirect
+      });
+
+      document.getElementById("syncSheetsButton") && (document.getElementById("syncSheetsButton").onclick = syncDirect);
+      document.getElementById("seedListsButton") && (document.getElementById("seedListsButton").onclick = addDemoDirect);
+      document.getElementById("createListButton") && (document.getElementById("createListButton").onclick = window.rankforgeDashboardActions.handleCreateListButtonClick);
+      document.getElementById("quickCreateForm") && (document.getElementById("quickCreateForm").onsubmit = submitQuickCreateDirect);
+      document.getElementById("saveWebhookButton") && (document.getElementById("saveWebhookButton").onclick = saveWebhookDirect);
+      document.getElementById("webhookConfigForm") && (document.getElementById("webhookConfigForm").onsubmit = saveWebhookDirect);
+      const webhookInput = document.getElementById("webhookUrlInput");
+      if (webhookInput) {
+        webhookInput.value = ensureWebhook();
+      }
+    })();
+  </script>
 </body>
 </html>

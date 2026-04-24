@@ -671,6 +671,12 @@ function updateHero() {
   document.getElementById("activeListRun").textContent = formatRunDate(activeList.lastRun);
   document.getElementById("pipelineListTitle").textContent = `${activeList.name} funnel`;
   document.getElementById("activeLeadSummary").textContent = `${activeList.city}, ${activeList.country} - ${titleCase(activeList.niche)} - ${activeList.status}`;
+  document.getElementById("topbarInsightOne").textContent = `${activeList.name} stays visible until archived`;
+  document.getElementById("topbarInsightTwo").textContent = `Workspace scoped to ${uiState.currentUserId || loadCurrentUserId()}`;
+  document.getElementById("topbarInsightThree").textContent = `Min thresholds: SEO ${activeList.minSeoScore} / Lead ${activeList.minLeadScore}`;
+  document.getElementById("listThresholdSummary").textContent = `SEO ${activeList.minSeoScore} / Lead ${activeList.minLeadScore}`;
+  document.getElementById("listCoverageSummary").textContent = `${activeList.discovered} discovered / ${activeList.audited} audited`;
+  document.getElementById("listQualificationSummary").textContent = `${activeList.qualified} qualified / ${activeList.rejected} rejected`;
 }
 
 function updateMetrics() {
@@ -741,10 +747,15 @@ function renderPipeline() {
 function renderLeads() {
   const tbody = document.querySelector("#leadsTable tbody");
   const leads = getLeadsForActiveList();
+  const activeList = getActiveList();
   tbody.innerHTML = "";
 
   const selectedLead = getSelectedLead(leads);
   document.getElementById("visibleLeadCount").textContent = `${leads.length} lead${leads.length === 1 ? "" : "s"}`;
+  document.getElementById("exportTargetList").textContent = activeList ? activeList.name : "No selected list";
+  document.getElementById("exportTargetMeta").textContent = activeList
+    ? `${leads.length} visible leads from ${titleCase(activeList.niche)} in ${activeList.city}.`
+    : "0 visible leads ready for export.";
   updateLeadDetail(selectedLead);
 
   if (!leads.length) {

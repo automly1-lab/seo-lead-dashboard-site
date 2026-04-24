@@ -77,6 +77,11 @@
           <p class="kicker">SEO Agency Command Center</p>
           <h1>Main Dashboard</h1>
           <p class="topbar-copy">Track saved prospect lists, monitor SEO opportunity quality, and keep outreach-ready leads accessible over time.</p>
+          <div class="topbar-insight-row">
+            <span class="topbar-insight" id="topbarInsightOne">Persistent saved lists</span>
+            <span class="topbar-insight" id="topbarInsightTwo">User-scoped lead visibility</span>
+            <span class="topbar-insight" id="topbarInsightThree">Sync live sheet intelligence</span>
+          </div>
         </div>
 
         <div class="topbar-actions">
@@ -215,6 +220,21 @@
 
           <p class="panel-copy">Users can come back later and reopen the same list. Lists remain visible with their status, latest run, and cumulative results.</p>
 
+          <div class="list-context-strip">
+            <div class="list-context-card">
+              <span class="workspace-label">Selected Thresholds</span>
+              <strong id="listThresholdSummary">SEO 0 / Lead 0</strong>
+            </div>
+            <div class="list-context-card">
+              <span class="workspace-label">Current Coverage</span>
+              <strong id="listCoverageSummary">0 discovered / 0 audited</strong>
+            </div>
+            <div class="list-context-card">
+              <span class="workspace-label">Qualification Mix</span>
+              <strong id="listQualificationSummary">0 qualified / 0 rejected</strong>
+            </div>
+          </div>
+
           <div class="saved-list-table-wrap">
             <table class="data-table" id="savedListsTable">
               <thead>
@@ -271,28 +291,30 @@
             <h2>Leads inside the selected saved list</h2>
           </div>
 
-          <div class="filters">
-            <label>
-              <span>Status</span>
-              <select id="qualificationFilter">
-                <option value="all">All</option>
-                <option value="qualified">Qualified</option>
-                <option value="review_needed">Review Needed</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </label>
-            <label>
-              <span>Min Score</span>
-              <input id="scoreFilter" type="range" min="0" max="100" value="0">
-            </label>
-            <label class="toggle-label">
-              <input id="contactReadyFilter" type="checkbox">
-              <span>Only contact-ready</span>
-            </label>
-            <label class="toggle-label">
-              <input id="paidAdsFilter" type="checkbox">
-              <span>Paid ads signal</span>
-            </label>
+          <div class="filters-shell">
+            <div class="filters">
+              <label>
+                <span>Status</span>
+                <select id="qualificationFilter">
+                  <option value="all">All</option>
+                  <option value="qualified">Qualified</option>
+                  <option value="review_needed">Review Needed</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </label>
+              <label>
+                <span>Min Score</span>
+                <input id="scoreFilter" type="range" min="0" max="100" value="0">
+              </label>
+              <label class="toggle-label">
+                <input id="contactReadyFilter" type="checkbox">
+                <span>Only contact-ready</span>
+              </label>
+              <label class="toggle-label">
+                <input id="paidAdsFilter" type="checkbox">
+                <span>Paid ads signal</span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -449,6 +471,11 @@
               <p class="panel-eyebrow">Exports</p>
               <h2>List-aware handoff</h2>
             </div>
+          </div>
+          <div class="export-summary-card">
+            <span class="workspace-label">Current Export Scope</span>
+            <strong id="exportTargetList">No selected list</strong>
+            <small id="exportTargetMeta">0 visible leads ready for export.</small>
           </div>
           <ul class="export-list">
             <li>

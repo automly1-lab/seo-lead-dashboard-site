@@ -187,6 +187,15 @@ function saveWebhookUrl(url) {
   localStorage.setItem(WEBHOOK_STORAGE_KEY, url);
 }
 
+function ensureWebhookUrl() {
+  const existing = loadWebhookUrl().trim();
+  if (existing) {
+    return existing;
+  }
+  saveWebhookUrl(DEFAULT_SEARCH_WEBHOOK_URL);
+  return DEFAULT_SEARCH_WEBHOOK_URL;
+}
+
 function loadCurrentUserId() {
   try {
     return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
@@ -594,7 +603,7 @@ async function submitSearchToWebhook(searchPayload) {
 }
 
 function hydrateWebhookUi() {
-  const webhookUrl = loadWebhookUrl();
+  const webhookUrl = ensureWebhookUrl();
   const input = document.getElementById("webhookUrlInput");
   if (input) input.value = webhookUrl;
   if (webhookUrl) {
@@ -1041,8 +1050,9 @@ function saveWebhookFromInput(event) {
   const input = document.getElementById("webhookUrlInput");
   const webhookUrl = input?.value.trim() || "";
   if (!webhookUrl) {
-    saveWebhookUrl("");
-    updateMessageNode("webhookStatus", "Webhook URL bos. Kayit temizlendi.", "");
+    saveWebhookUrl(DEFAULT_SEARCH_WEBHOOK_URL);
+    hydrateWebhookUi();
+    updateMessageNode("webhookStatus", "Webhook bos birakilamaz. Varsayilan n8n webhook geri yuklendi.", "success");
     return;
   }
   saveWebhookUrl(webhookUrl);
@@ -1219,6 +1229,8 @@ document.getElementById("syncSheetsButton")?.addEventListener("click", syncFromA
 document.getElementById("seedListsButton")?.addEventListener("click", addDemoList);
 document.getElementById("saveWebhookButton")?.addEventListener("click", saveWebhookFromInput);
 document.getElementById("webhookConfigForm")?.addEventListener("submit", saveWebhookFromInput);
+document.getElementById("webhookUrlInput")?.addEventListener("change", saveWebhookFromInput);
+document.getElementById("webhookUrlInput")?.addEventListener("blur", saveWebhookFromInput);
 document.getElementById("saveCurrentUserButton")?.addEventListener("click", saveCurrentUserFromInput);
 document.getElementById("rerunListButton")?.addEventListener("click", rerunSelectedList);
 document.getElementById("duplicateListButton")?.addEventListener("click", duplicateSelectedList);

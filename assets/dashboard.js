@@ -995,7 +995,14 @@ async function createListFromForm(event) {
   const country = document.getElementById("countryInput").value.trim();
   const minSeoScore = Number(document.getElementById("seoThresholdInput").value || 60);
   const minLeadScore = Number(document.getElementById("leadThresholdInput").value || 70);
-  if (!name || !niche || !businessType || !city || !country) return;
+  if (!name || !niche || !businessType || !city || !country) {
+    updateMessageNode(
+      "createSearchStatus",
+      "Liste olusturmak icin List Name, Niche, Business Type, City ve Country alanlarini doldur.",
+      "error",
+    );
+    return;
+  }
 
   const searchPayload = buildSearchPayload({
     name,
@@ -1053,6 +1060,38 @@ async function createListFromForm(event) {
     window.setTimeout(() => {
       syncFromApi();
     }, 2500);
+  }
+}
+
+function handleCreateListButtonClick() {
+  const form = document.getElementById("quickCreateForm");
+  if (!form) return;
+  const requiredIds = [
+    "searchNameInput",
+    "nicheInput",
+    "businessTypeInput",
+    "cityInput",
+    "countryInput",
+  ];
+  const firstEmpty = requiredIds
+    .map((id) => document.getElementById(id))
+    .find((input) => !String(input?.value || "").trim());
+
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (firstEmpty) {
+    firstEmpty.focus();
+    updateMessageNode(
+      "createSearchStatus",
+      "Liste olusturmak icin once formu doldur, sonra tekrar Create Search List'e bas veya alttaki kaydet butonunu kullan.",
+      "error",
+    );
+    return;
+  }
+
+  if (typeof form.requestSubmit === "function") {
+    form.requestSubmit();
+  } else {
+    form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
   }
 }
 
@@ -1214,7 +1253,6 @@ function addDemoList() {
 }
 
 function render() {
-  if (!getActiveList()) return;
   updateWorkspaceStrip();
   updateHero();
   updateMetrics();
@@ -1236,9 +1274,7 @@ uiState.currentUserId = loadCurrentUserId();
 saveUiState();
 
 document.getElementById("quickCreateForm")?.addEventListener("submit", createListFromForm);
-document.getElementById("createListButton")?.addEventListener("click", () => {
-  document.getElementById("searchNameInput")?.focus();
-});
+document.getElementById("createListButton")?.addEventListener("click", handleCreateListButtonClick);
 document.getElementById("syncSheetsButton")?.addEventListener("click", syncFromApi);
 document.getElementById("seedListsButton")?.addEventListener("click", addDemoList);
 document.getElementById("saveWebhookButton")?.addEventListener("click", saveWebhookFromInput);

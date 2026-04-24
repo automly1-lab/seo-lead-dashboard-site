@@ -447,6 +447,14 @@ async function fetchSheetRowsSafe(sheetName) {
   }
 }
 
+async function fetchSheetsSequential(sheetNames) {
+  const results = [];
+  for (const sheetName of sheetNames) {
+    results.push(await fetchSheetRowsSafe(sheetName));
+  }
+  return results;
+}
+
 async function fetchStaticDashboardData() {
   const response = await fetch("../data/dashboard-data.json", {
     headers: { Accept: "application/json, text/plain, */*" },
@@ -478,7 +486,22 @@ function buildRemoteData(data) {
 
   const auditHasFinalLead = new Set(finalLeads.map((item) => item.audit_id).filter(Boolean));
 
-  const lists = searches.map((search) => {
+  const searchMap = new Map();
+  for (const search of searches) {
+    if (search.search_id) searchMap.set(search.search_id, search);
+  }
+  for (const row of rawProspects) {
+    if (row.search_id && !searchMap.has(row.search_id)) searchMap.set(row.search_id, row);
+  }
+  for (const row of audits) {
+    if (row.search_id && !searchMap.has(row.search_id)) searchMap.set(row.search_id, row);
+  }
+  for (const row of finalLeads) {
+    if (row.search_id && !searchMap.has(row.search_id)) searchMap.set(row.search_id, row);
+  }
+
+  const lists = Array.from(searchMap.values()).map((search) => {
+    const searchId = search.search_id || "";
     const searchAudits = audits.filter((item) => item.search_id === search.search_id);
     const searchProspects = rawProspects.filter((item) => item.search_id === search.search_id);
     const qualifiedCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "qualified").length;
@@ -493,7 +516,7 @@ function buildRemoteData(data) {
       derivedStatus = "queued";
     }
     return {
-      id: search.search_id,
+      id: searchId,
       userId: search.user_id || "usr_mvp",
       name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
       niche: search.niche || "",
@@ -512,7 +535,7 @@ function buildRemoteData(data) {
       minLeadScore: numberValue(search.min_lead_score || 70),
       isRemote: true,
     };
-  });
+  }).filter((item) => item.id);
 
   const leads = finalLeads.map((lead, index) => {
     const audit = auditById[lead.audit_id] || {};
@@ -585,12 +608,12 @@ async function syncSheets(event) {
   if (event) event.preventDefault();
   updateStatus("dataStatus", "Syncing sheets...", "");
   try {
-    const results = await Promise.all([
-      fetchSheetRowsSafe("raw_prospects"),
-      fetchSheetRowsSafe("searches"),
-      fetchSheetRowsSafe("seo_audits"),
-      fetchSheetRowsSafe("contacts"),
-      fetchSheetRowsSafe("final_leads"),
+    const results = await fetchSheetsSequential([
+      "raw_prospects",
+      "searches",
+      "seo_audits",
+      "contacts",
+      "final_leads",
     ]);
 
     const map = Object.fromEntries(results.map((item) => [item.sheetName, item]));

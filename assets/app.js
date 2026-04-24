@@ -13,6 +13,15 @@ function safeParse(raw, fallback) {
   }
 }
 
+function cleanCellValue(value) {
+  if (typeof value === "string") return value.trim();
+  return value;
+}
+
+function normalizeKey(value) {
+  return String(value || "").trim();
+}
+
 function getSession() {
   if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
     return window.rankforgeAuth.getSession();
@@ -23,10 +32,11 @@ function getSession() {
 function getCurrentUserId() {
   const session = getSession();
   if (session && session.userId) {
-    localStorage.setItem(APP_USER_ID_KEY, session.userId);
-    return session.userId;
+    const normalized = normalizeKey(session.userId);
+    localStorage.setItem(APP_USER_ID_KEY, normalized);
+    return normalized;
   }
-  return localStorage.getItem(APP_USER_ID_KEY) || "usr_mvp";
+  return normalizeKey(localStorage.getItem(APP_USER_ID_KEY) || "usr_mvp");
 }
 
 function loadState() {
@@ -148,10 +158,10 @@ function mergeRuntime(remote) {
   const currentUserId = getCurrentUserId();
   appState.currentUserId = currentUserId;
   const archived = new Set(appState.archivedListIds);
-  const localLists = (appState.localLists || []).filter((item) => (item.userId || currentUserId) === currentUserId);
-  const remoteLists = (remote.lists || []).filter((item) => (item.userId || currentUserId) === currentUserId);
-  const localLeads = (appState.localLeads || []).filter((item) => (item.userId || currentUserId) === currentUserId);
-  const remoteLeads = (remote.leads || []).filter((item) => (item.userId || currentUserId) === currentUserId);
+  const localLists = (appState.localLists || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
+  const remoteLists = (remote.lists || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
+  const localLeads = (appState.localLeads || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
+  const remoteLeads = (remote.leads || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
 
   runtimeData = {
     lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id).filter((item) => !archived.has(item.id)),
@@ -366,7 +376,7 @@ function parseGvizTable(parsed) {
     const cells = row.c || [];
     cols.forEach((key, index) => {
       const cell = cells[index];
-      record[key] = !cell ? "" : cell.f || cell.v || "";
+      record[key] = cleanCellValue(!cell ? "" : cell.f || cell.v || "");
     });
     return record;
   });
@@ -488,25 +498,29 @@ function buildRemoteData(data) {
 
   const searchMap = new Map();
   for (const search of searches) {
-    if (search.search_id) searchMap.set(search.search_id, search);
+    const searchId = normalizeKey(search.search_id);
+    if (searchId) searchMap.set(searchId, search);
   }
   for (const row of rawProspects) {
-    if (row.search_id && !searchMap.has(row.search_id)) searchMap.set(row.search_id, row);
+    const searchId = normalizeKey(row.search_id);
+    if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
   for (const row of audits) {
-    if (row.search_id && !searchMap.has(row.search_id)) searchMap.set(row.search_id, row);
+    const searchId = normalizeKey(row.search_id);
+    if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
   for (const row of finalLeads) {
-    if (row.search_id && !searchMap.has(row.search_id)) searchMap.set(row.search_id, row);
+    const searchId = normalizeKey(row.search_id);
+    if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
 
   const lists = Array.from(searchMap.values()).map((search) => {
-    const searchId = search.search_id || "";
-    const searchAudits = audits.filter((item) => item.search_id === search.search_id);
-    const searchProspects = rawProspects.filter((item) => item.search_id === search.search_id);
-    const qualifiedCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "qualified").length;
-    const reviewNeededCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "review_needed").length;
-    const rejectedCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "rejected").length;
+    const searchId = normalizeKey(search.search_id);
+    const searchAudits = audits.filter((item) => normalizeKey(item.search_id) === searchId);
+    const searchProspects = rawProspects.filter((item) => normalizeKey(item.search_id) === searchId);
+    const qualifiedCount = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId && normalizeKey(item.qualification_status) === "qualified").length;
+    const reviewNeededCount = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId && normalizeKey(item.qualification_status) === "review_needed").length;
+    const rejectedCount = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId && normalizeKey(item.qualification_status) === "rejected").length;
     let derivedStatus = search.status || "active";
     if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) {
       derivedStatus = "completed";
@@ -517,7 +531,7 @@ function buildRemoteData(data) {
     }
     return {
       id: searchId,
-      userId: search.user_id || "usr_mvp",
+      userId: normalizeKey(search.user_id || "usr_mvp"),
       name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
       niche: search.niche || "",
       businessType: search.business_type || "",
@@ -542,8 +556,8 @@ function buildRemoteData(data) {
     const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || {};
     return {
       id: lead.lead_id || `remote_lead_${index + 1}`,
-      listId: lead.search_id || audit.search_id || "",
-      userId: lead.user_id || audit.user_id || contact.user_id || "usr_mvp",
+      listId: normalizeKey(lead.search_id || audit.search_id || ""),
+      userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id || "usr_mvp"),
       company: lead.company_name || audit.company_name || "Unknown company",
       website: lead.website_url || audit.website_url || "",
       decisionMaker: lead.decision_maker_name || contact.contact_name || "",
@@ -575,8 +589,8 @@ function buildRemoteData(data) {
       const fallbackStatus = numberValue(audit.seo_need_score) >= numberValue(audit.min_lead_score || 70) ? "review_needed" : "rejected";
       return {
         id: `audit_fallback_${audit.audit_id || index + 1}`,
-        listId: audit.search_id || "",
-        userId: audit.user_id || contact.user_id || "usr_mvp",
+        listId: normalizeKey(audit.search_id || ""),
+        userId: normalizeKey(audit.user_id || contact.user_id || "usr_mvp"),
         company: audit.company_name || "Unknown company",
         website: audit.website_url || audit.final_url || "",
         decisionMaker: contact.contact_name || "",

@@ -377,6 +377,150 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function formatRunDate(value) {
+        try {
+          if (!value) return "No run yet";
+          return new Date(value).toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+        } catch (error) {
+          return "No run yet";
+        }
+      }
+
+      function getListsForCurrentUser() {
+        const state = loadState();
+        const currentUserId = getSessionUserId();
+        const archived = Array.isArray(state.archivedListIds) ? state.archivedListIds : [];
+        const localLists = Array.isArray(state.localLists) ? state.localLists : [];
+        return localLists.filter(function (list) {
+          return archived.indexOf(list.id) === -1 && (list.userId || currentUserId) === currentUserId;
+        });
+      }
+
+      function getLeadsForCurrentUserList(listId) {
+        const state = loadState();
+        const currentUserId = getSessionUserId();
+        const localLeads = Array.isArray(state.localLeads) ? state.localLeads : [];
+        return localLeads.filter(function (lead) {
+          return lead.listId === listId && (lead.userId || currentUserId) === currentUserId;
+        });
+      }
+
+      function renderFallbackDashboard() {
+        const state = loadState();
+        const currentUserId = getSessionUserId();
+        const lists = getListsForCurrentUser();
+        const activeId = state.activeListId || (lists[0] && lists[0].id);
+        const activeList = lists.filter(function (list) { return list.id === activeId; })[0] || lists[0] || null;
+        const leads = activeList ? getLeadsForCurrentUserList(activeList.id) : [];
+        const tbody = document.querySelector("#savedListsTable tbody");
+        const leadsBody = document.querySelector("#leadsTable tbody");
+
+        const metricSavedLists = document.getElementById("metricSavedLists");
+        const metricQualified = document.getElementById("metricQualified");
+        const metricReviewNeeded = document.getElementById("metricReviewNeeded");
+        const metricAverageScore = document.getElementById("metricAverageScore");
+        const workspaceUserBadge = document.getElementById("workspaceUserBadge");
+        const workspaceDataSource = document.getElementById("workspaceDataSource");
+        const workspaceLastSync = document.getElementById("workspaceLastSync");
+        const activeListName = document.getElementById("activeListName");
+        const activeListStatus = document.getElementById("activeListStatus");
+        const activeListDescription = document.getElementById("activeListDescription");
+        const activeListMarket = document.getElementById("activeListMarket");
+        const activeListRun = document.getElementById("activeListRun");
+        const visibleLeadCount = document.getElementById("visibleLeadCount");
+        const activeLeadSummary = document.getElementById("activeLeadSummary");
+        const pipelineDiscovered = document.getElementById("pipelineDiscovered");
+        const pipelineAudited = document.getElementById("pipelineAudited");
+        const pipelineEnriched = document.getElementById("pipelineEnriched");
+        const pipelineQualified = document.getElementById("pipelineQualified");
+        const pipelineRejected = document.getElementById("pipelineRejected");
+        const workspaceSelectedListHealth = document.getElementById("workspaceSelectedListHealth");
+        const workspaceSelectedListMeta = document.getElementById("workspaceSelectedListMeta");
+
+        if (workspaceUserBadge) workspaceUserBadge.textContent = currentUserId;
+        if (workspaceDataSource) workspaceDataSource.textContent = "Local workspace state";
+        if (workspaceLastSync) workspaceLastSync.textContent = "Rendered from fallback controller";
+
+        if (metricSavedLists) metricSavedLists.textContent = String(lists.length);
+        if (metricQualified) {
+          metricQualified.textContent = String(lists.reduce(function (sum, list) { return sum + Number(list.qualified || 0); }, 0));
+        }
+        if (metricReviewNeeded) {
+          const reviewCount = lists.reduce(function (sum, list) {
+            return sum + Math.max(Number(list.audited || 0) - Number(list.qualified || 0) - Number(list.rejected || 0), 0);
+          }, 0);
+          metricReviewNeeded.textContent = String(reviewCount);
+        }
+        if (metricAverageScore) {
+          const allLeads = (Array.isArray(state.localLeads) ? state.localLeads : []).filter(function (lead) {
+            return (lead.userId || currentUserId) === currentUserId;
+          });
+          const avg = allLeads.length ? Math.round(allLeads.reduce(function (sum, lead) { return sum + Number(lead.overallScore || 0); }, 0) / allLeads.length) : 0;
+          metricAverageScore.textContent = String(avg);
+        }
+
+        if (activeListName) activeListName.textContent = activeList ? activeList.name : "No saved list yet";
+        if (activeListStatus) activeListStatus.textContent = activeList ? activeList.status : "empty";
+        if (activeListDescription) activeListDescription.textContent = activeList ? activeList.description : "Create a list to start building the workspace.";
+        if (activeListMarket) activeListMarket.textContent = activeList ? [activeList.niche, activeList.city, activeList.country].join(" - ") : "-";
+        if (activeListRun) activeListRun.textContent = activeList ? formatRunDate(activeList.lastRun) : "No run yet";
+        if (visibleLeadCount) visibleLeadCount.textContent = String(leads.length) + " leads";
+        if (activeLeadSummary) activeLeadSummary.textContent = activeList ? [activeList.city, activeList.country, activeList.status].join(" - ") : "No active list selected yet.";
+        if (pipelineDiscovered) pipelineDiscovered.textContent = activeList ? String(activeList.discovered || 0) : "0";
+        if (pipelineAudited) pipelineAudited.textContent = activeList ? String(activeList.audited || 0) : "0";
+        if (pipelineEnriched) pipelineEnriched.textContent = activeList ? String(activeList.enriched || 0) : "0";
+        if (pipelineQualified) pipelineQualified.textContent = activeList ? String(activeList.qualified || 0) : "0";
+        if (pipelineRejected) pipelineRejected.textContent = activeList ? String(activeList.rejected || 0) : "0";
+        if (workspaceSelectedListHealth) workspaceSelectedListHealth.textContent = activeList ? "Workspace list loaded" : "No list selected";
+        if (workspaceSelectedListMeta) workspaceSelectedListMeta.textContent = activeList ? ((activeList.qualified || 0) + " qualified, " + (activeList.rejected || 0) + " rejected.") : "Pick a saved list to inspect funnel quality.";
+
+        if (tbody) {
+          if (!lists.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Bu user icin henuz kayitli liste yok.</td></tr>';
+          } else {
+            tbody.innerHTML = lists.slice(0, 5).map(function (list) {
+              return '<tr>' +
+                '<td><span class="list-name">' + escapeHtml(list.name) + '</span></td>' +
+                '<td>' + escapeHtml([list.niche, list.city].join(" - ")) + '</td>' +
+                '<td><span class="status-pill status-qualified">' + escapeHtml(list.status || "draft") + '</span></td>' +
+                '<td>' + escapeHtml(formatRunDate(list.lastRun)) + '</td>' +
+                '<td>' + escapeHtml(String(list.qualified || 0)) + '</td>' +
+              '</tr>';
+            }).join("");
+          }
+        }
+
+        if (leadsBody) {
+          if (!leads.length) {
+            leadsBody.innerHTML = '<tr><td colspan="5" class="empty-state">Bu liste icin gosterilecek lead bulunamadi.</td></tr>';
+          } else {
+            leadsBody.innerHTML = leads.slice(0, 6).map(function (lead) {
+              return '<tr>' +
+                '<td class="company-cell"><strong>' + escapeHtml(lead.company || "Unknown company") + '</strong><span>' + escapeHtml((lead.website || "").replace(/^https?:\\/\\//, "")) + '</span></td>' +
+                '<td><strong>' + escapeHtml(lead.decisionMaker || "No named contact yet") + '</strong><span class="status-note">' + escapeHtml(lead.role || "Needs enrichment / review") + '</span></td>' +
+                '<td class="contact-stack"><span>' + escapeHtml(lead.email || "No email") + '</span><span>' + escapeHtml(lead.phone || "No phone") + '</span></td>' +
+                '<td><span class="score-pill">' + escapeHtml(String(lead.overallScore || 0)) + '</span></td>' +
+                '<td><span class="status-pill status-qualified">' + escapeHtml(lead.status || "review_needed") + '</span></td>' +
+              '</tr>';
+            }).join("");
+          }
+        }
+      }
+
       function updateStatus(id, message) {
         const node = document.getElementById(id);
         if (node) node.textContent = message;
@@ -482,7 +626,8 @@
           recommendedChannel: "email"
         });
         saveState(state);
-        window.location.reload();
+        renderFallbackDashboard();
+        updateStatus("dataStatus", "Demo list added");
       }
 
       function buildPayload() {
@@ -547,13 +692,14 @@
         }
 
         setTimeout(function () {
-          window.location.reload();
-        }, 700);
+          renderFallbackDashboard();
+        }, 300);
         return false;
       }
 
       function syncDirect() {
-        window.location.reload();
+        renderFallbackDashboard();
+        updateStatus("dataStatus", "Fallback sync refreshed local workspace");
       }
 
       window.rankforgeDashboardActions = Object.assign({}, window.rankforgeDashboardActions || {}, {
@@ -581,6 +727,7 @@
       if (webhookInput) {
         webhookInput.value = ensureWebhook();
       }
+      renderFallbackDashboard();
     })();
   </script>
 </body>

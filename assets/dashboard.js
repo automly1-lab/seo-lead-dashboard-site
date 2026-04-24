@@ -306,6 +306,7 @@ function buildRuntimeFromSheets(sheetData) {
   const contacts = sheetData.contacts || [];
   const finalLeads = sheetData.final_leads || [];
 
+  const prospectsById = Object.fromEntries(rawProspects.filter((row) => row.prospect_id).map((row) => [row.prospect_id, row]));
   const contactByProspect = {};
   for (const contact of contacts) {
     const prospectId = contact.prospect_id;
@@ -318,13 +319,94 @@ function buildRuntimeFromSheets(sheetData) {
 
   const auditsById = Object.fromEntries(seoAudits.filter((row) => row.audit_id).map((row) => [row.audit_id, row]));
   const contactsById = Object.fromEntries(contacts.filter((row) => row.contact_id).map((row) => [row.contact_id, row]));
+  const leads = [];
+  const seenLeadKeys = new Set();
+
+  function resolveSearchId({ lead = {}, audit = {}, prospect = {}, contact = {} }) {
+    return lead.search_id || audit.search_id || prospect.search_id || contact.search_id || "";
+  }
+
+  function pushLead(candidate) {
+    const key = candidate.id || `${candidate.listId}|${candidate.company}|${candidate.website}`;
+    if (!candidate.listId || seenLeadKeys.has(key)) return;
+    seenLeadKeys.add(key);
+    leads.push(candidate);
+  }
+
+  for (let index = 0; index < finalLeads.length; index += 1) {
+    const lead = finalLeads[index];
+    const audit = auditsById[lead.audit_id] || {};
+    const prospect = prospectsById[lead.prospect_id] || {};
+    const contact = contactsById[lead.primary_contact_id] || contactByProspect[lead.prospect_id] || {};
+    const listId = resolveSearchId({ lead, audit, prospect, contact });
+    pushLead({
+      id: lead.lead_id || `remote_lead_${index + 1}`,
+      listId,
+      company: lead.company_name || audit.company_name || prospect.company_name || "Unknown company",
+      website: lead.website_url || audit.website_url || prospect.website_url || "",
+      decisionMaker: lead.decision_maker_name || contact.contact_name || null,
+      role: lead.decision_maker_role || contact.contact_role || null,
+      email: lead.decision_maker_email || contact.email || null,
+      phone: lead.decision_maker_phone || contact.phone || null,
+      seoScore: safeNumber(lead.seo_need_score || audit.seo_need_score),
+      overallScore: safeNumber(lead.overall_lead_score || lead.seo_need_score || audit.seo_need_score),
+      commercialFit: safeNumber(lead.commercial_fit_score || audit.commercial_fit_score),
+      contactConfidence: safeNumber(lead.contact_confidence_score || contact.contact_confidence_score),
+      status: lead.qualification_status || lead.status || "review_needed",
+      outreachReadiness: lead.outreach_readiness || (contact.email || contact.phone ? "ready" : "needs_review"),
+      paidAdsDetected: String(lead.paid_ads_detected || audit.paid_ads_detected || "").toLowerCase() === "true",
+      primaryProblem: lead.primary_problem || "",
+      secondaryProblem: lead.secondary_problem || "",
+      whyItMatters: lead.qualification_reason || audit.audit_summary || "",
+      outreachAngle: lead.outreach_angle || audit.recommended_outreach_angle || "",
+      valueHypothesis: lead.client_value_hypothesis || "",
+      firstLine: lead.first_line_personalization || "",
+      recommendedOffer: lead.recommended_offer || "",
+      recommendedChannel: lead.recommended_channel || "",
+    });
+  }
+
+  for (let index = 0; index < seoAudits.length; index += 1) {
+    const audit = seoAudits[index];
+    const prospect = prospectsById[audit.prospect_id] || {};
+    const contact = contactByProspect[audit.prospect_id] || {};
+    const listId = resolveSearchId({ audit, prospect, contact });
+    const seoScore = safeNumber(audit.seo_need_score);
+    const contactConfidence = safeNumber(contact.contact_confidence_score);
+    const overallScore = Math.round((seoScore * 0.7) + (safeNumber(audit.commercial_fit_score) * 0.2) + (contactConfidence * 0.1));
+    pushLead({
+      id: `audit_${audit.audit_id || index + 1}`,
+      listId,
+      company: audit.company_name || prospect.company_name || "Unknown company",
+      website: audit.website_url || prospect.website_url || "",
+      decisionMaker: contact.contact_name || null,
+      role: contact.contact_role || null,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      seoScore,
+      overallScore,
+      commercialFit: safeNumber(audit.commercial_fit_score),
+      contactConfidence,
+      status: seoScore >= safeNumber(audit.min_lead_score || 70) ? "review_needed" : "rejected",
+      outreachReadiness: contact.email || contact.phone ? "ready" : "needs_review",
+      paidAdsDetected: String(audit.paid_ads_detected || "").toLowerCase() === "true",
+      primaryProblem: "",
+      secondaryProblem: "",
+      whyItMatters: audit.audit_summary || "",
+      outreachAngle: audit.recommended_outreach_angle || "",
+      valueHypothesis: "",
+      firstLine: "",
+      recommendedOffer: "",
+      recommendedChannel: contact.email ? "email" : contact.phone ? "phone" : "",
+    });
+  }
 
   const lists = searches.map((search) => {
     const searchId = search.search_id;
     const searchProspects = rawProspects.filter((row) => row.search_id === searchId);
     const searchAudits = seoAudits.filter((row) => row.search_id === searchId && row.status === "completed");
     const searchContacts = contacts.filter((row) => row.search_id === searchId && row.status !== "pending");
-    const searchLeads = finalLeads.filter((row) => row.search_id === searchId);
+    const searchLeads = leads.filter((row) => row.listId === searchId);
     return {
       id: searchId,
       name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
@@ -343,36 +425,6 @@ function buildRuntimeFromSheets(sheetData) {
       minSeoScore: safeNumber(search.min_audit_score || 55),
       minLeadScore: safeNumber(search.min_lead_score || 70),
       archived: false,
-    };
-  });
-
-  const leads = finalLeads.map((lead, index) => {
-    const audit = auditsById[lead.audit_id] || {};
-    const contact = contactsById[lead.primary_contact_id] || contactByProspect[lead.prospect_id] || {};
-    return {
-      id: lead.lead_id || `remote_lead_${index + 1}`,
-      listId: lead.search_id || audit.search_id || contact.search_id || "",
-      company: lead.company_name || audit.company_name || "Unknown company",
-      website: lead.website_url || audit.website_url || "",
-      decisionMaker: lead.decision_maker_name || contact.contact_name || null,
-      role: lead.decision_maker_role || contact.contact_role || null,
-      email: lead.decision_maker_email || contact.email || null,
-      phone: lead.decision_maker_phone || contact.phone || null,
-      seoScore: safeNumber(lead.seo_need_score),
-      overallScore: safeNumber(lead.overall_lead_score),
-      commercialFit: safeNumber(lead.commercial_fit_score),
-      contactConfidence: safeNumber(lead.contact_confidence_score),
-      status: lead.qualification_status || lead.status || "review_needed",
-      outreachReadiness: lead.outreach_readiness || "needs_review",
-      paidAdsDetected: String(lead.paid_ads_detected || audit.paid_ads_detected || "").toLowerCase() === "true",
-      primaryProblem: lead.primary_problem || "",
-      secondaryProblem: lead.secondary_problem || "",
-      whyItMatters: lead.qualification_reason || audit.audit_summary || "",
-      outreachAngle: lead.outreach_angle || audit.recommended_outreach_angle || "",
-      valueHypothesis: lead.client_value_hypothesis || "",
-      firstLine: lead.first_line_personalization || "",
-      recommendedOffer: lead.recommended_offer || "",
-      recommendedChannel: lead.recommended_channel || "",
     };
   });
 

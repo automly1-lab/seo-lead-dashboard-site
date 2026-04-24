@@ -47,6 +47,7 @@ def build_runtime_data(sheet_data):
     contacts = sheet_data.get("contacts", [])
     final_leads = sheet_data.get("final_leads", [])
 
+    prospects_by_id = {row.get("prospect_id"): row for row in raw_prospects if row.get("prospect_id")}
     contact_by_prospect = {}
     for contact in contacts:
         prospect_id = contact.get("prospect_id")
@@ -58,6 +59,83 @@ def build_runtime_data(sheet_data):
 
     audit_by_id = {audit.get("audit_id"): audit for audit in seo_audits if audit.get("audit_id")}
     contacts_by_id = {contact.get("contact_id"): contact for contact in contacts if contact.get("contact_id")}
+    leads = []
+    seen_keys = set()
+
+    def resolve_search_id(lead=None, audit=None, prospect=None, contact=None):
+        lead = lead or {}
+        audit = audit or {}
+        prospect = prospect or {}
+        contact = contact or {}
+        return lead.get("search_id") or audit.get("search_id") or prospect.get("search_id") or contact.get("search_id") or ""
+
+    def push_lead(candidate):
+        key = candidate.get("id") or f"{candidate.get('listId')}|{candidate.get('company')}|{candidate.get('website')}"
+        if not candidate.get("listId") or key in seen_keys:
+            return
+        seen_keys.add(key)
+        leads.append(candidate)
+
+    for index, lead in enumerate(final_leads, start=1):
+        audit = audit_by_id.get(lead.get("audit_id"), {})
+        prospect = prospects_by_id.get(lead.get("prospect_id"), {})
+        contact = contacts_by_id.get(lead.get("primary_contact_id")) or contact_by_prospect.get(lead.get("prospect_id"), {})
+        push_lead({
+            "id": lead.get("lead_id") or f"remote_lead_{index}",
+            "listId": resolve_search_id(lead=lead, audit=audit, prospect=prospect, contact=contact),
+            "company": lead.get("company_name") or audit.get("company_name") or prospect.get("company_name") or "Unknown company",
+            "website": lead.get("website_url") or audit.get("website_url") or prospect.get("website_url") or "",
+            "decisionMaker": lead.get("decision_maker_name") or contact.get("contact_name") or None,
+            "role": lead.get("decision_maker_role") or contact.get("contact_role") or None,
+            "email": lead.get("decision_maker_email") or contact.get("email") or None,
+            "phone": lead.get("decision_maker_phone") or contact.get("phone") or None,
+            "seoScore": safe_number(lead.get("seo_need_score") or audit.get("seo_need_score")),
+            "overallScore": safe_number(lead.get("overall_lead_score") or lead.get("seo_need_score") or audit.get("seo_need_score")),
+            "commercialFit": safe_number(lead.get("commercial_fit_score") or audit.get("commercial_fit_score")),
+            "contactConfidence": safe_number(lead.get("contact_confidence_score") or contact.get("contact_confidence_score")),
+            "status": lead.get("qualification_status") or lead.get("status") or "review_needed",
+            "outreachReadiness": lead.get("outreach_readiness") or ("ready" if (contact.get("email") or contact.get("phone")) else "needs_review"),
+            "paidAdsDetected": str(lead.get("paid_ads_detected") or audit.get("paid_ads_detected") or "").lower() == "true",
+            "primaryProblem": lead.get("primary_problem") or "",
+            "secondaryProblem": lead.get("secondary_problem") or "",
+            "whyItMatters": lead.get("qualification_reason") or audit.get("audit_summary") or "",
+            "outreachAngle": lead.get("outreach_angle") or audit.get("recommended_outreach_angle") or "",
+            "valueHypothesis": lead.get("client_value_hypothesis") or "",
+            "firstLine": lead.get("first_line_personalization") or "",
+            "recommendedOffer": lead.get("recommended_offer") or "",
+            "recommendedChannel": lead.get("recommended_channel") or "",
+        })
+
+    for index, audit in enumerate(seo_audits, start=1):
+        prospect = prospects_by_id.get(audit.get("prospect_id"), {})
+        contact = contact_by_prospect.get(audit.get("prospect_id"), {})
+        seo_score = safe_number(audit.get("seo_need_score"))
+        contact_confidence = safe_number(contact.get("contact_confidence_score"))
+        push_lead({
+            "id": f"audit_{audit.get('audit_id') or index}",
+            "listId": resolve_search_id(audit=audit, prospect=prospect, contact=contact),
+            "company": audit.get("company_name") or prospect.get("company_name") or "Unknown company",
+            "website": audit.get("website_url") or prospect.get("website_url") or "",
+            "decisionMaker": contact.get("contact_name") or None,
+            "role": contact.get("contact_role") or None,
+            "email": contact.get("email") or None,
+            "phone": contact.get("phone") or None,
+            "seoScore": seo_score,
+            "overallScore": int(round((seo_score * 0.7) + (safe_number(audit.get("commercial_fit_score")) * 0.2) + (contact_confidence * 0.1))),
+            "commercialFit": safe_number(audit.get("commercial_fit_score")),
+            "contactConfidence": contact_confidence,
+            "status": "review_needed" if seo_score >= safe_number(audit.get("min_lead_score") or 70) else "rejected",
+            "outreachReadiness": "ready" if (contact.get("email") or contact.get("phone")) else "needs_review",
+            "paidAdsDetected": str(audit.get("paid_ads_detected") or "").lower() == "true",
+            "primaryProblem": "",
+            "secondaryProblem": "",
+            "whyItMatters": audit.get("audit_summary") or "",
+            "outreachAngle": audit.get("recommended_outreach_angle") or "",
+            "valueHypothesis": "",
+            "firstLine": "",
+            "recommendedOffer": "",
+            "recommendedChannel": "email" if contact.get("email") else ("phone" if contact.get("phone") else ""),
+        })
 
     lists = []
     for search in searches:
@@ -65,7 +143,7 @@ def build_runtime_data(sheet_data):
         search_prospects = [row for row in raw_prospects if row.get("search_id") == search_id]
         search_audits = [row for row in seo_audits if row.get("search_id") == search_id and row.get("status") == "completed"]
         search_contacts = [row for row in contacts if row.get("search_id") == search_id and row.get("status") != "pending"]
-        search_leads = [row for row in final_leads if row.get("search_id") == search_id]
+        search_leads = [row for row in leads if row.get("listId") == search_id]
         lists.append({
             "id": search_id,
             "name": search.get("search_name") or f"{title_case(search.get('niche'))} - {search.get('city')}",
@@ -84,36 +162,6 @@ def build_runtime_data(sheet_data):
             "minSeoScore": safe_number(search.get("min_audit_score") or 55),
             "minLeadScore": safe_number(search.get("min_lead_score") or 70),
             "archived": False,
-        })
-
-    leads = []
-    for index, lead in enumerate(final_leads, start=1):
-        audit = audit_by_id.get(lead.get("audit_id"), {})
-        contact = contacts_by_id.get(lead.get("primary_contact_id")) or contact_by_prospect.get(lead.get("prospect_id"), {})
-        leads.append({
-            "id": lead.get("lead_id") or f"remote_lead_{index}",
-            "listId": lead.get("search_id"),
-            "company": lead.get("company_name") or audit.get("company_name") or "Unknown company",
-            "website": lead.get("website_url") or audit.get("website_url") or "",
-            "decisionMaker": lead.get("decision_maker_name") or contact.get("contact_name") or None,
-            "role": lead.get("decision_maker_role") or contact.get("contact_role") or None,
-            "email": lead.get("decision_maker_email") or contact.get("email") or None,
-            "phone": lead.get("decision_maker_phone") or contact.get("phone") or None,
-            "seoScore": safe_number(lead.get("seo_need_score")),
-            "overallScore": safe_number(lead.get("overall_lead_score")),
-            "commercialFit": safe_number(lead.get("commercial_fit_score")),
-            "contactConfidence": safe_number(lead.get("contact_confidence_score")),
-            "status": lead.get("qualification_status") or lead.get("status") or "review_needed",
-            "outreachReadiness": lead.get("outreach_readiness") or "needs_review",
-            "paidAdsDetected": str(lead.get("paid_ads_detected") or audit.get("paid_ads_detected") or "").lower() == "true",
-            "primaryProblem": lead.get("primary_problem") or "",
-            "secondaryProblem": lead.get("secondary_problem") or "",
-            "whyItMatters": lead.get("qualification_reason") or audit.get("audit_summary") or "",
-            "outreachAngle": lead.get("outreach_angle") or audit.get("recommended_outreach_angle") or "",
-            "valueHypothesis": lead.get("client_value_hypothesis") or "",
-            "firstLine": lead.get("first_line_personalization") or "",
-            "recommendedOffer": lead.get("recommended_offer") or "",
-            "recommendedChannel": lead.get("recommended_channel") or "",
         })
 
     return {

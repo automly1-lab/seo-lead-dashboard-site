@@ -1,6 +1,46 @@
 {
   "lists": [
     {
+      "id": "srch_1777059841884",
+      "userId": "usr_demo_owner",
+      "name": "Tamirciler",
+      "niche": "Car Mechanic",
+      "businessType": "Repair",
+      "city": "London",
+      "country": "United Kingdoom",
+      "description": "Car Mechanic opportunities for London, kept as a persistent saved list.",
+      "status": "active",
+      "lastRun": "2026-04-24T19:44:03.582Z",
+      "discovered": 0,
+      "audited": 0,
+      "enriched": 0,
+      "qualified": 0,
+      "rejected": 0,
+      "minSeoScore": 60,
+      "minLeadScore": 70,
+      "archived": false
+    },
+    {
+      "id": "srch_1777058817116",
+      "userId": "usr_demo_owner",
+      "name": "accounting",
+      "niche": "accountants",
+      "businessType": "accountants",
+      "city": "Poznan",
+      "country": "Poland",
+      "description": "Accountants opportunities for Poznan, kept as a persistent saved list.",
+      "status": "active",
+      "lastRun": "2026-04-24T19:26:57.490Z",
+      "discovered": 0,
+      "audited": 0,
+      "enriched": 0,
+      "qualified": 0,
+      "rejected": 0,
+      "minSeoScore": 60,
+      "minLeadScore": 70,
+      "archived": false
+    },
+    {
       "id": "srch_restoration_companies_new_york_1777041809618",
       "userId": "usr_dashboard",
       "name": "Restoration Companies",
@@ -64,6 +104,8 @@
   "leads": [],
   "source": "github-static-refresh",
   "meta": {
-    "duplicate_search_rows_removed_in_patch_snapshot": 4
+    "search_rows_read": 11,
+    "unique_lists_exported": 5,
+    "duplicate_search_rows_removed": 6
   }
 }

@@ -4,10 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence</title>
-  <meta http-equiv="refresh" content="0; url=./dashboard/">
   <link rel="canonical" href="./dashboard/">
   <script>
-    window.location.replace("./dashboard/");
+    try {
+      const session = JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
+      window.location.replace(session ? "./dashboard/" : "./login/");
+    } catch (error) {
+      window.location.replace("./login/");
+    }
   </script>
   <style>
     body {
@@ -23,6 +27,6 @@
   </style>
 </head>
 <body>
-  <p>Redirecting to the dashboard... <a href="./dashboard/">Open dashboard</a></p>
+  <p>Redirecting... <a href="./login/">Open login</a></p>
 </body>
 </html>

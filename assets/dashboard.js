@@ -598,7 +598,14 @@ function hydrateWebhookUi() {
   const input = document.getElementById("webhookUrlInput");
   if (input) input.value = webhookUrl;
   if (webhookUrl) {
-    updateMessageNode("webhookStatus", "Webhook bagli. Dashboard'dan olusturulan listeler n8n'e gonderilecek.", "success");
+    const hostname = (() => {
+      try {
+        return new URL(webhookUrl).hostname;
+      } catch {
+        return webhookUrl;
+      }
+    })();
+    updateMessageNode("webhookStatus", `Webhook kaydedildi. Create Search istekleri ${hostname} adresine gidecek.`, "success");
   } else {
     updateMessageNode("webhookStatus", "Webhook not connected yet.", "");
   }
@@ -1029,9 +1036,15 @@ async function createListFromForm(event) {
   }
 }
 
-function saveWebhookFromInput() {
+function saveWebhookFromInput(event) {
+  event?.preventDefault();
   const input = document.getElementById("webhookUrlInput");
   const webhookUrl = input?.value.trim() || "";
+  if (!webhookUrl) {
+    saveWebhookUrl("");
+    updateMessageNode("webhookStatus", "Webhook URL bos. Kayit temizlendi.", "");
+    return;
+  }
   saveWebhookUrl(webhookUrl);
   hydrateWebhookUi();
 }
@@ -1205,6 +1218,7 @@ document.getElementById("createListButton")?.addEventListener("click", () => {
 document.getElementById("syncSheetsButton")?.addEventListener("click", syncFromApi);
 document.getElementById("seedListsButton")?.addEventListener("click", addDemoList);
 document.getElementById("saveWebhookButton")?.addEventListener("click", saveWebhookFromInput);
+document.getElementById("webhookConfigForm")?.addEventListener("submit", saveWebhookFromInput);
 document.getElementById("saveCurrentUserButton")?.addEventListener("click", saveCurrentUserFromInput);
 document.getElementById("rerunListButton")?.addEventListener("click", rerunSelectedList);
 document.getElementById("duplicateListButton")?.addEventListener("click", duplicateSelectedList);

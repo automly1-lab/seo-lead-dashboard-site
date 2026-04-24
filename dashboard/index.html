@@ -36,14 +36,14 @@
         <p class="panel-eyebrow">n8n Connection</p>
         <h2>Search submit webhook</h2>
         <p>Connect one public n8n webhook URL so dashboard-created lists are written into the live search pipeline.</p>
-        <div class="webhook-config">
+        <form class="webhook-config" id="webhookConfigForm">
           <label>
             <span>Webhook URL</span>
             <input id="webhookUrlInput" type="text" placeholder="https://your-n8n.app/webhook/create-search">
           </label>
-          <button class="button ghost button-block" id="saveWebhookButton" type="button">Save Webhook</button>
+          <button class="button ghost button-block" id="saveWebhookButton" type="submit">Save Webhook</button>
           <p class="webhook-note" id="webhookStatus">Webhook not connected yet.</p>
-        </div>
+        </form>
       </section>
 
       <section class="sidebar-panel sidebar-panel-muted">

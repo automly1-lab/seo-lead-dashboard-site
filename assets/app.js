@@ -44,6 +44,9 @@ function loadState() {
   if (!Array.isArray(state.localLists)) state.localLists = [];
   if (!Array.isArray(state.localLeads)) state.localLeads = [];
   if (!Array.isArray(state.archivedListIds)) state.archivedListIds = [];
+  if (!state.remoteCache || typeof state.remoteCache !== "object") state.remoteCache = { lists: [], leads: [] };
+  if (!Array.isArray(state.remoteCache.lists)) state.remoteCache.lists = [];
+  if (!Array.isArray(state.remoteCache.leads)) state.remoteCache.leads = [];
   state.selectedListId = state.selectedListId || null;
   state.selectedLeadId = state.selectedLeadId || null;
   state.syncMode = state.syncMode || "local";
@@ -57,7 +60,10 @@ function saveState(state) {
 }
 
 let appState = loadState();
-let runtimeData = { lists: [], leads: [] };
+let runtimeData = {
+  lists: Array.isArray(appState.remoteCache?.lists) ? [...appState.remoteCache.lists] : [],
+  leads: Array.isArray(appState.remoteCache?.leads) ? [...appState.remoteCache.leads] : [],
+};
 
 function getWebhookUrl() {
   const stored = (localStorage.getItem(APP_WEBHOOK_KEY) || "").trim();
@@ -158,19 +164,10 @@ function mergeRuntime(remote) {
   const currentUserId = getCurrentUserId();
   appState.currentUserId = currentUserId;
   const archived = new Set(appState.archivedListIds);
-  const localLists = (appState.localLists || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
-  const ownedListIds = new Set(localLists.map((item) => normalizeKey(item.id)).filter(Boolean));
-  const remoteLists = (remote.lists || []).filter((item) => {
-    const rowUserId = normalizeKey(item.userId || currentUserId);
-    const rowListId = normalizeKey(item.id);
-    return rowUserId === currentUserId || ownedListIds.has(rowListId);
-  });
-  const localLeads = (appState.localLeads || []).filter((item) => normalizeKey(item.userId || currentUserId) === currentUserId);
-  const remoteLeads = (remote.leads || []).filter((item) => {
-    const rowUserId = normalizeKey(item.userId || currentUserId);
-    const rowListId = normalizeKey(item.listId);
-    return rowUserId === currentUserId || ownedListIds.has(rowListId);
-  });
+  const localLists = appState.localLists || [];
+  const remoteLists = remote.lists || [];
+  const localLeads = appState.localLeads || [];
+  const remoteLeads = remote.leads || [];
 
   runtimeData = {
     lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id).filter((item) => !archived.has(item.id)),
@@ -183,6 +180,10 @@ function mergeRuntime(remote) {
   if (!runtimeData.leads.find((item) => item.id === appState.selectedLeadId)) {
     appState.selectedLeadId = null;
   }
+  appState.remoteCache = {
+    lists: [...remoteLists],
+    leads: [...remoteLeads],
+  };
   saveState(appState);
 }
 

@@ -83,6 +83,7 @@ def build_runtime_data(sheet_data):
         push_lead({
             "id": lead.get("lead_id") or f"remote_lead_{index}",
             "listId": resolve_search_id(lead=lead, audit=audit, prospect=prospect, contact=contact),
+            "userId": lead.get("user_id") or audit.get("user_id") or prospect.get("user_id") or contact.get("user_id") or "usr_mvp",
             "company": lead.get("company_name") or audit.get("company_name") or prospect.get("company_name") or "Unknown company",
             "website": lead.get("website_url") or audit.get("website_url") or prospect.get("website_url") or "",
             "decisionMaker": lead.get("decision_maker_name") or contact.get("contact_name") or None,
@@ -114,6 +115,7 @@ def build_runtime_data(sheet_data):
         push_lead({
             "id": f"audit_{audit.get('audit_id') or index}",
             "listId": resolve_search_id(audit=audit, prospect=prospect, contact=contact),
+            "userId": audit.get("user_id") or prospect.get("user_id") or contact.get("user_id") or "usr_mvp",
             "company": audit.get("company_name") or prospect.get("company_name") or "Unknown company",
             "website": audit.get("website_url") or prospect.get("website_url") or "",
             "decisionMaker": contact.get("contact_name") or None,
@@ -146,6 +148,7 @@ def build_runtime_data(sheet_data):
         search_leads = [row for row in leads if row.get("listId") == search_id]
         lists.append({
             "id": search_id,
+            "userId": search.get("user_id") or "usr_mvp",
             "name": search.get("search_name") or f"{title_case(search.get('niche'))} - {search.get('city')}",
             "niche": search.get("niche") or "",
             "businessType": search.get("business_type") or "",

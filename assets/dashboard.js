@@ -1,5 +1,6 @@
 const STORAGE_KEY = "rankforge-dashboard-state-v3";
 const WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
+const CURRENT_USER_STORAGE_KEY = "rankforge-current-user-id-v1";
 const DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
 const SHEET_ID = "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco";
 const DASHBOARD_SHEET_TABS = ["searches", "raw_prospects", "seo_audits", "contacts", "final_leads"];
@@ -133,6 +134,7 @@ function createDefaultUiState() {
     localLeads: [],
     lastSyncAt: null,
     syncMode: "demo",
+    currentUserId: "usr_mvp",
   };
 }
 
@@ -168,8 +170,22 @@ function saveWebhookUrl(url) {
   localStorage.setItem(WEBHOOK_STORAGE_KEY, url);
 }
 
+function loadCurrentUserId() {
+  try {
+    return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
+  } catch {
+    return "usr_mvp";
+  }
+}
+
+function saveCurrentUserId(userId) {
+  localStorage.setItem(CURRENT_USER_STORAGE_KEY, userId);
+}
+
 function buildDemoRuntimeData() {
   const cloned = cloneSeededState();
+  cloned.lists = cloned.lists.map((list) => ({ ...list, userId: "usr_demo" }));
+  cloned.leads = cloned.leads.map((lead) => ({ ...lead, userId: "usr_demo" }));
   return {
     lists: cloned.lists,
     leads: cloned.leads,
@@ -180,8 +196,9 @@ function buildDemoRuntimeData() {
 function mergeRuntimeData(remoteData) {
   const baseData = remoteData?.lists?.length ? remoteData : buildDemoRuntimeData();
   const archived = new Set(uiState.archivedListIds || []);
-  const lists = [...(uiState.localLists || []), ...baseData.lists].filter((list) => !archived.has(list.id));
-  const leads = [...(uiState.localLeads || []), ...baseData.leads].filter((lead) => !archived.has(lead.listId));
+  const currentUserId = uiState.currentUserId || loadCurrentUserId();
+  const lists = [...(uiState.localLists || []), ...baseData.lists].filter((list) => !archived.has(list.id) && (list.userId || currentUserId) === currentUserId);
+  const leads = [...(uiState.localLeads || []), ...baseData.leads].filter((lead) => !archived.has(lead.listId) && (lead.userId || currentUserId) === currentUserId);
 
   runtimeData = {
     lists,
@@ -207,6 +224,13 @@ function updateMessageNode(id, message, tone = "") {
   node.classList.remove("is-success", "is-error");
   if (tone === "success") node.classList.add("is-success");
   if (tone === "error") node.classList.add("is-error");
+}
+
+function hydrateCurrentUserUi() {
+  const currentUserId = uiState.currentUserId || loadCurrentUserId();
+  const input = document.getElementById("currentUserIdInput");
+  if (input) input.value = currentUserId;
+  updateMessageNode("currentUserStatus", `Current workspace user: ${currentUserId}`, "success");
 }
 
 async function syncFromApi() {
@@ -342,6 +366,7 @@ function buildRuntimeFromSheets(sheetData) {
     pushLead({
       id: lead.lead_id || `remote_lead_${index + 1}`,
       listId,
+      userId: lead.user_id || audit.user_id || prospect.user_id || contact.user_id || "usr_mvp",
       company: lead.company_name || audit.company_name || prospect.company_name || "Unknown company",
       website: lead.website_url || audit.website_url || prospect.website_url || "",
       decisionMaker: lead.decision_maker_name || contact.contact_name || null,
@@ -377,6 +402,7 @@ function buildRuntimeFromSheets(sheetData) {
     pushLead({
       id: `audit_${audit.audit_id || index + 1}`,
       listId,
+      userId: audit.user_id || prospect.user_id || contact.user_id || "usr_mvp",
       company: audit.company_name || prospect.company_name || "Unknown company",
       website: audit.website_url || prospect.website_url || "",
       decisionMaker: contact.contact_name || null,
@@ -409,6 +435,7 @@ function buildRuntimeFromSheets(sheetData) {
     const searchLeads = leads.filter((row) => row.listId === searchId);
     return {
       id: searchId,
+      userId: search.user_id || "usr_mvp",
       name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
       niche: search.niche || "",
       businessType: search.business_type || "",
@@ -459,7 +486,7 @@ function buildSearchPayload(formValues) {
   const primaryKeyword = `${formValues.niche} ${formValues.city}`.trim();
   return {
     search_id: createSearchRecordId(formValues.name, formValues.city),
-    user_id: "usr_dashboard",
+    user_id: uiState.currentUserId || loadCurrentUserId(),
     created_at: createdAt,
     updated_at: createdAt,
     status: "active",
@@ -582,6 +609,11 @@ function renderSavedLists() {
   const lists = getVisibleLists();
   tbody.innerHTML = "";
 
+  if (!lists.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Bu user icin henuz kayitli liste yok.</td></tr>';
+    return;
+  }
+
   for (const list of lists) {
     const statusClass =
       list.status === "completed" || list.status === "qualified"
@@ -631,6 +663,11 @@ function renderLeads() {
   const selectedLead = leads[0] || runtimeData.leads.find((lead) => lead.listId === uiState.activeListId) || null;
   updateLeadDetail(selectedLead);
 
+  if (!leads.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Bu liste icin gosterilecek lead bulunamadi.</td></tr>';
+    return;
+  }
+
   for (const lead of leads) {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -657,7 +694,19 @@ function renderLeads() {
 }
 
 function updateLeadDetail(lead) {
-  if (!lead) return;
+  if (!lead) {
+    document.getElementById("detailCompany").textContent = "No lead selected";
+    document.getElementById("detailStatus").textContent = "empty";
+    document.getElementById("detailWebsite").textContent = "-";
+    document.getElementById("detailLocation").textContent = "-";
+    document.getElementById("detailPrimaryProblem").textContent = "-";
+    document.getElementById("detailOffer").textContent = "-";
+    document.getElementById("detailReason").textContent = "No lead data available for the current selection yet.";
+    document.getElementById("detailAngle").textContent = "-";
+    document.getElementById("detailValue").textContent = "-";
+    document.getElementById("detailPersonalization").textContent = "-";
+    return;
+  }
   document.getElementById("detailCompany").textContent = lead.company;
   document.getElementById("detailStatus").textContent = titleCase(lead.status);
   document.getElementById("detailWebsite").textContent = String(lead.website || "").replace(/^https?:\/\//, "");
@@ -694,6 +743,7 @@ async function createListFromForm(event) {
   const id = searchPayload.search_id;
   uiState.localLists.unshift({
     id,
+    userId: uiState.currentUserId || loadCurrentUserId(),
     name,
     niche,
     businessType,
@@ -746,6 +796,54 @@ function saveWebhookFromInput() {
   hydrateWebhookUi();
 }
 
+function saveCurrentUserFromInput() {
+  const input = document.getElementById("currentUserIdInput");
+  const currentUserId = String(input?.value || "").trim() || "usr_mvp";
+  uiState.currentUserId = currentUserId;
+  saveCurrentUserId(currentUserId);
+  saveUiState();
+  mergeRuntimeData(runtimeData);
+  hydrateCurrentUserUi();
+  render();
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+function exportSelectedListCsv() {
+  const activeList = getActiveList();
+  const leads = getLeadsForActiveList();
+  if (!activeList || !leads.length) {
+    updateMessageNode("exportStatus", "Export icin secili listede gorunen lead yok.", "error");
+    return;
+  }
+  const headers = [
+    "company_name","website","decision_maker","role","email","phone","seo_score","overall_score","commercial_fit",
+    "contact_confidence","status","outreach_readiness","paid_ads_detected","primary_problem","secondary_problem",
+    "why_it_matters","outreach_angle","value_hypothesis","first_line","recommended_offer","recommended_channel"
+  ];
+  const rows = leads.map((lead) => [
+    lead.company, lead.website, lead.decisionMaker, lead.role, lead.email, lead.phone, lead.seoScore, lead.overallScore,
+    lead.commercialFit, lead.contactConfidence, lead.status, lead.outreachReadiness, lead.paidAdsDetected ? "true" : "false",
+    lead.primaryProblem, lead.secondaryProblem, lead.whyItMatters, lead.outreachAngle, lead.valueHypothesis, lead.firstLine,
+    lead.recommendedOffer, lead.recommendedChannel,
+  ]);
+  const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${slugify(activeList.name || "rankforge_export") || "rankforge_export"}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  updateMessageNode("exportStatus", `${leads.length} lead CSV olarak export edildi.`, "success");
+}
+
 function rerunSelectedList() {
   const activeList = getActiveList();
   if (!activeList) return;
@@ -787,6 +885,7 @@ function addDemoList() {
   const id = `list_${Date.now()}`;
   uiState.localLists.unshift({
     id,
+    userId: uiState.currentUserId || loadCurrentUserId(),
     name: "Berlin Roofers - Expansion Batch",
     niche: "roof repair",
     businessType: "roofing company",
@@ -809,6 +908,7 @@ function addDemoList() {
   uiState.localLeads.push({
     id: `lead_${Date.now()}`,
     listId: id,
+    userId: uiState.currentUserId || loadCurrentUserId(),
     company: "NordDach Berlin",
     website: "https://norddach-berlin.de",
     decisionMaker: "Managing Director",
@@ -858,9 +958,11 @@ document.getElementById("createListButton").addEventListener("click", () => {
 document.getElementById("syncSheetsButton").addEventListener("click", syncFromApi);
 document.getElementById("seedListsButton").addEventListener("click", addDemoList);
 document.getElementById("saveWebhookButton").addEventListener("click", saveWebhookFromInput);
+document.getElementById("saveCurrentUserButton").addEventListener("click", saveCurrentUserFromInput);
 document.getElementById("rerunListButton").addEventListener("click", rerunSelectedList);
 document.getElementById("duplicateListButton").addEventListener("click", duplicateSelectedList);
 document.getElementById("archiveListButton").addEventListener("click", archiveSelectedList);
+document.getElementById("exportSelectedListButton").addEventListener("click", exportSelectedListCsv);
 document.getElementById("qualificationFilter").addEventListener("change", renderLeads);
 document.getElementById("scoreFilter").addEventListener("input", () => {
   document.getElementById("scoreFilterValue").textContent = document.getElementById("scoreFilter").value;
@@ -871,5 +973,7 @@ document.getElementById("paidAdsFilter").addEventListener("change", renderLeads)
 
 mergeRuntimeData(runtimeData);
 hydrateWebhookUi();
+uiState.currentUserId = uiState.currentUserId || loadCurrentUserId();
+hydrateCurrentUserUi();
 render();
 syncFromApi();

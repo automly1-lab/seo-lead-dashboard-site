@@ -414,6 +414,12 @@ select {
   font-size: 13px;
 }
 
+.empty-state {
+  padding: 18px 14px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .form-status.is-success,
 .webhook-note.is-success {
   color: #2d6735;

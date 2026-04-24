@@ -55,6 +55,20 @@
           <p class="webhook-note" id="webhookStatus">Webhook not connected yet.</p>
         </div>
       </section>
+
+      <section class="sidebar-panel sidebar-panel-muted">
+        <p class="panel-eyebrow">Workspace Scope</p>
+        <h2>User-visible data boundary</h2>
+        <p>Each account should only see its own lists and leads. For the MVP, set the current workspace user ID here.</p>
+        <div class="webhook-config">
+          <label>
+            <span>Current User ID</span>
+            <input id="currentUserIdInput" type="text" placeholder="usr_mvp">
+          </label>
+          <button class="button ghost button-block" id="saveCurrentUserButton" type="button">Save Workspace User</button>
+          <p class="webhook-note" id="currentUserStatus">Current workspace user not set.</p>
+        </div>
+      </section>
     </aside>
 
     <main class="dashboard-main">
@@ -357,7 +371,8 @@
               <span>Include scoring reasons, outreach angle, and paid-ads signal.</span>
             </li>
           </ul>
-          <button class="button primary button-block" type="button">Export Selected List</button>
+          <button class="button primary button-block" id="exportSelectedListButton" type="button">Export Selected List CSV</button>
+          <p class="form-status" id="exportStatus">CSV export uses the currently visible leads in the selected saved list.</p>
         </article>
       </section>
     </main>

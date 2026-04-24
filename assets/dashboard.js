@@ -1,5 +1,6 @@
 const STORAGE_KEY = "rankforge-dashboard-state-v3";
 const WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
+const DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
 const DASHBOARD_API_URL = "/api/dashboard-data";
 const STATIC_DATA_URL = "/data/dashboard-data.json";
 
@@ -155,9 +156,9 @@ function saveUiState() {
 
 function loadWebhookUrl() {
   try {
-    return localStorage.getItem(WEBHOOK_STORAGE_KEY) || "";
+    return localStorage.getItem(WEBHOOK_STORAGE_KEY) || DEFAULT_SEARCH_WEBHOOK_URL;
   } catch {
-    return "";
+    return DEFAULT_SEARCH_WEBHOOK_URL;
   }
 }
 

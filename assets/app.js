@@ -359,13 +359,7 @@ function saveWebhook(event) {
   return false;
 }
 
-async function fetchSheetRows(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
-  const response = await fetch(url, { headers: { Accept: "text/plain, application/json, */*" } });
-  if (!response.ok) throw new Error(`sheet-${sheetName}`);
-  const payload = await response.text();
-  const cleaned = payload.replace(/^[\s\S]*?setResponse\(/, "").replace(/\);\s*$/, "");
-  const parsed = JSON.parse(cleaned);
+function parseGvizTable(parsed) {
   const cols = (parsed.table?.cols || []).map((col) => col.label || col.id);
   return (parsed.table?.rows || []).map((row) => {
     const record = {};
@@ -376,6 +370,67 @@ async function fetchSheetRows(sheetName) {
     });
     return record;
   });
+}
+
+function parseGvizText(payload) {
+  const cleaned = payload.replace(/^[\s\S]*?setResponse\(/, "").replace(/\);\s*$/, "");
+  return parseGvizTable(JSON.parse(cleaned));
+}
+
+async function fetchSheetRowsViaScript(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
+  return new Promise((resolve, reject) => {
+    const previousGoogle = window.google;
+    const script = document.createElement("script");
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error(`sheet-${sheetName}-timeout`));
+    }, 15000);
+
+    function cleanup() {
+      window.clearTimeout(timeout);
+      script.remove();
+      if (previousGoogle === undefined) {
+        delete window.google;
+      } else {
+        window.google = previousGoogle;
+      }
+    }
+
+    window.google = window.google || {};
+    window.google.visualization = window.google.visualization || {};
+    window.google.visualization.Query = window.google.visualization.Query || {};
+    window.google.visualization.Query.setResponse = (parsed) => {
+      try {
+        const rows = parseGvizTable(parsed);
+        cleanup();
+        resolve(rows);
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+    };
+
+    script.src = url;
+    script.async = true;
+    script.onerror = () => {
+      cleanup();
+      reject(new Error(`sheet-${sheetName}-script`));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+async function fetchSheetRows(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
+  try {
+    const response = await fetch(url, { headers: { Accept: "text/plain, application/json, */*" } });
+    if (!response.ok) throw new Error(`sheet-${sheetName}`);
+    const payload = await response.text();
+    return parseGvizText(payload);
+  } catch {
+    return fetchSheetRowsViaScript(sheetName);
+  }
 }
 
 async function fetchSheetRowsSafe(sheetName) {

@@ -3,58 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RankForge Intelligence | SEO Lead Dashboard</title>
-  <meta name="description" content="RankForge Intelligence dashboard for SEO agencies to monitor saved lists, qualified leads, and pipeline activity without overwhelming the operator.">
-  <link rel="stylesheet" href="../assets/site-enhancements.css">
+  <title>RankForge Intelligence | Dashboard</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
 </head>
-<body class="dashboard-body app-page-dashboard" data-auth="protected">
+<body class="dashboard-body app-page-dashboard" data-auth="protected" data-page="dashboard">
   <div class="dashboard-shell">
     <aside class="sidebar">
       <a class="brand" href="../index.html">
         <span class="brand-mark">RF</span>
-        <span class="brand-copy">
-          <strong>RankForge</strong>
-          <small>SEO Intelligence</small>
-        </span>
+        <span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span>
       </a>
-
       <nav class="sidebar-nav" aria-label="Primary">
         <a class="active" href="../dashboard/">Dashboard</a>
         <a href="../lists/">Saved Lists</a>
         <a href="../leads/">Leads</a>
         <a href="../lead-detail/">Lead Detail</a>
       </nav>
-
       <section class="sidebar-panel">
         <p class="panel-eyebrow">Retention Rule</p>
         <h2>Saved lists stay visible.</h2>
-        <p>Once a user creates a list, it remains in the workspace until it is manually archived. Re-running updates the same list record.</p>
+        <p>Once a user creates a list, it remains in the workspace until it is manually archived.</p>
       </section>
-
-      <section class="sidebar-panel sidebar-panel-muted">
+      <form class="sidebar-panel sidebar-panel-muted" onsubmit="return window.rankforgeApp.saveWebhook(event)">
         <p class="panel-eyebrow">n8n Connection</p>
         <h2>Search submit webhook</h2>
-        <p>Connect one public n8n webhook URL so dashboard-created lists are written into the live search pipeline.</p>
-        <form class="webhook-config" id="webhookConfigForm">
-          <label>
-            <span>Webhook URL</span>
-            <input id="webhookUrlInput" type="text" placeholder="https://your-n8n.app/webhook/create-search">
-          </label>
-          <button class="button ghost button-block" id="saveWebhookButton" type="submit">Save Webhook</button>
+        <p>Use a public n8n webhook so dashboard-created lists are written into the live pipeline.</p>
+        <div class="webhook-config">
+          <label><span>Webhook URL</span><input id="webhookUrlInput" type="text" placeholder="https://your-n8n.app/webhook/create-search"></label>
+          <button class="button ghost button-block" type="submit">Save Webhook</button>
           <p class="webhook-note" id="webhookStatus">Webhook not connected yet.</p>
-        </form>
-      </section>
-
+        </div>
+      </form>
       <section class="sidebar-panel sidebar-panel-muted">
         <p class="panel-eyebrow">Workspace Scope</p>
-        <h2>User-visible data boundary</h2>
-        <p>Her hesap sadece kendi listelerini ve lead'lerini gorur. Auth sonrasi workspace user otomatik belirlenir.</p>
+        <h2>User-visible boundary</h2>
+        <p>The signed-in user only sees their own searches and leads.</p>
         <div class="webhook-config">
-          <label>
-            <span>Current User ID</span>
-            <input id="currentUserIdInput" type="text" placeholder="usr_mvp" readonly>
-          </label>
+          <label><span>Current User ID</span><input id="currentUserIdInput" type="text" readonly></label>
           <p class="webhook-note" id="currentUserStatus">Signed-in workspace user not loaded yet.</p>
         </div>
       </section>
@@ -72,29 +57,15 @@
             <span class="topbar-insight" id="topbarInsightThree">Sync live sheet intelligence</span>
           </div>
         </div>
-
         <div class="topbar-actions">
-          <div class="data-status" id="dataStatus">Demo data</div>
-          <button class="button ghost" id="syncSheetsButton" type="button" onclick="window.rankforgeDashboardActions?.syncSheets()">Sync Sheets</button>
-          <button class="button ghost" id="seedListsButton" type="button" onclick="window.rankforgeDashboardActions?.addDemoList()">Add Demo List</button>
-          <button class="button primary" id="createListButton" type="button" onclick="window.rankforgeDashboardActions?.handleCreateListButtonClick()">Create Search List</button>
+          <div class="data-status" id="dataStatus">Local workspace</div>
+          <button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button>
+          <button class="button ghost" type="button" onclick="window.rankforgeApp.addDemoList()">Add Demo List</button>
+          <button class="button primary" type="button" onclick="document.getElementById('quickCreateForm').requestSubmit()">Create Search List</button>
         </div>
       </header>
 
-      <section class="page-intro-strip">
-        <article class="page-intro-card">
-          <span class="workspace-label">What this page is for</span>
-          <strong>Fast operating overview</strong>
-          <small>Use the dashboard to understand what changed, which market batch is strongest, and where the team should go next.</small>
-        </article>
-        <article class="page-intro-card">
-          <span class="workspace-label">How to use it</span>
-          <strong>Start here, work elsewhere</strong>
-          <small>The dashboard is intentionally lighter now. Deep list management, filtering, and lead review live in dedicated workspaces.</small>
-        </article>
-      </section>
-
-      <section class="workspace-strip" aria-label="Workspace status">
+      <section class="workspace-strip">
         <article class="workspace-card">
           <span class="workspace-label">Current Workspace User</span>
           <strong id="workspaceUserBadge">usr_mvp</strong>
@@ -102,7 +73,7 @@
         </article>
         <article class="workspace-card">
           <span class="workspace-label">Data Source</span>
-          <strong id="workspaceDataSource">Demo data</strong>
+          <strong id="workspaceDataSource">Local workspace</strong>
           <small id="workspaceLastSync">Waiting for first sync</small>
         </article>
         <article class="workspace-card workspace-card-highlight">
@@ -112,567 +83,97 @@
         </article>
       </section>
 
-      <section class="hero-grid" id="overview">
+      <section class="hero-grid">
         <article class="hero-card hero-card-primary">
           <div class="hero-head">
             <div>
               <p class="panel-eyebrow">Active Workspace</p>
-              <h2 id="activeListName">London Dentists - Priority Opportunities</h2>
+              <h2 id="activeListName">No saved list yet</h2>
             </div>
-            <span class="pill" id="activeListStatus">running</span>
+            <span class="pill" id="activeListStatus">empty</span>
           </div>
-
-          <p class="hero-description" id="activeListDescription">High-intent local businesses where SEO weaknesses, commercial fit, and contact readiness create strong agency outreach angles.</p>
-
+          <p class="hero-description" id="activeListDescription">Create a list to start building the workspace.</p>
           <dl class="hero-stats">
-            <div>
-              <dt>Target Market</dt>
-              <dd id="activeListMarket">Dentists - London - United Kingdom</dd>
-            </div>
-            <div>
-              <dt>Last Run</dt>
-              <dd id="activeListRun">Today, 10:14</dd>
-            </div>
-            <div>
-              <dt>Persistence</dt>
-              <dd>Saved until manually archived</dd>
-            </div>
+            <div><dt>Target Market</dt><dd id="activeListMarket">-</dd></div>
+            <div><dt>Last Run</dt><dd id="activeListRun">No run yet</dd></div>
+            <div><dt>Persistence</dt><dd>Saved until manually archived</dd></div>
           </dl>
         </article>
 
         <article class="hero-card hero-card-secondary">
           <p class="panel-eyebrow">Create New Saved List</p>
-          <form class="quick-create-form" id="quickCreateForm" onsubmit="return window.rankforgeDashboardActions?.submitQuickCreateForm(event)">
-            <label>
-              <span>List Name</span>
-              <input id="searchNameInput" name="search_name" type="text" placeholder="Miami Restoration Companies">
-            </label>
+          <form class="quick-create-form" id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)">
+            <label><span>List Name</span><input id="searchNameInput" type="text" placeholder="Miami Restoration Companies"></label>
             <div class="grid-two">
-              <label>
-                <span>Niche</span>
-                <input id="nicheInput" name="niche" type="text" placeholder="home restoration">
-              </label>
-              <label>
-                <span>Business Type</span>
-                <input id="businessTypeInput" name="business_type" type="text" placeholder="restoration contractor">
-              </label>
+              <label><span>Niche</span><input id="nicheInput" type="text" placeholder="home restoration"></label>
+              <label><span>Business Type</span><input id="businessTypeInput" type="text" placeholder="restoration contractor"></label>
             </div>
             <div class="grid-two">
-              <label>
-                <span>City</span>
-                <input id="cityInput" name="city" type="text" placeholder="Miami">
-              </label>
-              <label>
-                <span>Country</span>
-                <input id="countryInput" name="country" type="text" placeholder="United States">
-              </label>
+              <label><span>City</span><input id="cityInput" type="text" placeholder="Miami"></label>
+              <label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label>
             </div>
             <div class="grid-two">
-              <label>
-                <span>Min SEO Score</span>
-                <input id="seoThresholdInput" name="min_seo_score" type="number" min="0" max="100" value="60">
-              </label>
-              <label>
-                <span>Min Lead Score</span>
-                <input id="leadThresholdInput" name="min_lead_score" type="number" min="0" max="100" value="70">
-              </label>
+              <label><span>Min SEO Score</span><input id="seoThresholdInput" type="number" min="0" max="100" value="60"></label>
+              <label><span>Min Lead Score</span><input id="leadThresholdInput" type="number" min="0" max="100" value="70"></label>
             </div>
-            <p class="form-status" id="createSearchStatus">Saving a list keeps it visible. Connecting the webhook also sends it into the live n8n workflow.</p>
+            <p class="form-status" id="createSearchStatus">Create a saved list and send it into n8n.</p>
             <button class="button primary button-block" type="submit">Save List to Dashboard</button>
           </form>
         </article>
       </section>
 
-      <section class="metrics-grid" aria-label="Dashboard metrics">
-        <article class="metric-card">
-          <p>Saved Lists</p>
-          <strong id="metricSavedLists">0</strong>
-          <span>Persistent search jobs kept in workspace</span>
-        </article>
-        <article class="metric-card">
-          <p>Qualified Leads</p>
-          <strong id="metricQualified">0</strong>
-          <span>Ready or near-ready outreach opportunities</span>
-        </article>
-        <article class="metric-card">
-          <p>Review Needed</p>
-          <strong id="metricReviewNeeded">0</strong>
-          <span>Good opportunities waiting on manual review</span>
-        </article>
-        <article class="metric-card">
-          <p>Average Lead Score</p>
-          <strong id="metricAverageScore">0</strong>
-          <span>Overall quality across visible saved lists</span>
-        </article>
-      </section>
-
-      <section class="cta-strip">
-        <a class="cta-panel" href="../lists/">
-          <span class="workspace-label">Next Step</span>
-          <strong>Open Saved Lists</strong>
-          <small>Manage reruns, duplicates, archive actions, and list health.</small>
-        </a>
-        <a class="cta-panel" href="../leads/">
-          <span class="workspace-label">Work Queue</span>
-          <strong>Open Leads Workspace</strong>
-          <small>Filter, export, and review the actual outreach list away from the dashboard.</small>
-        </a>
-        <a class="cta-panel" href="../lead-detail/">
-          <span class="workspace-label">Deep Review</span>
-          <strong>Open Lead Detail</strong>
-          <small>Inspect a selected lead’s reasoning, contact path, and next action.</small>
-        </a>
+      <section class="metrics-grid">
+        <article class="metric-card"><p>Saved Lists</p><strong id="metricSavedLists">0</strong><span>Persistent search jobs kept in workspace</span></article>
+        <article class="metric-card"><p>Qualified Leads</p><strong id="metricQualified">0</strong><span>Ready or near-ready outreach opportunities</span></article>
+        <article class="metric-card"><p>Review Needed</p><strong id="metricReviewNeeded">0</strong><span>Good opportunities waiting on manual review</span></article>
+        <article class="metric-card"><p>Average Lead Score</p><strong id="metricAverageScore">0</strong><span>Overall quality across visible saved lists</span></article>
       </section>
 
       <section class="content-grid">
         <article class="panel panel-wide">
           <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Recent Saved Lists</p>
-              <h2>Keep the dashboard lightweight</h2>
-            </div>
-            <div class="panel-actions">
-              <a class="button ghost small" href="../lists/">Open Full Lists View</a>
-            </div>
+            <div><p class="panel-eyebrow">Recent Saved Lists</p><h2>Keep the dashboard lightweight</h2></div>
+            <div class="panel-actions"><a class="button ghost small" href="../lists/">Open Full Lists View</a></div>
           </div>
-
-          <p class="panel-copy">This page only shows the latest workspace context. Full list management lives in the dedicated Saved Lists page.</p>
-
-          <div class="table-shell">
-            <div class="table-toolbar">
-              <div>
-                <span class="workspace-label">Recent Library Activity</span>
-                <strong>Latest saved lists in this workspace</strong>
-              </div>
-              <small>Click a row to jump into the full Saved Lists page with that list selected.</small>
-            </div>
-            <div class="saved-list-table-wrap">
-              <table class="data-table" id="savedListsTable">
-                <thead>
-                  <tr>
-                    <th>List</th>
-                    <th>Market</th>
-                    <th>Status</th>
-                    <th>Last Run</th>
-                    <th>Qualified</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </div>
+          <div class="saved-list-table-wrap">
+            <table class="data-table" id="savedListsTable">
+              <thead><tr><th>List</th><th>Market</th><th>Status</th><th>Last Run</th><th>Qualified</th></tr></thead>
+              <tbody></tbody>
+            </table>
           </div>
         </article>
-
         <article class="panel">
-          <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Selected List Funnel</p>
-              <h2 id="pipelineListTitle">Selected list funnel</h2>
-            </div>
-          </div>
+          <div class="panel-header"><div><p class="panel-eyebrow">Selected List Funnel</p><h2 id="pipelineListTitle">Selected list funnel</h2></div></div>
           <div class="pipeline-stack" id="pipeline">
-            <div class="pipeline-step">
-              <span>Discovered</span>
-              <strong id="pipelineDiscovered">0</strong>
-            </div>
-            <div class="pipeline-step">
-              <span>Audited</span>
-              <strong id="pipelineAudited">0</strong>
-            </div>
-            <div class="pipeline-step">
-              <span>Enriched</span>
-              <strong id="pipelineEnriched">0</strong>
-            </div>
-            <div class="pipeline-step">
-              <span>Qualified</span>
-              <strong id="pipelineQualified">0</strong>
-            </div>
-            <div class="pipeline-step">
-              <span>Rejected</span>
-              <strong id="pipelineRejected">0</strong>
-            </div>
+            <div class="pipeline-step"><span>Discovered</span><strong id="pipelineDiscovered">0</strong></div>
+            <div class="pipeline-step"><span>Audited</span><strong id="pipelineAudited">0</strong></div>
+            <div class="pipeline-step"><span>Enriched</span><strong id="pipelineEnriched">0</strong></div>
+            <div class="pipeline-step"><span>Qualified</span><strong id="pipelineQualified">0</strong></div>
+            <div class="pipeline-step"><span>Rejected</span><strong id="pipelineRejected">0</strong></div>
           </div>
         </article>
       </section>
 
       <section class="panel">
         <div class="panel-header">
-          <div>
-            <p class="panel-eyebrow">Recent Leads</p>
-            <h2>Lead view is now a separate workspace</h2>
-          </div>
-          <div class="panel-actions">
-            <a class="button ghost small" href="../leads/">Open Leads View</a>
-          </div>
+          <div><p class="panel-eyebrow">Recent Leads</p><h2>Lead snapshot</h2></div>
+          <div class="panel-actions"><a class="button ghost small" href="../leads/">Open Leads View</a></div>
         </div>
-
         <div class="lead-summary-bar">
-          <div>
-            <span class="workspace-label">Visible Leads</span>
-            <strong id="visibleLeadCount">0 leads</strong>
-          </div>
-          <div>
-            <span class="workspace-label">List Snapshot</span>
-            <strong id="activeLeadSummary">No active list selected yet.</strong>
-          </div>
+          <div><span class="workspace-label">Visible Leads</span><strong id="visibleLeadCount">0 leads</strong></div>
+          <div><span class="workspace-label">List Snapshot</span><strong id="activeLeadSummary">No active list selected yet.</strong></div>
         </div>
-
-        <div class="table-shell">
-          <div class="table-toolbar">
-            <div>
-              <span class="workspace-label">Recent Lead Snapshot</span>
-              <strong>Highest-signal leads in the selected list</strong>
-            </div>
-            <small>Click a lead row to continue in the dedicated Lead Detail page.</small>
-          </div>
-          <div class="saved-list-table-wrap">
-            <table class="data-table leads-table" id="leadsTable">
-              <thead>
-                <tr>
-                  <th>Company</th>
-                  <th>Decision Maker</th>
-                  <th>Contact</th>
-                  <th>Overall</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
+        <div class="saved-list-table-wrap">
+          <table class="data-table leads-table" id="leadsTable">
+            <thead><tr><th>Company</th><th>Decision Maker</th><th>Contact</th><th>Overall</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </section>
     </main>
   </div>
 
-  <script src="../assets/auth.js?v=20260424-auth2"></script>
-  <script src="../assets/dashboard.js?v=20260424-debug1"></script>
-  <script>
-    (function () {
-      var STORAGE_KEY = "rankforge-dashboard-state-v3";
-      var WEBHOOK_STORAGE_KEY = "rankforge-search-submit-webhook-v1";
-      var CURRENT_USER_STORAGE_KEY = "rankforge-current-user-id-v1";
-      var DEFAULT_SEARCH_WEBHOOK_URL = "https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search";
-
-      function byId(id) {
-        return document.getElementById(id);
-      }
-
-      function parseJson(raw, fallback) {
-        try {
-          return raw ? JSON.parse(raw) : fallback;
-        } catch (error) {
-          return fallback;
-        }
-      }
-
-      function currentUserId() {
-        var session = parseJson(localStorage.getItem("rankforge-auth-session-v1"), null);
-        if (session && session.userId) {
-          localStorage.setItem(CURRENT_USER_STORAGE_KEY, session.userId);
-          return session.userId;
-        }
-        return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
-      }
-
-      function loadState() {
-        var state = parseJson(localStorage.getItem(STORAGE_KEY), {});
-        if (!Array.isArray(state.localLists)) state.localLists = [];
-        if (!Array.isArray(state.localLeads)) state.localLeads = [];
-        if (!Array.isArray(state.archivedListIds)) state.archivedListIds = [];
-        state.currentUserId = currentUserId();
-        return state;
-      }
-
-      function saveState(state) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      }
-
-      function status(id, text) {
-        var node = byId(id);
-        if (node) node.textContent = text;
-      }
-
-      function ensureWebhook() {
-        var current = (localStorage.getItem(WEBHOOK_STORAGE_KEY) || "").trim();
-        if (!current) {
-          current = DEFAULT_SEARCH_WEBHOOK_URL;
-          localStorage.setItem(WEBHOOK_STORAGE_KEY, current);
-        }
-        return current;
-      }
-
-      function formatDate(value) {
-        if (!value) return "No run yet";
-        try {
-          return new Date(value).toLocaleString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit"
-          });
-        } catch (error) {
-          return "No run yet";
-        }
-      }
-
-      function renderFallback() {
-        var state = loadState();
-        var userId = state.currentUserId;
-        var lists = state.localLists.filter(function (item) {
-          return state.archivedListIds.indexOf(item.id) === -1 && (item.userId || userId) === userId;
-        });
-        var activeId = state.activeListId || (lists[0] && lists[0].id);
-        var activeList = null;
-        var i;
-        for (i = 0; i < lists.length; i += 1) {
-          if (lists[i].id === activeId) {
-            activeList = lists[i];
-            break;
-          }
-        }
-        if (!activeList && lists.length) activeList = lists[0];
-        var leads = state.localLeads.filter(function (lead) {
-          return activeList && lead.listId === activeList.id && (lead.userId || userId) === userId;
-        });
-
-        if (byId("workspaceUserBadge")) byId("workspaceUserBadge").textContent = userId;
-        if (byId("workspaceDataSource")) byId("workspaceDataSource").textContent = "Fallback local state";
-        if (byId("workspaceLastSync")) byId("workspaceLastSync").textContent = "Fallback controls active";
-        if (byId("metricSavedLists")) byId("metricSavedLists").textContent = String(lists.length);
-        if (byId("metricQualified")) {
-          var q = 0;
-          for (i = 0; i < lists.length; i += 1) q += Number(lists[i].qualified || 0);
-          byId("metricQualified").textContent = String(q);
-        }
-        if (byId("metricReviewNeeded")) byId("metricReviewNeeded").textContent = "0";
-        if (byId("metricAverageScore")) {
-          var total = 0;
-          var count = 0;
-          for (i = 0; i < state.localLeads.length; i += 1) {
-            if ((state.localLeads[i].userId || userId) === userId) {
-              total += Number(state.localLeads[i].overallScore || 0);
-              count += 1;
-            }
-          }
-          byId("metricAverageScore").textContent = String(count ? Math.round(total / count) : 0);
-        }
-
-        if (activeList) {
-          if (byId("activeListName")) byId("activeListName").textContent = activeList.name;
-          if (byId("activeListStatus")) byId("activeListStatus").textContent = activeList.status || "queued";
-          if (byId("activeListDescription")) byId("activeListDescription").textContent = activeList.description || "Saved search list in workspace.";
-          if (byId("activeListMarket")) byId("activeListMarket").textContent = [activeList.niche, activeList.city, activeList.country].join(" - ");
-          if (byId("activeListRun")) byId("activeListRun").textContent = formatDate(activeList.lastRun);
-          if (byId("pipelineDiscovered")) byId("pipelineDiscovered").textContent = String(activeList.discovered || 0);
-          if (byId("pipelineAudited")) byId("pipelineAudited").textContent = String(activeList.audited || 0);
-          if (byId("pipelineEnriched")) byId("pipelineEnriched").textContent = String(activeList.enriched || 0);
-          if (byId("pipelineQualified")) byId("pipelineQualified").textContent = String(activeList.qualified || 0);
-          if (byId("pipelineRejected")) byId("pipelineRejected").textContent = String(activeList.rejected || 0);
-          if (byId("visibleLeadCount")) byId("visibleLeadCount").textContent = String(leads.length) + " leads";
-          if (byId("activeLeadSummary")) byId("activeLeadSummary").textContent = activeList.city + ", " + activeList.country + " - " + activeList.status;
-          if (byId("workspaceSelectedListHealth")) byId("workspaceSelectedListHealth").textContent = "Local list loaded";
-          if (byId("workspaceSelectedListMeta")) byId("workspaceSelectedListMeta").textContent = String(activeList.qualified || 0) + " qualified, " + String(activeList.rejected || 0) + " rejected.";
-        }
-
-        var listBody = document.querySelector("#savedListsTable tbody");
-        if (listBody) {
-          if (!lists.length) {
-            listBody.innerHTML = '<tr><td colspan="5" class="empty-state">No local lists yet.</td></tr>';
-          } else {
-            listBody.innerHTML = "";
-            for (i = 0; i < Math.min(lists.length, 5); i += 1) {
-              listBody.innerHTML += "<tr><td><span class='list-name'>" + lists[i].name + "</span></td><td>" + lists[i].niche + " - " + lists[i].city + "</td><td><span class='status-pill status-qualified'>" + (lists[i].status || "queued") + "</span></td><td>" + formatDate(lists[i].lastRun) + "</td><td>" + String(lists[i].qualified || 0) + "</td></tr>";
-            }
-          }
-        }
-
-        var leadBody = document.querySelector("#leadsTable tbody");
-        if (leadBody) {
-          if (!leads.length) {
-            leadBody.innerHTML = '<tr><td colspan="5" class="empty-state">No visible leads for this local list yet.</td></tr>';
-          } else {
-            leadBody.innerHTML = "";
-            for (i = 0; i < Math.min(leads.length, 6); i += 1) {
-              leadBody.innerHTML += "<tr><td class='company-cell'><strong>" + (leads[i].company || "Unknown company") + "</strong><span>" + (leads[i].website || "") + "</span></td><td><strong>" + (leads[i].decisionMaker || "No named contact yet") + "</strong><span class='status-note'>" + (leads[i].role || "Needs review") + "</span></td><td class='contact-stack'><span>" + (leads[i].email || "No email") + "</span><span>" + (leads[i].phone || "No phone") + "</span></td><td><span class='score-pill'>" + String(leads[i].overallScore || 0) + "</span></td><td><span class='status-pill status-qualified'>" + (leads[i].status || "review_needed") + "</span></td></tr>";
-            }
-          }
-        }
-      }
-
-      function addList(values) {
-        var state = loadState();
-        var id = "list_" + Date.now();
-        state.localLists.unshift({
-          id: id,
-          userId: state.currentUserId,
-          name: values.name,
-          niche: values.niche,
-          businessType: values.businessType,
-          city: values.city,
-          country: values.country,
-          description: values.description || "Saved search list in workspace.",
-          status: values.status || "queued",
-          lastRun: new Date().toISOString(),
-          discovered: values.discovered || 0,
-          audited: values.audited || 0,
-          enriched: values.enriched || 0,
-          qualified: values.qualified || 0,
-          rejected: values.rejected || 0,
-          minSeoScore: values.minSeoScore || 60,
-          minLeadScore: values.minLeadScore || 70,
-          archived: false,
-          isRemote: false
-        });
-        state.activeListId = id;
-        saveState(state);
-        return { id: id, userId: state.currentUserId };
-      }
-
-      function saveWebhook(event) {
-        if (event && event.preventDefault) event.preventDefault();
-        var input = byId("webhookUrlInput");
-        var value = ((input && input.value) || "").trim() || DEFAULT_SEARCH_WEBHOOK_URL;
-        localStorage.setItem(WEBHOOK_STORAGE_KEY, value);
-        if (input) input.value = value;
-        status("webhookStatus", "Webhook saved.");
-        return false;
-      }
-
-      function addDemo(event) {
-        if (event && event.preventDefault) event.preventDefault();
-        var created = addList({
-          name: "Berlin Roofers - Expansion Batch",
-          niche: "roof repair",
-          businessType: "roofing company",
-          city: "Berlin",
-          country: "Germany",
-          description: "Saved expansion list for local roof repair companies.",
-          status: "completed",
-          discovered: 27,
-          audited: 18,
-          enriched: 10,
-          qualified: 4,
-          rejected: 7,
-          minSeoScore: 57,
-          minLeadScore: 71
-        });
-        var state = loadState();
-        state.localLeads.push({
-          id: "lead_" + Date.now(),
-          listId: created.id,
-          userId: created.userId,
-          company: "NordDach Berlin",
-          website: "https://norddach-berlin.de",
-          decisionMaker: "Managing Director",
-          role: "Managing Director",
-          email: "info@norddach-berlin.de",
-          phone: "+49 30 5554 8821",
-          overallScore: 79,
-          status: "qualified"
-        });
-        saveState(state);
-        renderFallback();
-        status("dataStatus", "Demo list added");
-        return false;
-      }
-
-      function submitCreate(event) {
-        if (event && event.preventDefault) event.preventDefault();
-        var payload = {
-          search_id: "srch_" + Date.now(),
-          user_id: currentUserId(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          status: "active",
-          search_name: ((byId("searchNameInput") && byId("searchNameInput").value) || "").trim(),
-          niche: ((byId("nicheInput") && byId("nicheInput").value) || "").trim(),
-          business_type: ((byId("businessTypeInput") && byId("businessTypeInput").value) || "").trim(),
-          city: ((byId("cityInput") && byId("cityInput").value) || "").trim(),
-          country: ((byId("countryInput") && byId("countryInput").value) || "").trim(),
-          primary_keyword: ((byId("nicheInput") && byId("nicheInput").value) || "").trim(),
-          secondary_keywords: "",
-          discovery_query_limit: "1",
-          discovery_page_limit: "1",
-          max_results_requested: "20",
-          min_audit_score: String((byId("seoThresholdInput") && byId("seoThresholdInput").value) || 60),
-          min_lead_score: String((byId("leadThresholdInput") && byId("leadThresholdInput").value) || 70),
-          started_at: "",
-          completed_at: "",
-          failed_at: "",
-          failure_reason: ""
-        };
-
-        if (!payload.search_name || !payload.niche || !payload.business_type || !payload.city || !payload.country) {
-          status("createSearchStatus", "Please fill all required fields.");
-          return false;
-        }
-
-        addList({
-          name: payload.search_name,
-          niche: payload.niche,
-          businessType: payload.business_type,
-          city: payload.city,
-          country: payload.country,
-          minSeoScore: Number(payload.min_audit_score),
-          minLeadScore: Number(payload.min_lead_score),
-          status: "queued"
-        });
-        renderFallback();
-        status("createSearchStatus", "List created locally. Sending to n8n...");
-
-        try {
-          var webhook = ensureWebhook();
-          var body = new URLSearchParams();
-          Object.keys(payload).forEach(function (key) {
-            body.set(key, payload[key] == null ? "" : String(payload[key]));
-          });
-          fetch(webhook, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-            body: body.toString()
-          }).then(function () {
-            status("createSearchStatus", "List created and webhook sent.");
-          }).catch(function () {
-            status("createSearchStatus", "List created locally, webhook send failed.");
-          });
-        } catch (error) {
-          status("createSearchStatus", "List created locally, webhook send failed.");
-        }
-        return false;
-      }
-
-      function handleCreateButton(event) {
-        if (event && event.preventDefault) event.preventDefault();
-        return submitCreate(event);
-      }
-
-      function sync(event) {
-        if (event && event.preventDefault) event.preventDefault();
-        renderFallback();
-        status("dataStatus", "Fallback sync complete");
-        return false;
-      }
-
-      var webhookInput = byId("webhookUrlInput");
-      if (webhookInput) webhookInput.value = ensureWebhook();
-      if (byId("syncSheetsButton")) byId("syncSheetsButton").onclick = sync;
-      if (byId("seedListsButton")) byId("seedListsButton").onclick = addDemo;
-      if (byId("createListButton")) byId("createListButton").onclick = handleCreateButton;
-      if (byId("quickCreateForm")) byId("quickCreateForm").onsubmit = submitCreate;
-      if (byId("saveWebhookButton")) byId("saveWebhookButton").onclick = saveWebhook;
-      if (byId("webhookConfigForm")) byId("webhookConfigForm").onsubmit = saveWebhook;
-
-      window.rankforgeDashboardActions = {
-        syncSheets: sync,
-        addDemoList: addDemo,
-        handleCreateListButtonClick: handleCreateButton,
-        submitQuickCreateForm: submitCreate,
-        saveWebhook: saveWebhook
-      };
-
-      renderFallback();
-    })();
-  </script>
+  <script src="../assets/auth.js"></script>
+  <script src="../assets/app.js"></script>
 </body>
 </html>

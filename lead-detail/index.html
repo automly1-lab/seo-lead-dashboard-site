@@ -4,201 +4,73 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence | Lead Detail</title>
-  <meta name="description" content="Inspect selected lead detail inside RankForge Intelligence.">
-  <link rel="stylesheet" href="../assets/site-enhancements.css">
   <link rel="stylesheet" href="../assets/dashboard.css">
 </head>
-<body class="dashboard-body app-page-lead-detail" data-auth="protected">
+<body class="dashboard-body app-page-lead-detail" data-auth="protected" data-page="lead-detail">
   <div class="dashboard-shell">
     <aside class="sidebar">
-      <a class="brand" href="../index.html">
-        <span class="brand-mark">RF</span>
-        <span class="brand-copy">
-          <strong>RankForge</strong>
-          <small>SEO Intelligence</small>
-        </span>
-      </a>
-
-      <nav class="sidebar-nav" aria-label="Primary">
-        <a href="../dashboard/">Dashboard</a>
-        <a href="../lists/">Saved Lists</a>
-        <a href="../leads/">Leads</a>
-        <a class="active" href="../lead-detail/">Lead Detail</a>
-      </nav>
-
-      <section class="sidebar-panel">
-        <p class="panel-eyebrow">Why This Page</p>
-        <h2>Read one lead deeply.</h2>
-        <p>This page is intentionally focused on one company at a time so the reasoning and next action stay easy to read.</p>
-      </section>
+      <a class="brand" href="../index.html"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
+      <nav class="sidebar-nav"><a href="../dashboard/">Dashboard</a><a href="../lists/">Saved Lists</a><a href="../leads/">Leads</a><a class="active" href="../lead-detail/">Lead Detail</a></nav>
+      <section class="sidebar-panel"><p class="panel-eyebrow">Why This Page</p><h2>Read one lead deeply.</h2><p>This page stays focused on one company at a time so the reasoning and next action are easy to read.</p></section>
     </aside>
-
     <main class="dashboard-main">
       <header class="topbar">
-        <div>
-          <p class="kicker">Lead Detail</p>
-          <h1>Selected Lead Review</h1>
-          <p class="topbar-copy">Use this screen when the team needs the full narrative: why the lead matters, how to approach it, and what to do next.</p>
-        </div>
-        <div class="topbar-actions">
-          <div class="data-status" id="dataStatus">Demo data</div>
-          <button class="button ghost" id="syncSheetsButton" type="button">Sync Sheets</button>
-          <a class="button ghost" href="../leads/">Back to Leads</a>
-        </div>
+        <div><p class="kicker">Lead Detail</p><h1>Selected Lead Review</h1><p class="topbar-copy">Use this screen when the team needs the full narrative: why the lead matters, how to approach it, and what to do next.</p></div>
+        <div class="topbar-actions"><div class="data-status" id="dataStatus">Local workspace</div><button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button><a class="button ghost" href="../leads/">Back to Leads</a></div>
       </header>
-
       <section class="workspace-strip">
-        <article class="workspace-card">
-          <span class="workspace-label">Current Workspace User</span>
-          <strong id="workspaceUserBadge">usr_mvp</strong>
-          <small>User-scoped lists and leads only</small>
-        </article>
-        <article class="workspace-card">
-          <span class="workspace-label">Data Source</span>
-          <strong id="workspaceDataSource">Demo data</strong>
-          <small id="workspaceLastSync">Waiting for first sync</small>
-        </article>
-        <article class="workspace-card workspace-card-highlight">
-          <span class="workspace-label">Selected List Health</span>
-          <strong id="workspaceSelectedListHealth">No list selected</strong>
-          <small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small>
-        </article>
+        <article class="workspace-card"><span class="workspace-label">Current Workspace User</span><strong id="workspaceUserBadge">usr_mvp</strong><small>User-scoped lists and leads only</small></article>
+        <article class="workspace-card"><span class="workspace-label">Data Source</span><strong id="workspaceDataSource">Local workspace</strong><small id="workspaceLastSync">Waiting for first sync</small></article>
+        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Selected List Health</span><strong id="workspaceSelectedListHealth">No list selected</strong><small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small></article>
       </section>
-
       <section class="detail-grid detail-grid-single">
         <article class="panel">
-          <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Selected Lead Detail</p>
-              <h2 id="detailCompany">Dental Smiles London | Euston Practice</h2>
-            </div>
-            <span class="pill pill-soft" id="detailStatus">qualified</span>
-          </div>
-
+          <div class="panel-header"><div><p class="panel-eyebrow">Selected Lead Detail</p><h2 id="detailCompany">No lead selected</h2></div><span class="pill pill-soft" id="detailStatus">review_needed</span></div>
           <dl class="detail-matrix">
-            <div>
-              <dt>Website</dt>
-              <dd><a id="detailWebsite" href="#" target="_blank" rel="noreferrer">dentalsmileslondon.co.uk</a></dd>
-            </div>
-            <div>
-              <dt>Location</dt>
-              <dd id="detailLocation">London, United Kingdom</dd>
-            </div>
-            <div>
-              <dt>Primary Problem</dt>
-              <dd id="detailPrimaryProblem">Weak local SEO execution</dd>
-            </div>
-            <div>
-              <dt>Recommended Offer</dt>
-              <dd id="detailOffer">Local SEO audit</dd>
-            </div>
+            <div><dt>Website</dt><dd><a id="detailWebsite" href="#" target="_blank" rel="noreferrer">-</a></dd></div>
+            <div><dt>Location</dt><dd id="detailLocation">-</dd></div>
+            <div><dt>Primary Problem</dt><dd id="detailPrimaryProblem">-</dd></div>
+            <div><dt>Recommended Offer</dt><dd id="detailOffer">-</dd></div>
           </dl>
-
           <div class="detail-score-grid">
-            <article class="detail-score-card">
-              <span>SEO Need</span>
-              <strong id="detailSeoScore">0</strong>
-            </article>
-            <article class="detail-score-card">
-              <span>Overall Score</span>
-              <strong id="detailOverallScore">0</strong>
-            </article>
-            <article class="detail-score-card">
-              <span>Commercial Fit</span>
-              <strong id="detailCommercialFit">0</strong>
-            </article>
-            <article class="detail-score-card">
-              <span>Contact Confidence</span>
-              <strong id="detailContactConfidence">0</strong>
-            </article>
+            <article class="detail-score-card"><span>SEO Need</span><strong id="detailSeoScore">0</strong></article>
+            <article class="detail-score-card"><span>Overall Score</span><strong id="detailOverallScore">0</strong></article>
+            <article class="detail-score-card"><span>Commercial Fit</span><strong id="detailCommercialFit">0</strong></article>
+            <article class="detail-score-card"><span>Contact Confidence</span><strong id="detailContactConfidence">0</strong></article>
           </div>
-
           <div class="detail-chip-row">
             <span class="detail-chip" id="detailOutreachReadiness">Needs review</span>
             <span class="detail-chip" id="detailPaidAds">Paid ads: unknown</span>
             <span class="detail-chip" id="detailSecondaryProblem">Secondary issue not set</span>
           </div>
-
           <div class="detail-copy-grid">
-            <div>
-              <h3>Why this lead matters</h3>
-              <p id="detailReason">Strong local business fit, visible SEO weaknesses, and usable contact signals make this list entry outreach-ready.</p>
-            </div>
-            <div>
-              <h3>Outreach angle</h3>
-              <p id="detailAngle">Lead with missed service-page coverage and local ranking opportunity.</p>
-            </div>
-            <div>
-              <h3>Client value hypothesis</h3>
-              <p id="detailValue">A focused local SEO rebuild should convert existing paid demand into more cost-efficient organic leads.</p>
-            </div>
-            <div>
-              <h3>First-line personalization</h3>
-              <p id="detailPersonalization">Noticed the practice has strong local intent but thin treatment pages that likely cap organic visibility.</p>
-            </div>
+            <div><h3>Why this lead matters</h3><p id="detailReason">No qualification reason yet.</p></div>
+            <div><h3>Outreach angle</h3><p id="detailAngle">No outreach angle yet.</p></div>
+            <div><h3>Client value hypothesis</h3><p id="detailValue">No value hypothesis yet.</p></div>
+            <div><h3>First-line personalization</h3><p id="detailPersonalization">No personalization yet.</p></div>
           </div>
-
           <div class="detail-contact-grid">
-            <div class="detail-contact-card">
-              <h3>Decision Maker Snapshot</h3>
-              <p id="detailDecisionMaker">No named contact yet</p>
-              <small id="detailDecisionRole">Needs contact enrichment</small>
-            </div>
-            <div class="detail-contact-card">
-              <h3>Best Contact Path</h3>
-              <p id="detailContactLine">No direct contact captured</p>
-              <small id="detailContactChannel">Recommended channel not set</small>
-            </div>
+            <div class="detail-contact-card"><h3>Decision Maker Snapshot</h3><p id="detailDecisionMaker">No named contact yet</p><small id="detailDecisionRole">Needs contact enrichment</small></div>
+            <div class="detail-contact-card"><h3>Best Contact Path</h3><p id="detailContactLine">No direct contact captured</p><small id="detailContactChannel">Recommended channel not set</small></div>
           </div>
-
           <div class="detail-action-grid">
-            <div class="detail-action-card">
-              <h3>Next Best Action</h3>
-              <p id="detailNextAction">Review contact path and choose the cleanest outreach angle.</p>
-            </div>
-            <div class="detail-action-card">
-              <h3>Lead Risk</h3>
-              <p id="detailRiskNote">No major risk recorded yet.</p>
-            </div>
+            <div class="detail-action-card"><h3>Next Best Action</h3><p id="detailNextAction">Review the selected lead.</p></div>
+            <div class="detail-action-card"><h3>Lead Risk</h3><p id="detailRiskNote">No major risk recorded yet.</p></div>
           </div>
-
           <div class="detail-bottom-grid">
-            <div class="detail-list-card">
-              <h3>Signal Checklist</h3>
-              <ul class="detail-bullet-list" id="detailSignalList">
-                <li>Waiting for lead data</li>
-              </ul>
-            </div>
-            <div class="detail-list-card">
-              <h3>Outreach Playbook</h3>
-              <ul class="detail-bullet-list" id="detailPlaybookList">
-                <li>Choose a lead to generate recommendations.</li>
-              </ul>
-            </div>
+            <div class="detail-list-card"><h3>Signal Checklist</h3><ul class="detail-bullet-list" id="detailSignalList"><li>Review SEO weakness signals.</li></ul></div>
+            <div class="detail-list-card"><h3>Outreach Playbook</h3><ul class="detail-bullet-list" id="detailPlaybookList"><li>Choose a lead to generate recommendations.</li></ul></div>
           </div>
         </article>
-
         <article class="panel panel-compact">
-          <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Current Context</p>
-              <h2 id="exportTargetList">No selected list</h2>
-            </div>
-          </div>
-          <div class="export-summary-card export-summary-card-inline">
-            <span class="workspace-label">Current Export Scope</span>
-            <strong id="exportTargetListMirror">No selected list</strong>
-            <small id="exportTargetMeta">0 visible leads ready for export.</small>
-          </div>
-          <div class="panel-actions top-space">
-            <a class="button ghost small" href="../leads/">Back to Leads Workspace</a>
-          </div>
+          <div class="panel-header"><div><p class="panel-eyebrow">Current Context</p><h2 id="exportTargetList">No selected list</h2></div></div>
+          <div class="export-summary-card export-summary-card-inline"><span class="workspace-label">Current Export Scope</span><strong id="exportTargetListMirror">No selected list</strong><small id="exportTargetMeta">0 visible leads ready for export.</small></div>
+          <div class="panel-actions top-space"><a class="button ghost small" href="../leads/">Back to Leads Workspace</a></div>
         </article>
       </section>
     </main>
   </div>
-
-  <script src="../assets/auth.js?v=20260424-auth2"></script>
-  <script src="../assets/dashboard.js?v=20260424-debug1"></script>
+  <script src="../assets/auth.js"></script>
+  <script src="../assets/app.js"></script>
 </body>
 </html>

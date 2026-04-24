@@ -1,0 +1,1925 @@
+{
+  "name": "SEO Agency Lead Intelligence MVP",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a365199f-529f-42bf-ae35-31915d22321f",
+      "name": "Manual Trigger - Run SEO Lead Jobs",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        19680,
+        13216
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "d03b0908-0e39-476f-8781-361fe0a89f3f",
+      "name": "Schedule Trigger - Weekdays",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        19680,
+        13376
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "searches",
+          "mode": "name",
+          "cachedResultName": "searches"
+        },
+        "options": {}
+      },
+      "id": "9abb2c9f-223c-45c7-85e4-c042b58cc106",
+      "name": "Google Sheets - Read Searches",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        19936,
+        13216
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "raw_prospects",
+          "mode": "name",
+          "cachedResultName": "raw_prospects"
+        },
+        "options": {}
+      },
+      "id": "e5c2d9fe-6aa9-457b-82ef-34ad0f67a2b6",
+      "name": "Google Sheets - Read Existing Raw Prospects",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        19936,
+        13376
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(item => item.json || {});\nconst keys = [];\n\nfor (const row of rows) {\n  const domain = String(row.domain || row.root_domain || '').trim().toLowerCase();\n  const placeDetail = String(row.place_detail_url || row.source_url || '').trim();\n  const duplicateKey = String(row.duplicate_group_key || '').trim().toLowerCase();\n  const companyCity = `${String(row.company_name || '').toLowerCase().trim()}|${String(row.city || '').toLowerCase().trim()}`;\n\n  if (domain) keys.push(domain);\n  if (placeDetail) keys.push(placeDetail);\n  if (duplicateKey) keys.push(duplicateKey);\n  if (companyCity !== '|') keys.push(companyCity);\n}\n\nreturn [{\n  json: {\n    existing_keys_csv: [...new Set(keys)].join('\\n'),\n    existing_key_count: [...new Set(keys)].length\n  }\n}];"
+      },
+      "id": "b9a0c92d-7606-4763-addf-94884a25746f",
+      "name": "Code - Snapshot Existing Raw Prospect Keys",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20176,
+        13376
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function slugify(value) {\n  return String(value || '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '_')\n    .replace(/^_+|_+$/g, '')\n    .slice(0, 60);\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const row = item.json || {};\n  const status = String(row.status || '').trim().toLowerCase();\n  if (!['active', 'queued', 'running', 'draft'].includes(status)) continue;\n\n  const niche = String(row.niche || '').trim();\n  const city = String(row.city || '').trim();\n  const country = String(row.country || '').trim();\n  const businessType = String(row.business_type || '').trim();\n  const primaryKeyword = String(row.primary_keyword || row.target_keywords || niche).trim();\n  const secondaryKeywords = String(row.secondary_keywords || row.include_keywords || '')\n    .split(',')\n    .map(value => value.trim())\n    .filter(Boolean);\n\n  if (!niche || !city || !country) continue;\n\n  const searchId = String(row.search_id || '').trim() || `srch_${slugify(`${niche}_${city}_${country}`)}_${Date.now()}`;\n  output.push({\n    json: {\n      search_id: searchId,\n      user_id: row.user_id || 'usr_mvp',\n      search_name: row.search_name || `${niche} in ${city}`,\n      niche,\n      city,\n      country,\n      business_type: businessType || niche,\n      primary_keyword: primaryKeyword,\n      secondary_keywords: secondaryKeywords,\n      max_results_requested: Number(row.max_results_requested || 20),\n      discovery_query_limit: Math.max(1, Math.min(Number(row.discovery_query_limit || 2), 3)),\n      discovery_page_limit: Math.max(1, Math.min(Number(row.discovery_page_limit || 1), 3)),\n      min_audit_score: Number(row.min_audit_score || 55),\n      min_lead_score: Number(row.min_lead_score || 70),\n      status: 'running',\n      created_at: row.created_at || new Date().toISOString(),\n      updated_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn output;"
+      },
+      "id": "656ecfb2-4051-4ccc-96d0-5e5569ddb59b",
+      "name": "Code - Prepare Active Searches",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20176,
+        13216
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.flatMap((entry) => {\nconst source = entry.json || {};\nconst unique = [];\nconst seen = new Set();\n\nfunction cleanKeyword(value, city, country) {\n  const text = String(value || '').trim();\n  if (!text) return '';\n  const cityEscaped = String(city || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  const countryEscaped = String(country || '').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n  return text\n    .replace(new RegExp(`\\\\b${cityEscaped}\\\\b`, 'ig'), '')\n    .replace(new RegExp(`\\\\b${countryEscaped}\\\\b`, 'ig'), '')\n    .replace(/\\bin\\b/ig, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nconst secondaryKeywords = Array.isArray(source.secondary_keywords)\n  ? source.secondary_keywords\n  : String(source.secondary_keywords || '').split(',').map(v => v.trim()).filter(Boolean);\nconst primaryBase = cleanKeyword(source.primary_keyword, source.city, source.country) || source.niche;\nconst secondaryBases = secondaryKeywords\n  .map(keyword => cleanKeyword(keyword, source.city, source.country))\n  .filter(Boolean);\n\nconst candidates = [\n  `${primaryBase} ${source.city}`,\n  `${source.business_type} ${source.city}`,\n  ...secondaryBases.map(keyword => `${keyword} ${source.city}`)\n];\n\nfor (const query of candidates) {\n  const normalized = String(query || '').trim().toLowerCase();\n  if (!normalized || seen.has(normalized)) continue;\n  seen.add(normalized);\n  unique.push(query.trim());\n  if (unique.length >= Number(source.discovery_query_limit || 2)) break;\n}\n\nconst pageLimit = Math.max(1, Math.min(Number(source.discovery_page_limit || 1), 3));\nconst pageStarts = Array.from({ length: pageLimit }, (_, index) => index * 20);\n\nreturn unique.flatMap((query, index) => pageStarts.map((pageStart, pageIndex) => ({\n  json: {\n    ...source,\n    serp_query: query,\n    local_query: cleanKeyword(query, source.city, source.country) || source.niche,\n    serp_index: index + 1,\n    page_index: pageIndex + 1,\n    page_start: pageStart\n  }\n})));\n});"
+      },
+      "id": "a0991c60-ca51-411b-83c5-9b7355e6aaa6",
+      "name": "Code - Build SERP Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20416,
+        13216
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "engine",
+              "value": "google_maps"
+            },
+            {
+              "name": "q",
+              "value": "={{ [$json.local_query || $json.serp_query, $json.city, $json.country].filter(Boolean).join(', ') }}"
+            },
+            {
+              "name": "type",
+              "value": "search"
+            },
+            {
+              "name": "hl",
+              "value": "en"
+            },
+            {
+              "name": "start",
+              "value": "={{ $json.page_start || 0 }}"
+            },
+            {
+              "name": "api_key",
+              "value": "REPLACE_WITH_SERPAPI_KEY"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "8ffc1e21-6e16-409e-917d-59a92e2b5a3d",
+      "name": "HTTP - SERP Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        20656,
+        13216
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeUrl(value) {\n  const url = String(value || '').trim();\n  if (!url) return null;\n  if (/^https?:\\/\\//i.test(url)) return url;\n  return `https://${url}`;\n}\n\nfunction domainFromUrl(value) {\n  try {\n    return new URL(normalizeUrl(value)).hostname.replace(/^www\\./i, '').toLowerCase();\n  } catch (error) {\n    return null;\n  }\n}\n\nreturn items.flatMap((entry) => {\nconst source = entry.json || {};\nconst response = entry.json || {};\nconst local = Array.isArray(response.local_results) ? response.local_results : [];\nconst places = Array.isArray(response.places_results) ? response.places_results : [];\nconst rows = [];\nconst blockedDomains = ['google.com', 'google.co.uk', 'google.de', 'maps.google.com'];\n\nfunction websiteFromResult(result) {\n  return normalizeUrl(\n    result?.links?.website\n    || result?.website\n    || result?.link\n    || result?.place_id_search\n    || ''\n  );\n}\n\nfunction titleFromResult(result) {\n  return result?.title || result?.name || null;\n}\n\nfunction snippetFromResult(result) {\n  return [result?.type, result?.address, result?.phone, result?.hours]\n    .filter(Boolean)\n    .join(' | ') || result?.description || null;\n}\n\nconst candidates = [...local, ...places];\n\nfor (const result of candidates) {\n  const websiteUrl = websiteFromResult(result);\n  const placeDetailUrl = normalizeUrl(result?.place_id_search || result?.serpapi_link || '');\n  const domain = domainFromUrl(websiteUrl);\n  if (!websiteUrl && !placeDetailUrl) continue;\n  if (domain && blockedDomains.includes(domain)) continue;\n  rows.push({\n    company_name: titleFromResult(result) || domain,\n    website_url: websiteUrl || '',\n    domain: domain || '',\n    root_domain: domain || '',\n    city: source.city,\n    country: source.country,\n    niche: source.niche,\n    business_type: source.business_type,\n    search_id: source.search_id,\n    user_id: source.user_id,\n    source_type: 'google_maps',\n    source_query: source.local_query || source.serp_query,\n    source_url: result.place_id_search || websiteUrl,\n    source_title: titleFromResult(result),\n    source_snippet: snippetFromResult(result),\n    discovery_confidence: websiteUrl ? 0.85 : 0.65,\n    place_detail_url: placeDetailUrl || '',\n    place_phone: result?.phone || '',\n    place_address: result?.address || '',\n    place_type: result?.type || ''\n  });\n}\n\nif (!rows.length) {\n  return [{\n    json: {\n      search_id: source.search_id,\n      user_id: source.user_id,\n      niche: source.niche,\n      city: source.city,\n      country: source.country,\n      business_type: source.business_type,\n      source_type: 'google_maps_empty',\n      source_query: source.local_query || source.serp_query,\n      source_url: response.search_metadata?.json_endpoint || null,\n      source_title: null,\n      source_snippet: JSON.stringify({\n        available_top_level_keys: Object.keys(response || {}).slice(0, 20),\n        local_results_count: local.length,\n        places_results_count: places.length,\n        search_information: response.search_information || null\n      }),\n      no_candidates_found: true\n    }\n  }];\n}\n\nreturn rows.map(row => ({ json: row }));\n});"
+      },
+      "id": "bd8282b2-fe8a-4844-8012-585ea620d486",
+      "name": "Code - Extract Candidate Prospects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20896,
+        13216
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "b961cf30-b4b2-45e1-8be4-7d6c4cf3ca61",
+      "name": "Merge - Wait For Existing Raw Prospects",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        21152,
+        13376
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeUrl(value) {\n  const url = String(value || '').trim();\n  if (!url) return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  return `https://${url}`;\n}\n\nfunction domainFromUrl(value) {\n  try {\n    return new URL(normalizeUrl(value)).hostname.replace(/^www\\./i, '').toLowerCase();\n  } catch (error) {\n    return '';\n  }\n}\n\nfunction slugify(value) {\n  return String(value || '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '')\n    .slice(0, 40);\n}\n\nconst blockedDomains = [\n  'facebook.com', 'instagram.com', 'linkedin.com', 'youtube.com', 'x.com', 'twitter.com',\n  'yelp.com', 'tripadvisor.com', 'clutch.co', 'yellowpages.com', 'mapquest.com',\n  'angi.com', 'checkatrade.com', 'thumbtack.com', 'trustpilot.com', 'bbb.org'\n];\nconst existingSnapshot = $('Code - Snapshot Existing Raw Prospect Keys').first()?.json || {};\nconst existingKeys = new Set(\n  String(existingSnapshot.existing_keys_csv || '')\n    .split('\\n')\n    .map(value => value.trim().toLowerCase())\n    .filter(Boolean)\n);\n\nconst output = [];\nconst seen = new Set();\nlet sequence = 0;\n\nfor (const item of items) {\n  const row = item.json || {};\n  if (row.no_candidates_found) {\n    output.push({\n      json: {\n        prospect_id: `pros_empty_${Date.now()}_${Math.floor(Math.random() * 100000)}`,\n        search_id: row.search_id,\n        user_id: row.user_id,\n        created_at: new Date().toISOString(),\n        updated_at: new Date().toISOString(),\n        status: 'rejected',\n        company_name: '',\n        normalized_company_name: '',\n        website_url: '',\n        domain: '',\n        root_domain: '',\n        city: row.city || '',\n        country: row.country || '',\n        niche: row.niche || '',\n        business_type: row.business_type || '',\n      source_type: row.source_type || 'serp_empty',\n      source_query: row.source_query || '',\n      source_url: row.source_url || '',\n      place_detail_url: row.place_detail_url || '',\n      place_phone: row.place_phone || '',\n      place_address: row.place_address || '',\n      place_type: row.place_type || '',\n      website_status: 'not_found',\n      operational_status: 'unknown',\n      duplicate_group_key: '',\n        discovery_confidence: 0,\n        discovery_notes: row.source_snippet || 'No extractable SERP candidates found',\n        discovered_at: new Date().toISOString(),\n        skip_audit: true\n      }\n    });\n    continue;\n  }\n\n  const websiteUrl = String(row.website_url || '').trim();\n  const derivedDomain = domainFromUrl(websiteUrl);\n  const domain = String(row.domain || derivedDomain || '').toLowerCase();\n  const rootDomain = String(row.root_domain || domain || '').toLowerCase();\n  const placeDetailUrl = String(row.place_detail_url || '').trim();\n  const uniqueKey = domain || placeDetailUrl || `${String(row.company_name || '').toLowerCase()}|${String(row.city || '').toLowerCase()}`;\n  if (!uniqueKey) continue;\n  if (domain && blockedDomains.some(blocked => domain === blocked || domain.endsWith(`.${blocked}`))) continue;\n  if (seen.has(uniqueKey)) continue;\n  if (existingKeys.has(uniqueKey)) continue;\n  if (domain && existingKeys.has(domain)) continue;\n  if (placeDetailUrl && existingKeys.has(placeDetailUrl)) continue;\n  seen.add(uniqueKey);\n  sequence += 1;\n\n  const prospectKey = slugify(domain || placeDetailUrl || row.company_name || `prospect${sequence}`) || `prospect${sequence}`;\n\n  output.push({\n    json: {\n      prospect_id: `pros_${prospectKey}_${Date.now()}_${sequence}`,\n      search_id: row.search_id,\n      user_id: row.user_id,\n      created_at: new Date().toISOString(),\n      updated_at: new Date().toISOString(),\n      status: websiteUrl ? 'valid' : 'needs_place_detail',\n      company_name: row.company_name,\n      normalized_company_name: String(row.company_name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(),\n      website_url: websiteUrl,\n      domain,\n      root_domain: rootDomain,\n      city: row.city,\n      country: row.country,\n      niche: row.niche,\n      business_type: row.business_type,\n      source_type: row.source_type,\n      source_query: row.source_query,\n      source_url: row.source_url,\n      place_detail_url: placeDetailUrl,\n      place_phone: row.place_phone || '',\n      place_address: row.place_address || '',\n      place_type: row.place_type || '',\n      website_status: websiteUrl ? 'pending_fetch' : 'pending_place_detail',\n      operational_status: 'unknown',\n      duplicate_group_key: uniqueKey,\n      discovery_confidence: row.discovery_confidence,\n      discovery_notes: row.source_snippet || '',\n      discovered_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn output;"
+      },
+      "id": "6fe292a5-d427-467a-a4f2-f2698811a487",
+      "name": "Code - Filter Directories and Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        21264,
+        13216
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const row = item.json || {};\n  if (row.skip_audit) return false;\n  return Boolean(String(row.website_url || '').trim() || String(row.place_detail_url || '').trim());\n});"
+      },
+      "id": "3bf96935-2bc2-4ea8-aa4e-dc2d4e3b27c4",
+      "name": "Code - Fan Out Valid Prospects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        21696,
+        13264
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.place_detail_url }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "34f0b853-b515-4e73-ba7e-6e4dc8cdbae1",
+      "name": "IF - Has Place Detail URL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        21744,
+        13392
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeUrl(value) {\n  const url = String(value || '').trim();\n  if (!url) return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  return `https://${url}`;\n}\n\nfunction domainFromUrl(value) {\n  try {\n    return new URL(normalizeUrl(value)).hostname.replace(/^www\\./i, '').toLowerCase();\n  } catch (error) {\n    return '';\n  }\n}\n\nreturn items.map(item => {\n  const row = item.json || {};\n  const websiteUrl = String(row.website_url || '').trim();\n  const domain = String(row.domain || domainFromUrl(websiteUrl) || '').toLowerCase();\n  const rootDomain = String(row.root_domain || domain || '').toLowerCase();\n\n  return {\n    json: {\n      ...row,\n      website_url: websiteUrl,\n      domain,\n      root_domain: rootDomain,\n      duplicate_group_key: row.duplicate_group_key || domain || row.place_detail_url || ''\n    }\n  };\n});"
+      },
+      "id": "c0edf0a6-d76e-469a-9736-2bbce2a7fda2",
+      "name": "Code - Normalize Raw Prospect For Storage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        21616,
+        13072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "raw_prospects",
+          "mode": "name",
+          "cachedResultName": "raw_prospects"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "prospect_id",
+              "displayName": "prospect_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "search_id",
+              "displayName": "search_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "normalized_company_name",
+              "displayName": "normalized_company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website_url",
+              "displayName": "website_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "root_domain",
+              "displayName": "root_domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "business_type",
+              "displayName": "business_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_type",
+              "displayName": "source_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_query",
+              "displayName": "source_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_detail_url",
+              "displayName": "place_detail_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_phone",
+              "displayName": "place_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_address",
+              "displayName": "place_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "place_type",
+              "displayName": "place_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website_status",
+              "displayName": "website_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "operational_status",
+              "displayName": "operational_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "duplicate_group_key",
+              "displayName": "duplicate_group_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "discovery_confidence",
+              "displayName": "discovery_confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "discovery_notes",
+              "displayName": "discovery_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "discovered_at",
+              "displayName": "discovered_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "skip_audit",
+              "displayName": "skip_audit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "4a11d066-93cd-49cb-95ec-ee0ac57b6644",
+      "name": "Google Sheets - Append Raw Prospects",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        21888,
+        12928
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.place_detail_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 18000
+        }
+      },
+      "id": "9841c8fb-9833-4cab-b33d-9989e2a1def3",
+      "name": "HTTP - Fetch Place Detail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        21888,
+        13136
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeUrl(value) {\n  const url = String(value || '').trim();\n  if (!url) return null;\n  if (/^https?:\\/\\//i.test(url)) return url;\n  return `https://${url}`;\n}\n\nfunction domainFromUrl(value) {\n  try {\n    return new URL(normalizeUrl(value)).hostname.replace(/^www\\./i, '').toLowerCase();\n  } catch (error) {\n    return '';\n  }\n}\n\nreturn items.map((entry, index) => {\n  const source = $('Code - Fan Out Valid Prospects').all()[index]?.json || {};\n  const response = entry.json || {};\n  const place = response.place_results || (Array.isArray(response.local_results) ? response.local_results[0] : null) || {};\n  const websiteUrl = normalizeUrl(place?.links?.website || place?.website || source.website_url || '');\n  const domain = domainFromUrl(websiteUrl);\n  const rootDomain = domain || String(source.root_domain || source.domain || '').toLowerCase();\n\n  return {\n    json: {\n      ...source,\n      website_url: websiteUrl || source.website_url || '',\n      domain: domain || source.domain || '',\n      root_domain: rootDomain,\n      website_status: websiteUrl ? 'pending_fetch' : 'not_found',\n      discovery_confidence: websiteUrl ? Math.max(Number(source.discovery_confidence || 0), 0.8) : source.discovery_confidence,\n      discovery_notes: websiteUrl\n        ? [source.discovery_notes, 'Website hydrated from place detail'].filter(Boolean).join(' | ')\n        : [source.discovery_notes, 'Place detail fetched but no website found'].filter(Boolean).join(' | '),\n      skip_audit: !websiteUrl\n    }\n  };\n});"
+      },
+      "id": "ee59c992-a9e1-4c30-9edc-5314d1a9a11f",
+      "name": "Code - Hydrate Website From Place Detail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        22144,
+        13136
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeUrl(value) {\n  const url = String(value || '').trim();\n  if (!url) return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  return `https://${url}`;\n}\n\nreturn items.map((entry) => {\n  const row = entry.json || {};\n  const websiteUrl = normalizeUrl(row.website_url || '');\n  let auditTargetUrl = websiteUrl;\n\n  try {\n    if (websiteUrl) {\n      const parsed = new URL(websiteUrl);\n      auditTargetUrl = `${parsed.protocol}//${parsed.hostname}/`;\n    }\n  } catch (error) {\n    auditTargetUrl = websiteUrl;\n  }\n\n  return {\n    json: {\n      ...row,\n      audit_target_url: auditTargetUrl,\n      original_website_url: websiteUrl,\n      has_auditable_url: Boolean(auditTargetUrl)\n    }\n  };\n});"
+      },
+      "id": "ff508e0a-ce68-405f-8a84-1b7d08dbf1eb",
+      "name": "Code - Resolve Audit Target URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        22144,
+        13296
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.audit_target_url }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "cb1b9052-a818-43cc-8994-d92b7356811a",
+      "name": "IF - Has Audit URL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        22288,
+        13296
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.audit_target_url || $json.website_url || '' }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 18000
+        }
+      },
+      "id": "b8fae27d-7f57-4bcb-ae3a-5f37246a2486",
+      "name": "HTTP - Fetch Website Homepage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        22400,
+        13296
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function stripHtml(html) {\n  return String(html || '')\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n    .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\nfunction extractMatch(html, regex) { const match = String(html || '').match(regex); return match ? String(match[1] || '').trim() : null; }\nfunction normalizeUrl(value, base) { const raw = String(value || '').trim(); if (!raw) return null; try { return new URL(raw, base).toString(); } catch (error) { return null; } }\nfunction unique(values) { return [...new Set(values.filter(Boolean))]; }\nreturn items.map((entry) => { const source = entry.json || {}; const html = String(source.html_compact || '').slice(0, 120000); const lowered = html.toLowerCase(); const plainText = stripHtml(html).slice(0, 12000); const title = extractMatch(html, /<title[^>]*>([\\s\\S]*?)<\\/title>/i); const metaDescription = extractMatch(html, /<meta[^>]+name=[\"']description[\"'][^>]+content=[\"']([\\s\\S]*?)[\"']/i) || extractMatch(html, /<meta[^>]+content=[\"']([\\s\\S]*?)[\"'][^>]+name=[\"']description[\"']/i); const h1Matches = [...html.matchAll(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/gi)].map(match => stripHtml(match[1])).filter(Boolean); const hrefMatches = [...html.matchAll(/href=[\"']([^\"'#]+)[\"']/gi)].map(match => match[1]).slice(0, 200); const serviceSignals = hrefMatches.filter(link => /(service|practice|solutions?|what-we-do|treatments?)/i.test(link)).slice(0, 10); const locationSignals = hrefMatches.filter(link => /(locations?|areas?-served|city|local|find-us)/i.test(link)).slice(0, 10); const blogSignals = hrefMatches.filter(link => /(blog|insights|news|articles?|resources)/i.test(link)).slice(0, 10); const contactSignals = hrefMatches.filter(link => /(contact|about|team|staff)/i.test(link)).slice(0, 10); const absoluteContactSignals = contactSignals.map(link => normalizeUrl(link, source.website_url)).filter(Boolean); const homepageEmails = unique((html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi) || []).map(email => email.toLowerCase()).filter(email => !/\\.(png|jpg|jpeg|gif|svg|webp)$/i.test(email))).slice(0, 5); const homepagePhones = unique((plainText.match(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g) || []).map(phone => phone.replace(/\\s+/g, ' ').trim()).slice(0, 5)); const linkedinSignals = unique(hrefMatches.map(link => normalizeUrl(link, source.website_url)).filter(link => /linkedin\\.com/i.test(String(link || '')))).slice(0, 5); const titleLength = title ? title.length : 0; const metaLength = metaDescription ? metaDescription.length : 0; const wordCount = plainText ? plainText.split(/\\s+/).filter(Boolean).length : 0; const localTerms = [source.city, source.country, source.niche].filter(Boolean).map(value => String(value).toLowerCase()); const localMentions = localTerms.filter(term => lowered.includes(term)).length; const paidAdsSignals = []; if (/googleadservices\\.com|gclid=|utm_medium=ppc|utm_source=googleads|doubleclick\\.net/i.test(lowered)) paidAdsSignals.push('tracking_script_or_click_id'); if (/(book now|schedule appointment|free consultation|call now|get quote|request estimate)/i.test(plainText)) paidAdsSignals.push('high_intent_cta_copy'); if (/(ppc|paid search|google ads|adwords|bing ads)/i.test(plainText)) paidAdsSignals.push('ads_language_on_page'); const paidAdsDetected = paidAdsSignals.length > 0; const paidAdsFitScore = paidAdsDetected ? min(100, 45 + (paidAdsSignals.length * 15)) : 0; function min(a,b){return a<b?a:b;} return { json: { ...source, html_compact: undefined, website_accessible: wordCount > 120, http_status: wordCount > 120 ? 200 : 0, final_url: source.audit_target_url || source.website_url, homepage_title: title, homepage_title_length: titleLength, homepage_meta_description: metaDescription, homepage_meta_length: metaLength, h1_count: h1Matches.length, h1_text: h1Matches.slice(0, 3).join(' | '), text_word_count: wordCount, has_blog: blogSignals.length > 0, has_service_pages: serviceSignals.length > 0, has_location_pages: locationSignals.length > 0, has_contact_or_team_pages: contactSignals.length > 0, local_mentions: localMentions, service_links: serviceSignals.join(','), location_links: locationSignals.join(','), blog_links: blogSignals.join(','), contact_page_candidate: absoluteContactSignals[0] || null, homepage_emails: homepageEmails.join(','), homepage_primary_email: homepageEmails[0] || null, homepage_phones: homepagePhones.join(','), homepage_primary_phone: homepagePhones[0] || null, linkedin_signals: linkedinSignals.join(','), page_text_excerpt: plainText.slice(0, 1600), website_status: wordCount > 120 ? 'accessible' : 'not_accessible', operational_status: wordCount > 120 ? 'likely_active' : 'unclear', paid_ads_detected: paidAdsDetected, paid_ads_evidence: paidAdsSignals.join(',') || null, paid_ads_fit_score: paidAdsFitScore, updated_at: new Date().toISOString() } }; });"
+      },
+      "id": "d41148bb-ceb4-4d31-a817-ca0f034bb520",
+      "name": "Code - Extract SEO Site Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        22624,
+        13136
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"model\": \"gpt-4.1-mini\",\n  \"input\": \"You are auditing whether a local business likely needs SEO help. Return only valid JSON. Be conservative and evidence-based. Do not invent traffic or rankings. If paid ads signals exist, treat them as a commercial-budget signal rather than proof of SEO success. Output schema: {\\\"blog_quality\\\":\\\"none|weak|average|strong\\\",\\\"service_page_quality\\\":\\\"none|weak|average|strong\\\",\\\"location_page_quality\\\":\\\"none|weak|average|strong\\\",\\\"title_tag_quality\\\":\\\"poor|weak|adequate|strong\\\",\\\"meta_description_quality\\\":\\\"poor|weak|adequate|strong\\\",\\\"heading_structure_quality\\\":\\\"poor|weak|adequate|strong\\\",\\\"internal_structure_quality\\\":\\\"poor|weak|adequate|strong\\\",\\\"local_seo_quality\\\":\\\"poor|weak|adequate|strong\\\",\\\"content_depth_score\\\":0,\\\"missed_opportunity_score\\\":0,\\\"inbound_dependency_score\\\":0,\\\"seo_need_score\\\":0,\\\"seo_need_confidence\\\":0,\\\"seo_need_reasons\\\":[\\\"reason 1\\\"],\\\"audit_summary\\\":\\\"summary\\\",\\\"recommended_outreach_angle\\\":\\\"angle\\\",\\\"commercial_fit_score\\\":0,\\\"paid_ads_detected\\\":false,\\\"paid_ads_evidence\\\":null,\\\"paid_ads_fit_score\\\":0}. Data: \" + JSON.stringify($json)\n}\n}}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "3a7f9598-8642-41cc-be6c-1fa05398d855",
+      "name": "LLM - Evaluate SEO Need",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        22288,
+        13360
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function getResponseText(response) {\n  if (response.output_text) return response.output_text;\n  const output = Array.isArray(response.output) ? response.output : [];\n  const parts = [];\n  for (const item of output) {\n    for (const part of item.content || []) {\n      if (typeof part.text === 'string') parts.push(part.text);\n    }\n  }\n  return parts.join('\\n').trim();\n}\n\nfunction parseJson(text) {\n  const cleaned = String(text || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();\n  const candidates = [\n    cleaned,\n    (cleaned.match(/\\{[\\s\\S]*\\}/) || [])[0] || '',\n    cleaned.replace(/[\\u201C\\u201D]/g, '\"').replace(/[\\u2018\\u2019]/g, \"'\"),\n    cleaned\n      .replace(/\\\\(?![\"\\\\\\/bfnrtu])/g, '\\\\\\\\')\n      .replace(/[\\u201C\\u201D]/g, '\"')\n      .replace(/[\\u2018\\u2019]/g, \"'\"),\n  ].filter(Boolean);\n\n  for (const candidate of candidates) {\n    try {\n      return JSON.parse(candidate);\n    } catch (error) {\n      continue;\n    }\n  }\n\n  return {};\n}\n\nfunction normalizeScore(value) {\n  const num = Number(value || 0);\n  if (!Number.isFinite(num) || num <= 0) return 0;\n  if (num <= 1) return Math.round(num * 100);\n  if (num <= 10) return Math.round(num * 10);\n  return Math.max(0, Math.min(100, Math.round(num)));\n}\n\nreturn items.map((entry, index) => {\n  const source = $('Code - Extract SEO Site Signals').all()[index]?.json || {};\n  const parsed = parseJson(getResponseText(entry.json || {}));\n  const paidAdsDetected = typeof parsed.paid_ads_detected === 'boolean'\n    ? parsed.paid_ads_detected\n    : Boolean(source.paid_ads_detected);\n  const paidAdsEvidence = parsed.paid_ads_evidence || source.paid_ads_evidence || null;\n  const paidAdsFitScore = normalizeScore(parsed.paid_ads_fit_score || source.paid_ads_fit_score || 0);\n\n  return {\n    json: {\n      audit_id: `aud_${Date.now()}_${Math.floor(Math.random() * 100000)}_${index + 1}`,\n      prospect_id: source.prospect_id,\n      search_id: source.search_id,\n      user_id: source.user_id,\n      created_at: new Date().toISOString(),\n      updated_at: new Date().toISOString(),\n      status: source.website_accessible ? 'completed' : 'failed',\n      website_accessible: source.website_accessible,\n      http_status: source.http_status,\n      final_url: source.final_url,\n      pages_checked: 1,\n      has_blog: source.has_blog,\n      blog_quality: parsed.blog_quality || (source.has_blog ? 'weak' : 'none'),\n      has_service_pages: source.has_service_pages,\n      service_page_quality: parsed.service_page_quality || (source.has_service_pages ? 'weak' : 'none'),\n      has_location_pages: source.has_location_pages,\n      location_page_quality: parsed.location_page_quality || (source.has_location_pages ? 'weak' : 'none'),\n      title_tag_quality: parsed.title_tag_quality || 'weak',\n      meta_description_quality: parsed.meta_description_quality || 'weak',\n      heading_structure_quality: parsed.heading_structure_quality || 'weak',\n      internal_structure_quality: parsed.internal_structure_quality || 'weak',\n      local_seo_quality: parsed.local_seo_quality || 'weak',\n      content_depth_score: normalizeScore(parsed.content_depth_score || 0),\n      missed_opportunity_score: normalizeScore(parsed.missed_opportunity_score || 0),\n      inbound_dependency_score: normalizeScore(parsed.inbound_dependency_score || 0),\n      seo_need_score: normalizeScore(parsed.seo_need_score || 0),\n      seo_need_confidence: normalizeScore(parsed.seo_need_confidence || 0),\n      seo_need_reasons: Array.isArray(parsed.seo_need_reasons) ? parsed.seo_need_reasons.join(' | ') : String(parsed.seo_need_reasons || ''),\n      audit_summary: parsed.audit_summary || null,\n      recommended_outreach_angle: parsed.recommended_outreach_angle || null,\n      commercial_fit_score: normalizeScore(parsed.commercial_fit_score || 0),\n      paid_ads_detected: paidAdsDetected,\n      paid_ads_evidence: paidAdsEvidence,\n      paid_ads_fit_score: paidAdsFitScore,\n      contact_page_candidate: source.contact_page_candidate || null,\n      homepage_emails: source.homepage_emails || '',\n      homepage_primary_email: source.homepage_primary_email || null,\n      homepage_phones: source.homepage_phones || '',\n      homepage_primary_phone: source.homepage_primary_phone || null,\n      linkedin_signals: source.linkedin_signals || '',\n      audited_at: new Date().toISOString(),\n      company_name: source.company_name,\n      website_url: source.website_url,\n      domain: source.domain,\n      niche: source.niche,\n      city: source.city,\n      country: source.country,\n      min_audit_score: source.min_audit_score || 55,\n      min_lead_score: source.min_lead_score || 70\n    }\n  };\n});"
+      },
+      "id": "7a49023a-e821-448c-8341-a2ba5ddd8f4b",
+      "name": "Code - Normalize SEO Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        23184,
+        13296
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "seo_audits",
+          "mode": "name",
+          "cachedResultName": "seo_audits"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "7e2b1756-0db0-48d9-8bd6-52c4f018f7e6",
+      "name": "Google Sheets - Append SEO Audits",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        23184,
+        13120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.website_accessible }}",
+              "value2": true
+            }
+          ],
+          "number": [
+            {
+              "value1": "={{ $json.seo_need_score }}",
+              "operation": "largerEqual",
+              "value2": 55
+            }
+          ]
+        }
+      },
+      "id": "fe358267-bb99-4abc-a1e8-845508fd23df",
+      "name": "IF - Worth Contact Enrichment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        23440,
+        13296
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function normalizeScore(value) {\n  const num = Number(value || 0);\n  if (!Number.isFinite(num) || num <= 0) return 0;\n  if (num <= 1) return Math.round(num * 100);\n  if (num <= 10) return Math.round(num * 10);\n  return Math.max(0, Math.min(100, Math.round(num)));\n}\n\nfunction tier(score) {\n  if (score >= 75) return 'high';\n  if (score >= 50) return 'medium';\n  return 'low';\n}\n\nreturn items.map((entry, index) => {\nconst audit = entry.json || {};\nconst leadId = `lead_${Date.now()}_${Math.floor(Math.random() * 100000)}_${index + 1}`;\nconst seoNeed = normalizeScore(audit.seo_need_score || 0);\nconst commercialFit = normalizeScore(audit.commercial_fit_score || 0);\nconst paidAdsFit = normalizeScore(audit.paid_ads_fit_score || 0);\nconst weightedScore = Math.round((seoNeed * 0.5) + (commercialFit * 0.3) + (paidAdsFit * 0.2));\n\nreturn {\n  json: {\n    lead_record: {\n      lead_id: leadId,\n      prospect_id: audit.prospect_id,\n      audit_id: audit.audit_id,\n      primary_contact_id: '',\n      search_id: audit.search_id,\n      user_id: audit.user_id,\n      created_at: new Date().toISOString(),\n      updated_at: new Date().toISOString(),\n      status: 'rejected',\n      qualification_status: 'rejected',\n      qualification_reason: 'Rejected before enrichment because SEO need or site quality did not meet threshold',\n      rejection_reason: audit.website_accessible ? 'SEO need score below threshold' : 'Website inaccessible or too weak to audit',\n      seo_need_score: seoNeed,\n      seo_need_tier: tier(seoNeed),\n      commercial_fit_score: commercialFit,\n      commercial_fit_tier: tier(commercialFit),\n      contact_confidence_score: 0,\n      contact_coverage: 'weak',\n      overall_lead_score: weightedScore,\n      outreach_readiness: 'not_ready',\n      lead_priority: 'low',\n      paid_ads_detected: Boolean(audit.paid_ads_detected),\n      paid_ads_fit_score: paidAdsFit,\n      primary_problem: 'seo_need_below_threshold',\n      secondary_problem: audit.website_accessible ? 'weak_commercial_fit' : 'website_not_accessible',\n      client_value_hypothesis: '',\n      recommended_offer: '',\n      recommended_channel: '',\n      outreach_angle: '',\n      first_line_personalization: '',\n      next_action: 'reject',\n      decision_maker_name: '',\n      decision_maker_role: '',\n      decision_maker_email: '',\n      decision_maker_phone: '',\n      company_name: audit.company_name,\n      website_url: audit.website_url,\n      domain: audit.domain,\n      niche: audit.niche,\n      city: audit.city,\n      country: audit.country,\n      exported_status: 'not_exported',\n      exported_at: '',\n      scored_at: new Date().toISOString()\n    },\n    log_record: {\n      log_id: `log_${Date.now()}_${Math.floor(Math.random() * 100000)}`,\n      created_at: new Date().toISOString(),\n      level: 'info',\n      entity_type: 'lead',\n      entity_id: leadId,\n      search_id: audit.search_id,\n      user_id: audit.user_id,\n      event_type: 'lead_rejected_before_enrichment',\n      event_status: 'rejected',\n      message: `${audit.company_name} rejected before contact enrichment`,\n      details_json: JSON.stringify({\n        seo_need_score: seoNeed,\n        commercial_fit_score: commercialFit,\n        paid_ads_detected: Boolean(audit.paid_ads_detected),\n        paid_ads_fit_score: paidAdsFit,\n        website_accessible: audit.website_accessible,\n        audit_summary: audit.audit_summary\n      })\n    }\n  }\n};\n});"
+      },
+      "id": "9ed1d118-a308-438a-a7c5-e652cffabec4",
+      "name": "Code - Finalize Rejected Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        23696,
+        13456
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.contact_page_candidate || $json.website_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 18000
+        }
+      },
+      "id": "c9e71906-04de-406f-ae40-b2d2c4af5e73",
+      "name": "HTTP - Fetch Contact Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        23696,
+        13200
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function stripHtml(html) { return String(html || '').replace(/<script[\\s\\S]*?<\\/script>/gi, ' ').replace(/<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\\s+/g, ' ').trim(); }\nfunction normalizeUrl(value, base) { const raw = String(value || '').trim(); if (!raw) return null; try { return new URL(raw, base).toString(); } catch (error) { return null; } }\nfunction normalizeEmail(value) { return String(value || '').trim().toLowerCase(); }\nfunction isPlaceholderEmail(value) { const email = normalizeEmail(value); if (!email || !email.includes('@')) return true; const blockedPatterns = [/^user@/i,/^name@/i,/^email@/i,/^test@/i,/^example@/i,/^yourname@/i,/^you@/i,/^username@/i,/^mail@domain\\./i,/@example\\./i,/@domain\\./i,/@yourdomain\\./i]; return blockedPatterns.some((pattern) => pattern.test(email)); }\nfunction decodeObfuscatedEmails(text) { const normalized = String(text || '').replace(/\\[at\\]|\\(at\\)|\\sat\\s/gi, '@').replace(/\\[dot\\]|\\(dot\\)|\\sdot\\s/gi, '.').replace(/\\s+/g, ''); return normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi) || []; }\nreturn items.map((entry) => { const audit = entry.json || {}; const html = String(audit.contact_html_compact || '').slice(0, 90000); const text = stripHtml(html).slice(0, 10000); const hrefMatches = [...html.matchAll(/href=[\"']([^\"'#]+)[\"']/gi)].map(match => match[1]).slice(0, 150); const mailtoEmails = hrefMatches.filter(link => /^mailto:/i.test(link)).map(link => normalizeEmail(link.replace(/^mailto:/i, '').split('?')[0])); const directEmails = (html.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi) || []).map(normalizeEmail); const obfuscatedEmails = decodeObfuscatedEmails(html).map(normalizeEmail); const homepageEmails = String(audit.homepage_emails || '').split(',').map(v => normalizeEmail(v)).filter(Boolean); const emails = [...new Set([...homepageEmails, ...directEmails, ...obfuscatedEmails, ...mailtoEmails].filter(email => !isPlaceholderEmail(email)))].slice(0, 5); const phones = [...new Set([...String(audit.homepage_phones || '').split(',').map(v => v.trim()).filter(Boolean), ...(text.match(/(?:\\+?\\d[\\d\\s().-]{7,}\\d)/g) || []).map(v => v.replace(/\\s+/g, ' ').trim())])].slice(0, 5); const linkedinUrls = [...new Set([...String(audit.linkedin_signals || '').split(',').map(v => v.trim()).filter(Boolean), ...hrefMatches.map(link => normalizeUrl(link, audit.contact_page_candidate || audit.website_url)).filter(link => /linkedin\\.com/i.test(String(link || '')))])].slice(0, 5); const contactSources = []; if (emails.length) contactSources.push('contact_page_email'); if (phones.length) contactSources.push('contact_page_phone'); if (linkedinUrls.length) contactSources.push('contact_page_linkedin'); if (!contactSources.length && audit.homepage_primary_phone) contactSources.push('homepage_phone_only'); return { json: { prospect_id: audit.prospect_id, audit_id: audit.audit_id, search_id: audit.search_id, user_id: audit.user_id, company_name: audit.company_name, website_url: audit.website_url, domain: audit.domain, niche: audit.niche, city: audit.city, country: audit.country, seo_need_score: audit.seo_need_score, seo_need_confidence: audit.seo_need_confidence, commercial_fit_score: audit.commercial_fit_score, audit_summary: audit.audit_summary, recommended_outreach_angle: audit.recommended_outreach_angle, min_audit_score: audit.min_audit_score, min_lead_score: audit.min_lead_score, paid_ads_detected: audit.paid_ads_detected, paid_ads_evidence: audit.paid_ads_evidence, paid_ads_fit_score: audit.paid_ads_fit_score, homepage_emails: audit.homepage_emails || '', homepage_primary_email: audit.homepage_primary_email || null, homepage_phones: audit.homepage_phones || '', homepage_primary_phone: audit.homepage_primary_phone || null, linkedin_signals: audit.linkedin_signals || '', contact_page_candidate: audit.contact_page_candidate || null, contact_page_fetched_url: audit.contact_page_candidate || audit.website_url, contact_page_text_excerpt: text.slice(0, 1200), contact_emails: emails.join(','), contact_primary_email: emails[0] || null, contact_phones: phones.join(','), contact_primary_phone: phones[0] || null, contact_linkedin_urls: linkedinUrls.join(','), contact_page_has_team_terms: /(founder|owner|director|manager|marketing|growth|team|staff|about us)/i.test(text), contact_source_summary: contactSources.join(','), placeholder_email_removed: [...new Set([...homepageEmails, ...directEmails, ...obfuscatedEmails, ...mailtoEmails].filter(isPlaceholderEmail))].slice(0, 5).join(',') } }; });"
+      },
+      "id": "f3171342-4f25-46df-a9d6-17e3ab642fa1",
+      "name": "Code - Extract Contact Evidence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        23968,
+        13200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    \"model\": \"gpt-4.1-mini\",\n  \"input\": \"You are enriching and scoring SEO agency leads. Return only valid JSON. Never invent contact details. If contact evidence is weak, leave fields null and lower confidence. Prefer site-derived contact evidence over assumptions. Treat placeholder emails like user@domain.com, example@example.com, email@domain.com, test@test.com as invalid and do not return them. If there is a real extracted email in contact evidence, prefer it. If paid ads are detected, use that only as a commercial-budget signal. Output schema: {\\\"contact_name\\\":null,\\\"contact_first_name\\\":null,\\\"contact_last_name\\\":null,\\\"contact_role\\\":null,\\\"role_seniority\\\":null,\\\"linkedin_url\\\":null,\\\"email\\\":null,\\\"email_status\\\":\\\"found|guessed|missing\\\",\\\"phone\\\":null,\\\"contact_source\\\":null,\\\"contact_confidence_score\\\":0,\\\"enrichment_notes\\\":\\\"notes\\\",\\\"commercial_fit_score\\\":0,\\\"overall_lead_score\\\":0,\\\"qualification_status\\\":\\\"qualified|rejected|review_needed\\\",\\\"qualification_reason\\\":\\\"reason\\\",\\\"rejection_reason\\\":null,\\\"outreach_angle\\\":\\\"angle\\\",\\\"first_line_personalization\\\":\\\"line\\\",\\\"lead_priority\\\":\\\"high|medium|low\\\",\\\"next_action\\\":\\\"action\\\",\\\"recommended_offer\\\":\\\"offer\\\",\\\"recommended_channel\\\":\\\"email|phone|linkedin\\\",\\\"client_value_hypothesis\\\":\\\"value\\\",\\\"primary_problem\\\":\\\"problem\\\",\\\"secondary_problem\\\":\\\"problem\\\"}. SEO audit data: \" + JSON.stringify({ prospect_id: $json.prospect_id, search_id: $json.search_id, company_name: $json.company_name, website_url: $json.website_url, domain: $json.domain, niche: $json.niche, city: $json.city, country: $json.country, seo_need_score: $json.seo_need_score, seo_need_confidence: $json.seo_need_confidence, seo_need_reasons: $json.seo_need_reasons, audit_summary: $json.audit_summary, recommended_outreach_angle: $json.recommended_outreach_angle, commercial_fit_score: $json.commercial_fit_score, paid_ads_detected: $json.paid_ads_detected, paid_ads_evidence: $json.paid_ads_evidence, paid_ads_fit_score: $json.paid_ads_fit_score, min_audit_score: $json.min_audit_score, min_lead_score: $json.min_lead_score }) + \" Contact evidence data: \" + JSON.stringify({ contact_page_candidate: $json.contact_page_candidate, contact_page_fetched_url: $json.contact_page_fetched_url, contact_emails: $json.contact_emails, contact_primary_email: $json.contact_primary_email, contact_phones: $json.contact_phones, contact_primary_phone: $json.contact_primary_phone, contact_linkedin_urls: $json.contact_linkedin_urls, contact_page_has_team_terms: $json.contact_page_has_team_terms, contact_source_summary: $json.contact_source_summary, placeholder_email_removed: $json.placeholder_email_removed })\n}\n}}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "f7f6e1e0-82b0-4a9e-9d79-2783ad08cd47",
+      "name": "LLM - Enrich Contact and Score Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        24224,
+        13200
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "function getResponseText(response) {\n  if (response.output_text) return response.output_text;\n  const output = Array.isArray(response.output) ? response.output : [];\n  const parts = [];\n  for (const item of output) {\n    for (const part of item.content || []) {\n      if (typeof part.text === 'string') parts.push(part.text);\n    }\n  }\n  return parts.join('\\n').trim();\n}\n\nfunction parseJson(text) {\n  const cleaned = String(text || '').replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();\n  const candidates = [\n    cleaned,\n    (cleaned.match(/\\{[\\s\\S]*\\}/) || [])[0] || '',\n    cleaned.replace(/[\\u201C\\u201D]/g, '\"').replace(/[\\u2018\\u2019]/g, \"'\"),\n    cleaned\n      .replace(/\\\\(?![\"\\\\\\/bfnrtu])/g, '\\\\\\\\')\n      .replace(/[\\u201C\\u201D]/g, '\"')\n      .replace(/[\\u2018\\u2019]/g, \"'\"),\n  ].filter(Boolean);\n\n  for (const candidate of candidates) {\n    try {\n      return JSON.parse(candidate);\n    } catch (error) {\n      continue;\n    }\n  }\n\n  return {};\n}\n\nfunction normalizeScore(value) {\n  const num = Number(value || 0);\n  if (!Number.isFinite(num) || num <= 0) return 0;\n  if (num <= 1) return Math.round(num * 100);\n  if (num <= 10) return Math.round(num * 10);\n  return Math.max(0, Math.min(100, Math.round(num)));\n}\n\nfunction tier(score) {\n  if (score >= 75) return 'high';\n  if (score >= 50) return 'medium';\n  return 'low';\n}\n\nreturn items.map((entry, index) => {\nconst evidence = $('Code - Extract Contact Evidence').all()[index]?.json || {};\nconst audit = evidence;\nconst parsed = parseJson(getResponseText(entry.json || {}));\nconst contactConfidence = normalizeScore(parsed.contact_confidence_score || 0);\nconst commercialFitBase = normalizeScore(parsed.commercial_fit_score || audit.commercial_fit_score || 0);\nconst seoNeed = normalizeScore(audit.seo_need_score || 0);\nconst paidAdsFit = normalizeScore(audit.paid_ads_fit_score || 0);\nconst extractedEmail = String(evidence.contact_primary_email || '').trim() || null;\nconst extractedPhone = String(evidence.contact_primary_phone || '').trim() || null;\nconst extractedLinkedin = String(evidence.contact_linkedin_urls || '').split(',').map(v => v.trim()).filter(Boolean)[0] || null;\nconst extractedSource = evidence.contact_source_summary || 'search_signals';\nconst commercialFit = normalizeScore(Math.round((commercialFitBase * 0.85) + (paidAdsFit * 0.15)));\nconst weightedScore = Math.round((seoNeed * 0.5) + (commercialFit * 0.3) + (contactConfidence * 0.2));\nconst overallLeadScore = normalizeScore(parsed.overall_lead_score || weightedScore);\nconst minLeadScore = Number(audit.min_lead_score || 70);\nconst hasDirectContact = Boolean(extractedEmail || extractedPhone || extractedLinkedin || parsed.contact_name);\n\nlet qualificationStatus = parsed.qualification_status || 'review_needed';\nif (seoNeed < 40 || commercialFit < 40) {\n  qualificationStatus = 'rejected';\n} else if (overallLeadScore >= minLeadScore && seoNeed >= Number(audit.min_audit_score || 55) && hasDirectContact) {\n  qualificationStatus = 'qualified';\n} else if (!hasDirectContact) {\n  qualificationStatus = 'review_needed';\n}\n\nconst contactCoverage = extractedEmail || parsed.email\n  ? 'direct'\n  : (extractedPhone || extractedLinkedin ? 'business_only' : 'weak');\nconst outreachReadiness = qualificationStatus === 'qualified'\n  ? 'ready'\n  : (qualificationStatus === 'review_needed' ? 'needs_review' : 'not_ready');\n\nconst contactId = `cnt_${Date.now()}_${Math.floor(Math.random() * 100000)}_${index + 1}`;\nconst leadId = `lead_${Date.now()}_${Math.floor(Math.random() * 100000)}_${index + 1}`;\n\nreturn {\n  json: {\n    contact_record: {\n      contact_id: contactId,\n      prospect_id: audit.prospect_id,\n      search_id: audit.search_id,\n      user_id: audit.user_id,\n      created_at: new Date().toISOString(),\n      updated_at: new Date().toISOString(),\n      status: parsed.contact_name ? 'found' : 'partial',\n      contact_name: parsed.contact_name || null,\n      contact_first_name: parsed.contact_first_name || null,\n      contact_last_name: parsed.contact_last_name || null,\n      contact_role: parsed.contact_role || null,\n      role_seniority: parsed.role_seniority || null,\n      linkedin_url: parsed.linkedin_url || extractedLinkedin,\n      email: parsed.email || extractedEmail,\n      email_status: parsed.email_status || (extractedEmail ? 'found' : 'missing'),\n      phone: parsed.phone || extractedPhone,\n      contact_source: parsed.contact_source || extractedSource,\n      contact_confidence_score: contactConfidence,\n      enrichment_notes: [parsed.enrichment_notes, evidence.placeholder_email_removed ? `Placeholder emails removed: ${evidence.placeholder_email_removed}` : ''].filter(Boolean).join(' | ') || null,\n      enriched_at: new Date().toISOString()\n    },\n    lead_record: {\n      lead_id: leadId,\n      prospect_id: audit.prospect_id,\n      audit_id: audit.audit_id,\n      primary_contact_id: contactId,\n      search_id: audit.search_id,\n      user_id: audit.user_id,\n      created_at: new Date().toISOString(),\n      updated_at: new Date().toISOString(),\n      status: qualificationStatus,\n      qualification_status: qualificationStatus,\n      qualification_reason: parsed.qualification_reason || audit.audit_summary || null,\n      rejection_reason: qualificationStatus === 'rejected' ? (parsed.rejection_reason || 'Low SEO need or weak commercial fit') : null,\n      seo_need_score: seoNeed,\n      seo_need_tier: tier(seoNeed),\n      commercial_fit_score: commercialFit,\n      commercial_fit_tier: tier(commercialFit),\n      contact_confidence_score: contactConfidence,\n      contact_coverage: contactCoverage,\n      overall_lead_score: overallLeadScore,\n      outreach_readiness: outreachReadiness,\n      lead_priority: parsed.lead_priority || (overallLeadScore >= 80 ? 'high' : overallLeadScore >= 65 ? 'medium' : 'low'),\n      paid_ads_detected: Boolean(audit.paid_ads_detected),\n      paid_ads_fit_score: paidAdsFit,\n      primary_problem: parsed.primary_problem || 'weak_local_seo_execution',\n      secondary_problem: parsed.secondary_problem || (Boolean(audit.paid_ads_detected) ? 'paid_ads_without_strong_seo_foundation' : 'limited_contact_coverage'),\n      client_value_hypothesis: parsed.client_value_hypothesis || null,\n      recommended_offer: parsed.recommended_offer || 'local_seo_audit',\n      recommended_channel: parsed.recommended_channel || (extractedEmail ? 'email' : (extractedPhone ? 'phone' : (extractedLinkedin ? 'linkedin' : 'email'))),\n      outreach_angle: parsed.outreach_angle || audit.recommended_outreach_angle || null,\n      first_line_personalization: parsed.first_line_personalization || null,\n      next_action: parsed.next_action || (qualificationStatus === 'qualified' ? 'start_outreach' : (qualificationStatus === 'review_needed' ? 'manual_review' : 'reject')),\n      decision_maker_name: parsed.contact_name || null,\n      decision_maker_role: parsed.contact_role || null,\n      decision_maker_email: parsed.email || extractedEmail,\n      decision_maker_phone: parsed.phone || extractedPhone,\n      company_name: audit.company_name,\n      website_url: audit.website_url,\n      domain: audit.domain,\n      niche: audit.niche,\n      city: audit.city,\n      country: audit.country,\n      exported_status: 'not_exported',\n      exported_at: '',\n      scored_at: new Date().toISOString()\n    },\n    log_record: {\n      log_id: `log_${Date.now()}_${Math.floor(Math.random() * 100000)}`,\n      created_at: new Date().toISOString(),\n      level: qualificationStatus === 'rejected' ? 'info' : 'success',\n      entity_type: 'lead',\n      entity_id: leadId,\n      search_id: audit.search_id,\n      user_id: audit.user_id,\n      event_type: 'lead_scored',\n      event_status: qualificationStatus,\n      message: `${audit.company_name} processed with score ${overallLeadScore}`,\n      details_json: JSON.stringify({\n        seo_need_score: seoNeed,\n        commercial_fit_score: commercialFit,\n        contact_confidence_score: contactConfidence,\n        paid_ads_detected: Boolean(audit.paid_ads_detected),\n        paid_ads_fit_score: paidAdsFit,\n        qualification_status: qualificationStatus,\n        next_action: parsed.next_action || null\n      })\n    }\n  }\n};\n});"
+      },
+      "id": "a9016ee2-b795-4de0-ac05-84a0dfa588ec",
+      "name": "Code - Finalize Lead Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        24480,
+        13200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({ json: item.json.contact_record }));"
+      },
+      "id": "b422393c-dea2-42a7-a17c-0300258e462f",
+      "name": "Code - Pick Contact Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        24736,
+        13120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "contacts",
+          "mode": "name",
+          "cachedResultName": "contacts"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "f81a7574-8909-4b17-a8b6-ee5480fbeb30",
+      "name": "Google Sheets - Append Contacts",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        25008,
+        13120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({ json: item.json.lead_record }));"
+      },
+      "id": "b5280f44-737b-4428-8ae1-ce0536f9bfd2",
+      "name": "Code - Pick Final Lead Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        24736,
+        13264
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "final_leads",
+          "mode": "name",
+          "cachedResultName": "final_leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prospect_id",
+              "displayName": "prospect_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "audit_id",
+              "displayName": "audit_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "primary_contact_id",
+              "displayName": "primary_contact_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "search_id",
+              "displayName": "search_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "qualification_status",
+              "displayName": "qualification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "qualification_reason",
+              "displayName": "qualification_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rejection_reason",
+              "displayName": "rejection_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "seo_need_score",
+              "displayName": "seo_need_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "commercial_fit_score",
+              "displayName": "commercial_fit_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contact_confidence_score",
+              "displayName": "contact_confidence_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "overall_lead_score",
+              "displayName": "overall_lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lead_priority",
+              "displayName": "lead_priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "outreach_angle",
+              "displayName": "outreach_angle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "first_line_personalization",
+              "displayName": "first_line_personalization",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "decision_maker_name",
+              "displayName": "decision_maker_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "decision_maker_role",
+              "displayName": "decision_maker_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "decision_maker_email",
+              "displayName": "decision_maker_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "decision_maker_phone",
+              "displayName": "decision_maker_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "company_name",
+              "displayName": "company_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "website_url",
+              "displayName": "website_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "niche",
+              "displayName": "niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "city",
+              "displayName": "city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "country",
+              "displayName": "country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "exported_status",
+              "displayName": "exported_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "exported_at",
+              "displayName": "exported_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scored_at",
+              "displayName": "scored_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1c2b87ac-cff8-49ac-a421-39088ac620c1",
+      "name": "Google Sheets - Append Final Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        25008,
+        13264
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({ json: item.json.log_record }));"
+      },
+      "id": "c12cc4ae-953e-4314-83d1-80d600e70d38",
+      "name": "Code - Pick Log Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        24736,
+        13392
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "activity_logs",
+          "mode": "name",
+          "cachedResultName": "activity_logs"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "log_id",
+              "displayName": "log_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "level",
+              "displayName": "level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "entity_type",
+              "displayName": "entity_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "entity_id",
+              "displayName": "entity_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "search_id",
+              "displayName": "search_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "event_status",
+              "displayName": "event_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "details_json",
+              "displayName": "details_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "990cab35-4afe-46f0-b2be-53795fe8e566",
+      "name": "Google Sheets - Append Activity Logs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        25008,
+        13392
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const source = $('Code - Resolve Audit Target URL').all()[index]?.json || {};\n  const raw = typeof item.json === 'string' ? item.json : (typeof item.json?.body === 'string' ? item.json.body : (typeof item.json?.data === 'string' ? item.json.data : ''));\n  const html = String(raw || '').slice(0, 120000);\n  return { json: { ...source, html_compact: html } };\n});"
+      },
+      "id": "compact-homepage-response-node",
+      "name": "Code - Compact Homepage Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        22480,
+        13216
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  const source = $('Code - Normalize SEO Audit').all()[index]?.json || {};\n  const raw = typeof item.json === 'string' ? item.json : (typeof item.json?.body === 'string' ? item.json.body : (typeof item.json?.data === 'string' ? item.json.data : ''));\n  const html = String(raw || '').slice(0, 90000);\n  return { json: { ...source, contact_html_compact: html } };\n});"
+      },
+      "id": "compact-contact-response-node",
+      "name": "Code - Compact Contact Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        23856,
+        13216
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger - Run SEO Lead Jobs": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read Searches",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Sheets - Read Existing Raw Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Weekdays": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Read Searches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read Searches": {
+      "main": [
+        [
+          {
+            "node": "Code - Prepare Active Searches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Read Existing Raw Prospects": {
+      "main": [
+        [
+          {
+            "node": "Code - Snapshot Existing Raw Prospect Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Snapshot Existing Raw Prospect Keys": {
+      "main": [
+        [
+          {
+            "node": "Merge - Wait For Existing Raw Prospects",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code - Prepare Active Searches": {
+      "main": [
+        [
+          {
+            "node": "Code - Build SERP Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Build SERP Queries": {
+      "main": [
+        [
+          {
+            "node": "HTTP - SERP Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - SERP Search": {
+      "main": [
+        [
+          {
+            "node": "Code - Extract Candidate Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extract Candidate Prospects": {
+      "main": [
+        [
+          {
+            "node": "Merge - Wait For Existing Raw Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge - Wait For Existing Raw Prospects": {
+      "main": [
+        [
+          {
+            "node": "Code - Filter Directories and Dedupe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Filter Directories and Dedupe": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalize Raw Prospect For Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalize Raw Prospect For Storage": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Raw Prospects",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code - Fan Out Valid Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Fan Out Valid Prospects": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Place Detail URL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Place Detail URL?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Fetch Place Detail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Resolve Audit Target URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Fetch Place Detail": {
+      "main": [
+        [
+          {
+            "node": "Code - Hydrate Website From Place Detail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Hydrate Website From Place Detail": {
+      "main": [
+        [
+          {
+            "node": "Code - Resolve Audit Target URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Resolve Audit Target URL": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Audit URL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Audit URL?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Fetch Website Homepage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Fetch Website Homepage": {
+      "main": [
+        [
+          {
+            "node": "Code - Compact Homepage Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extract SEO Site Signals": {
+      "main": [
+        [
+          {
+            "node": "LLM - Evaluate SEO Need",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM - Evaluate SEO Need": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalize SEO Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalize SEO Audit": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append SEO Audits",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF - Worth Contact Enrichment?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Worth Contact Enrichment?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Fetch Contact Page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Finalize Rejected Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Fetch Contact Page": {
+      "main": [
+        [
+          {
+            "node": "Code - Compact Contact Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extract Contact Evidence": {
+      "main": [
+        [
+          {
+            "node": "LLM - Enrich Contact and Score Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM - Enrich Contact and Score Lead": {
+      "main": [
+        [
+          {
+            "node": "Code - Finalize Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Finalize Lead Record": {
+      "main": [
+        [
+          {
+            "node": "Code - Pick Contact Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Finalize Rejected Lead": {
+      "main": [
+        [
+          {
+            "node": "Code - Pick Final Lead Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Pick Contact Record": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Pick Final Lead Record": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Final Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Pick Log Record": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Activity Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Compact Homepage Response": {
+      "main": [
+        [
+          {
+            "node": "Code - Extract SEO Site Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Compact Contact Response": {
+      "main": [
+        [
+          {
+            "node": "Code - Extract Contact Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d8dd8480-f0b8-4473-9b53-6b065ea49643",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4fcd07eb21d339c4b805c82963777c32200c9e9b8cc31946e33948b8b6866484"
+  },
+  "id": "5DmO7Jocujtgsi8E",
+  "tags": []
+}

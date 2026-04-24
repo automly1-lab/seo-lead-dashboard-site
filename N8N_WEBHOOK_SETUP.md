@@ -1,45 +1,22 @@
-## n8n Search Submit Webhook
+## RankForge Create Search Webhook
 
-Dashboard'daki `Create Search List` formu, bir n8n webhook URL'ine JSON POST atmak icin hazirlandi.
+Use this n8n webhook for dashboard-created search jobs:
 
-Beklenen payload:
+`https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-search`
 
-```json
-{
-  "search_id": "srch_miami_restoration_1713955344000",
-  "user_id": "usr_dashboard",
-  "created_at": "2026-04-24T12:15:44.000Z",
-  "updated_at": "2026-04-24T12:15:44.000Z",
-  "status": "active",
-  "search_name": "Miami Restoration Companies",
-  "niche": "home restoration",
-  "business_type": "restoration contractor",
-  "city": "Miami",
-  "country": "United States",
-  "primary_keyword": "home restoration Miami",
-  "secondary_keywords": "",
-  "discovery_query_limit": 1,
-  "discovery_page_limit": 1,
-  "max_results_requested": 20,
-  "min_audit_score": 60,
-  "min_lead_score": 70,
-  "started_at": "",
-  "completed_at": "",
-  "failed_at": "",
-  "failure_reason": ""
-}
-```
+Expected behavior:
 
-### n8n tarafinda en pratik kurulum
+1. User logs into the dashboard
+2. User creates a saved list on `/dashboard/`
+3. The list is created locally in the workspace immediately
+4. The same search payload is sent to n8n
+5. n8n appends the row into the `searches` Google Sheet tab
+6. The main lead intelligence workflow later reads that search and creates prospects, audits, contacts, and final leads
 
-1. `Webhook` node ekle
-2. `Respond to Webhook` node ekle
-3. Araya `Google Sheets -> Append` node koy
-4. Append edecegin sheet: `searches`
-5. Yukaridaki alanlari ayni kolon adlariyla yaz
+Required Google Sheets tab:
 
-### Onemli
+`searches`
 
-- Webhook URL public olmali
-- n8n tarafinda `Access-Control-Allow-Origin` acik olmali, yoksa GitHub Pages uzerinden CORS hatasi alirsin
-- Dashboard'da webhook URL bir kere kaydedilince localStorage'da saklanir
+Expected header:
+
+`search_id,user_id,created_at,updated_at,status,search_name,niche,business_type,city,country,primary_keyword,secondary_keywords,discovery_query_limit,discovery_page_limit,max_results_requested,min_audit_score,min_lead_score,started_at,completed_at,failed_at,failure_reason`

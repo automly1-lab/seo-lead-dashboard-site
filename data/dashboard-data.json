@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "lists": [
     {
       "id": "srch_1777059841884",
@@ -109,3 +110,8 @@
     "duplicate_search_rows_removed": 6
   }
 }
+=======
+  "lists": [],
+  "leads": []
+}
+>>>>>>> 2b45a46 (Clean SEO SaaS workspace and stabilize dashboard flow)

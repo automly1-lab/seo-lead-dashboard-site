@@ -1,0 +1,173 @@
+{
+  "name": "RankForge Dashboard - Create Search Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rankforge-create-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a4e7f5a1-3d2d-4fb6-bb87-84de4cf9d101",
+      "name": "Webhook - Receive Search",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        320,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function text(value) {\n  return String(value || '').trim();\n}\n\nfunction slugify(value) {\n  return String(value || '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '_')\n    .replace(/^_+|_+$/g, '')\n    .slice(0, 48);\n}\n\nreturn items.map((item) => {\n  const raw = item.json || {};\n  let payload = raw;\n\n  if (typeof raw.body === 'string' && raw.body.trim()) {\n    try {\n      payload = JSON.parse(raw.body);\n    } catch (error) {\n      payload = raw;\n    }\n  } else if (raw.body && typeof raw.body === 'object') {\n    payload = raw.body;\n  }\n\n  const now = new Date().toISOString();\n  const city = text(payload.city);\n  const country = text(payload.country);\n  const niche = text(payload.niche);\n  const businessType = text(payload.business_type || payload.businessType || niche);\n  const searchName = text(payload.search_name || payload.searchName || `${niche} ${city}`.trim());\n  const primaryKeyword = text(payload.primary_keyword || `${niche} ${city}`.trim());\n  const searchId = text(payload.search_id) || `srch_${slugify(searchName)}_${Date.now()}`;\n\n  return {\n    json: {\n      search_id: searchId,\n      user_id: text(payload.user_id) || 'usr_dashboard',\n      created_at: text(payload.created_at) || now,\n      updated_at: now,\n      status: text(payload.status) || 'active',\n      search_name: searchName,\n      niche,\n      business_type: businessType,\n      city,\n      country,\n      primary_keyword: primaryKeyword,\n      secondary_keywords: Array.isArray(payload.secondary_keywords)\n        ? payload.secondary_keywords.join(', ')\n        : text(payload.secondary_keywords),\n      discovery_query_limit: Number(payload.discovery_query_limit || 1),\n      discovery_page_limit: Number(payload.discovery_page_limit || 1),\n      max_results_requested: Number(payload.max_results_requested || 20),\n      min_audit_score: Number(payload.min_audit_score || 60),\n      min_lead_score: Number(payload.min_lead_score || 70),\n      started_at: text(payload.started_at),\n      completed_at: text(payload.completed_at),\n      failed_at: text(payload.failed_at),\n      failure_reason: text(payload.failure_reason)\n    }\n  };\n});"
+      },
+      "id": "30a8c58b-61fd-47c0-bd5b-2c20b1be94b0",
+      "name": "Code - Normalize Search Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "searches",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            { "id": "search_id", "displayName": "search_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "user_id", "displayName": "user_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "created_at", "displayName": "created_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "updated_at", "displayName": "updated_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "status", "displayName": "status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "search_name", "displayName": "search_name", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "niche", "displayName": "niche", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "business_type", "displayName": "business_type", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "city", "displayName": "city", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "country", "displayName": "country", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "primary_keyword", "displayName": "primary_keyword", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "secondary_keywords", "displayName": "secondary_keywords", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "discovery_query_limit", "displayName": "discovery_query_limit", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "discovery_page_limit", "displayName": "discovery_page_limit", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "max_results_requested", "displayName": "max_results_requested", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "min_audit_score", "displayName": "min_audit_score", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "min_lead_score", "displayName": "min_lead_score", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "started_at", "displayName": "started_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "completed_at", "displayName": "completed_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "failed_at", "displayName": "failed_at", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false },
+            { "id": "failure_reason", "displayName": "failure_reason", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true, "removed": false }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "c4b29fd5-1e0c-4d92-9f49-5122d46650af",
+      "name": "Google Sheets - Append Search",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        896,
+        260
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XD4i4JE9Y4H2YfU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, status: 'queued', search_id: $json.search_id, search_name: $json.search_name, message: 'Search accepted and saved to Google Sheets.' } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Accept"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f4fdcda4-d91f-4767-9d14-cddbd3f56dcc",
+      "name": "Respond to Webhook - Search Accepted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        260
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Receive Search": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalize Search Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalize Search Payload": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Append Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Append Search": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Search Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9d130991-77e6-4d4a-bcb6-19f09ba3126b",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "rankforge-create-search-webhook",
+  "tags": []
+}

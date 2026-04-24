@@ -4,29 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence</title>
-  <link rel="canonical" href="./dashboard/">
   <script>
     try {
-      const session = JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
+      var session = JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
       window.location.replace(session ? "./dashboard/" : "./login/");
     } catch (error) {
       window.location.replace("./login/");
     }
   </script>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      font-family: Arial, sans-serif;
-      background: #f6f1e8;
-      color: #1f211d;
-    }
-    a { color: inherit; }
-  </style>
 </head>
-<body>
-  <p>Redirecting... <a href="./login/">Open login</a></p>
-</body>
+<body></body>
 </html>

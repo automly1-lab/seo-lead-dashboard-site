@@ -404,12 +404,14 @@ select {
   background:
     linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(29, 78, 216, 0.06)),
     rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 118, 110, 0.16);
 }
 
 .hero-card-secondary {
   background:
     linear-gradient(180deg, rgba(29, 78, 216, 0.04), rgba(255, 255, 255, 0.62)),
     rgba(255, 255, 255, 0.98);
+  border-color: rgba(29, 78, 216, 0.12);
 }
 
 .hero-head,
@@ -571,6 +573,19 @@ select {
   display: grid;
   gap: 10px;
   padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::after {
+  position: absolute;
+  right: -18px;
+  bottom: -18px;
+  width: 92px;
+  height: 92px;
+  border-radius: 999px;
+  content: "";
+  background: radial-gradient(circle, rgba(15, 118, 110, 0.12), transparent 70%);
 }
 
 .metric-card p,
@@ -785,9 +800,9 @@ select {
   gap: 12px;
   margin-top: 16px;
   padding: 14px 16px;
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  border: 1px solid rgba(27, 39, 61, 0.08);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.56);
+  background: rgba(248, 251, 255, 0.88);
 }
 
 .lead-summary-bar strong {
@@ -1012,9 +1027,9 @@ select {
   padding: 16px 18px;
   border-radius: 18px;
   background:
-    linear-gradient(135deg, rgba(63, 92, 72, 0.1), rgba(191, 141, 61, 0.08)),
+    linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(29, 78, 216, 0.08)),
     rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(58, 46, 33, 0.08);
+  border: 1px solid rgba(27, 39, 61, 0.08);
   margin-top: 18px;
 }
 

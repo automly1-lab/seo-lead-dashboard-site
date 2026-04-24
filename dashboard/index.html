@@ -82,6 +82,19 @@
         </div>
       </header>
 
+      <section class="page-intro-strip">
+        <article class="page-intro-card">
+          <span class="workspace-label">What this page is for</span>
+          <strong>Fast operating overview</strong>
+          <small>Use the dashboard to understand what changed, which market batch is strongest, and where the team should go next.</small>
+        </article>
+        <article class="page-intro-card">
+          <span class="workspace-label">How to use it</span>
+          <strong>Start here, work elsewhere</strong>
+          <small>The dashboard is intentionally lighter now. Deep list management, filtering, and lead review live in dedicated workspaces.</small>
+        </article>
+      </section>
+
       <section class="workspace-strip" aria-label="Workspace status">
         <article class="workspace-card">
           <span class="workspace-label">Current Workspace User</span>
@@ -226,19 +239,28 @@
 
           <p class="panel-copy">This page only shows the latest workspace context. Full list management lives in the dedicated Saved Lists page.</p>
 
-          <div class="saved-list-table-wrap">
-            <table class="data-table" id="savedListsTable">
-              <thead>
-                <tr>
-                  <th>List</th>
-                  <th>Market</th>
-                  <th>Status</th>
-                  <th>Last Run</th>
-                  <th>Qualified</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+          <div class="table-shell">
+            <div class="table-toolbar">
+              <div>
+                <span class="workspace-label">Recent Library Activity</span>
+                <strong>Latest saved lists in this workspace</strong>
+              </div>
+              <small>Click a row to jump into the full Saved Lists page with that list selected.</small>
+            </div>
+            <div class="saved-list-table-wrap">
+              <table class="data-table" id="savedListsTable">
+                <thead>
+                  <tr>
+                    <th>List</th>
+                    <th>Market</th>
+                    <th>Status</th>
+                    <th>Last Run</th>
+                    <th>Qualified</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </article>
 
@@ -296,19 +318,28 @@
           </div>
         </div>
 
-        <div class="saved-list-table-wrap">
-          <table class="data-table leads-table" id="leadsTable">
-            <thead>
-              <tr>
-                <th>Company</th>
-                <th>Decision Maker</th>
-                <th>Contact</th>
-                <th>Overall</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="table-shell">
+          <div class="table-toolbar">
+            <div>
+              <span class="workspace-label">Recent Lead Snapshot</span>
+              <strong>Highest-signal leads in the selected list</strong>
+            </div>
+            <small>Click a lead row to continue in the dedicated Lead Detail page.</small>
+          </div>
+          <div class="saved-list-table-wrap">
+            <table class="data-table leads-table" id="leadsTable">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Decision Maker</th>
+                  <th>Contact</th>
+                  <th>Overall</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>

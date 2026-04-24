@@ -154,8 +154,8 @@ function mergeRuntime(remote) {
   const remoteLeads = (remote.leads || []).filter((item) => (item.userId || currentUserId) === currentUserId);
 
   runtimeData = {
-    lists: uniqueBy([...localLists, ...remoteLists], (item) => item.id).filter((item) => !archived.has(item.id)),
-    leads: uniqueBy([...localLeads, ...remoteLeads], (item) => item.id),
+    lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id).filter((item) => !archived.has(item.id)),
+    leads: uniqueBy([...remoteLeads, ...localLeads], (item) => item.id),
   };
 
   if (!runtimeData.lists.find((item) => item.id === appState.selectedListId)) {
@@ -427,7 +427,16 @@ function buildRemoteData(data) {
     const searchAudits = audits.filter((item) => item.search_id === search.search_id);
     const searchProspects = rawProspects.filter((item) => item.search_id === search.search_id);
     const qualifiedCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "qualified").length;
+    const reviewNeededCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "review_needed").length;
     const rejectedCount = finalLeads.filter((item) => item.search_id === search.search_id && item.qualification_status === "rejected").length;
+    let derivedStatus = search.status || "active";
+    if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) {
+      derivedStatus = "completed";
+    } else if (searchAudits.length > 0 || searchProspects.length > 0) {
+      derivedStatus = "running";
+    } else if (derivedStatus === "active") {
+      derivedStatus = "queued";
+    }
     return {
       id: search.search_id,
       userId: search.user_id || "usr_mvp",
@@ -437,7 +446,7 @@ function buildRemoteData(data) {
       city: search.city || "",
       country: search.country || "",
       description: `${titleCase(search.niche)} opportunities for ${search.city}.`,
-      status: search.status || "active",
+      status: derivedStatus,
       lastRun: search.completed_at || search.updated_at || search.created_at || "",
       discovered: searchProspects.length || numberValue(search.max_results_requested),
       audited: searchAudits.length,

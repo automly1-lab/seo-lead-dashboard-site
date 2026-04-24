@@ -311,7 +311,7 @@ async function submitSearchToWebhook(searchPayload) {
   const response = await fetch(webhookUrl, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "text/plain;charset=UTF-8",
       Accept: "application/json, text/plain, */*",
     },
     body: JSON.stringify(searchPayload),

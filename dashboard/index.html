@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankForge Intelligence | SEO Lead Dashboard</title>
+  <meta name="description" content="RankForge Intelligence dashboard for SEO agencies to manage saved lead lists, score SEO opportunities, and review qualified outreach-ready companies.">
+  <link rel="stylesheet" href="../assets/site-enhancements.css">
+  <link rel="stylesheet" href="../assets/dashboard.css">
+</head>
+<body class="dashboard-body">
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">RF</span>
+        <span class="brand-copy">
+          <strong>RankForge</strong>
+          <small>SEO Intelligence</small>
+        </span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a class="active" href="#overview">Dashboard</a>
+        <a href="#saved-lists">Saved Lists</a>
+        <a href="#qualified-leads">Qualified Leads</a>
+        <a href="#pipeline">Pipeline</a>
+        <a href="#exports">Exports</a>
+      </nav>
+
+      <section class="sidebar-panel">
+        <p class="panel-eyebrow">Retention Rule</p>
+        <h2>Saved lists stay visible.</h2>
+        <p>Once a user creates a list, it remains in the dashboard until it is manually archived. Re-running a list updates it; it does not erase it.</p>
+      </section>
+
+      <section class="sidebar-panel sidebar-panel-muted">
+        <p class="panel-eyebrow">Agency Operating View</p>
+        <ul class="sidebar-points">
+          <li>Search jobs are persistent records.</li>
+          <li>Qualified leads remain attached to their source list.</li>
+          <li>Review-needed leads are kept for later follow-up.</li>
+        </ul>
+      </section>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="topbar">
+        <div>
+          <p class="kicker">SEO Agency Command Center</p>
+          <h1>Main Dashboard</h1>
+          <p class="topbar-copy">Track saved prospect lists, monitor SEO opportunity quality, and keep outreach-ready leads accessible over time.</p>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="data-status" id="dataStatus">Demo data</div>
+          <button class="button ghost" id="syncSheetsButton" type="button">Sync Sheets</button>
+          <button class="button ghost" id="seedListsButton" type="button">Add Demo List</button>
+          <button class="button primary" id="createListButton" type="button">Create Search List</button>
+        </div>
+      </header>
+
+      <section class="hero-grid" id="overview">
+        <article class="hero-card hero-card-primary">
+          <div class="hero-head">
+            <div>
+              <p class="panel-eyebrow">Active Workspace</p>
+              <h2 id="activeListName">London Dentists - Priority Opportunities</h2>
+            </div>
+            <span class="pill" id="activeListStatus">running</span>
+          </div>
+
+          <p class="hero-description" id="activeListDescription">High-intent local businesses where SEO weaknesses, commercial fit, and contact readiness create strong agency outreach angles.</p>
+
+          <dl class="hero-stats">
+            <div>
+              <dt>Target Market</dt>
+              <dd id="activeListMarket">Dentists - London - United Kingdom</dd>
+            </div>
+            <div>
+              <dt>Last Run</dt>
+              <dd id="activeListRun">Today, 10:14</dd>
+            </div>
+            <div>
+              <dt>Persistence</dt>
+              <dd>Saved until manually archived</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="hero-card hero-card-secondary">
+          <p class="panel-eyebrow">Create New Saved List</p>
+          <form class="quick-create-form" id="quickCreateForm">
+            <label>
+              <span>List Name</span>
+              <input id="searchNameInput" name="search_name" type="text" placeholder="Miami Restoration Companies">
+            </label>
+            <div class="grid-two">
+              <label>
+                <span>Niche</span>
+                <input id="nicheInput" name="niche" type="text" placeholder="home restoration">
+              </label>
+              <label>
+                <span>Business Type</span>
+                <input id="businessTypeInput" name="business_type" type="text" placeholder="restoration contractor">
+              </label>
+            </div>
+            <div class="grid-two">
+              <label>
+                <span>City</span>
+                <input id="cityInput" name="city" type="text" placeholder="Miami">
+              </label>
+              <label>
+                <span>Country</span>
+                <input id="countryInput" name="country" type="text" placeholder="United States">
+              </label>
+            </div>
+            <div class="grid-two">
+              <label>
+                <span>Min SEO Score</span>
+                <input id="seoThresholdInput" name="min_seo_score" type="number" min="0" max="100" value="60">
+              </label>
+              <label>
+                <span>Min Lead Score</span>
+                <input id="leadThresholdInput" name="min_lead_score" type="number" min="0" max="100" value="70">
+              </label>
+            </div>
+            <button class="button primary button-block" type="submit">Save List to Dashboard</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="metrics-grid" aria-label="Dashboard metrics">
+        <article class="metric-card">
+          <p>Saved Lists</p>
+          <strong id="metricSavedLists">0</strong>
+          <span>Persistent search jobs kept in workspace</span>
+        </article>
+        <article class="metric-card">
+          <p>Qualified Leads</p>
+          <strong id="metricQualified">0</strong>
+          <span>Ready or near-ready outreach opportunities</span>
+        </article>
+        <article class="metric-card">
+          <p>Review Needed</p>
+          <strong id="metricReviewNeeded">0</strong>
+          <span>Good opportunities waiting on manual review</span>
+        </article>
+        <article class="metric-card">
+          <p>Average Lead Score</p>
+          <strong id="metricAverageScore">0</strong>
+          <span>Overall quality across visible saved lists</span>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel panel-wide" id="saved-lists">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Saved Search Lists</p>
+              <h2>Persistent list library</h2>
+            </div>
+            <div class="panel-actions">
+              <button class="button ghost small" type="button" id="rerunListButton">Rerun Selected</button>
+              <button class="button ghost small" type="button" id="duplicateListButton">Duplicate</button>
+              <button class="button ghost small" type="button" id="archiveListButton">Archive</button>
+            </div>
+          </div>
+
+          <p class="panel-copy">Users can come back later and reopen the same list. Lists remain visible with their status, latest run, and cumulative results.</p>
+
+          <div class="saved-list-table-wrap">
+            <table class="data-table" id="savedListsTable">
+              <thead>
+                <tr>
+                  <th>List</th>
+                  <th>Market</th>
+                  <th>Status</th>
+                  <th>Last Run</th>
+                  <th>Discovered</th>
+                  <th>Qualified</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Pipeline</p>
+              <h2 id="pipelineListTitle">Selected list funnel</h2>
+            </div>
+          </div>
+          <div class="pipeline-stack" id="pipeline">
+            <div class="pipeline-step">
+              <span>Discovered</span>
+              <strong id="pipelineDiscovered">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Audited</span>
+              <strong id="pipelineAudited">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Enriched</span>
+              <strong id="pipelineEnriched">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Qualified</span>
+              <strong id="pipelineQualified">0</strong>
+            </div>
+            <div class="pipeline-step">
+              <span>Rejected</span>
+              <strong id="pipelineRejected">0</strong>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel leads-panel" id="qualified-leads">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Lead Intelligence Table</p>
+            <h2>Leads inside the selected saved list</h2>
+          </div>
+
+          <div class="filters">
+            <label>
+              <span>Status</span>
+              <select id="qualificationFilter">
+                <option value="all">All</option>
+                <option value="qualified">Qualified</option>
+                <option value="review_needed">Review Needed</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </label>
+            <label>
+              <span>Min Score</span>
+              <input id="scoreFilter" type="range" min="0" max="100" value="0">
+            </label>
+            <label class="toggle-label">
+              <input id="contactReadyFilter" type="checkbox">
+              <span>Only contact-ready</span>
+            </label>
+            <label class="toggle-label">
+              <input id="paidAdsFilter" type="checkbox">
+              <span>Paid ads signal</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="score-display">
+          <span>Minimum visible score:</span>
+          <strong id="scoreFilterValue">0</strong>
+        </div>
+
+        <div class="saved-list-table-wrap">
+          <table class="data-table leads-table" id="leadsTable">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Decision Maker</th>
+                <th>Contact</th>
+                <th>SEO Score</th>
+                <th>Overall</th>
+                <th>Status</th>
+                <th>Outreach</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="detail-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Selected Lead Detail</p>
+              <h2 id="detailCompany">Dental Smiles London | Euston Practice</h2>
+            </div>
+            <span class="pill pill-soft" id="detailStatus">qualified</span>
+          </div>
+
+          <dl class="detail-matrix">
+            <div>
+              <dt>Website</dt>
+              <dd id="detailWebsite">dentalsmileslondon.co.uk</dd>
+            </div>
+            <div>
+              <dt>Location</dt>
+              <dd id="detailLocation">London, United Kingdom</dd>
+            </div>
+            <div>
+              <dt>Primary Problem</dt>
+              <dd id="detailPrimaryProblem">Weak local SEO execution</dd>
+            </div>
+            <div>
+              <dt>Recommended Offer</dt>
+              <dd id="detailOffer">Local SEO audit</dd>
+            </div>
+          </dl>
+
+          <div class="detail-copy-grid">
+            <div>
+              <h3>Why this lead matters</h3>
+              <p id="detailReason">Strong local business fit, visible SEO weaknesses, and usable contact signals make this list entry outreach-ready.</p>
+            </div>
+            <div>
+              <h3>Outreach angle</h3>
+              <p id="detailAngle">Lead with missed service-page coverage and local ranking opportunity.</p>
+            </div>
+            <div>
+              <h3>Client value hypothesis</h3>
+              <p id="detailValue">A focused local SEO rebuild should convert existing paid demand into more cost-efficient organic leads.</p>
+            </div>
+            <div>
+              <h3>First-line personalization</h3>
+              <p id="detailPersonalization">Noticed the practice has strong local intent but thin treatment pages that likely cap organic visibility.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel panel-compact" id="exports">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Exports</p>
+              <h2>List-aware handoff</h2>
+            </div>
+          </div>
+          <ul class="export-list">
+            <li>
+              <strong>Qualified Leads CSV</strong>
+              <span>Export only outreach-ready companies from the selected saved list.</span>
+            </li>
+            <li>
+              <strong>Review Queue</strong>
+              <span>Keep borderline companies attached to the same list for future review.</span>
+            </li>
+            <li>
+              <strong>Full Intelligence Export</strong>
+              <span>Include scoring reasons, outreach angle, and paid-ads signal.</span>
+            </li>
+          </ul>
+          <button class="button primary button-block" type="button">Export Selected List</button>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../assets/dashboard.js"></script>
+</body>
+</html>

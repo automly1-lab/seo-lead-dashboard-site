@@ -1,4 +1,4 @@
-// RANKFORGE CONTACT FORMATTING FIX ACTIVE: contact-format-1
+// RANKFORGE CONTACT FIX ACTIVE: raw-contact-force-2
 const APP_STORAGE_KEY = "rankforge-clean-app-state-v1";
 const APP_USER_ID_KEY = "rankforge-current-user-id-v1";
 const APP_WEBHOOK_KEY = "rankforge-search-submit-webhook-v1";
@@ -224,25 +224,35 @@ function escapeHtml(value) {
 }
 
 function contactParts(lead) {
-  const email = cleanEmail(lead?.email || "");
-  const phone = cleanPhone(lead?.phone || "");
-  return { email, phone };
+  return {
+    email: cleanEmail(lead && lead.email),
+    phone: cleanPhone(lead && lead.phone),
+  };
 }
 
-function renderContactCell(lead) {
-  const { email, phone } = contactParts(lead);
+function contactCellHtml(lead) {
+  const parts = contactParts(lead);
+  const email = parts.email;
+  const phone = parts.phone;
+  return `<div class="contact-stack contact-stack-formatted">${email
+    ? `<span class="contact-line"><strong>Email</strong><span>${escapeHtml(email)}</span></span>`
+    : `<span class="contact-line muted"><strong>Email</strong><span>Not found</span></span>`}${phone
+    ? `<span class="contact-line"><strong>Phone</strong><span>${escapeHtml(phone)}</span></span>`
+    : `<span class="contact-line muted"><strong>Phone</strong><span>Not found</span></span>`}</div>`;
+}
+
+function contactDetailHtml(lead) {
+  const parts = contactParts(lead);
+  const email = parts.email;
+  const phone = parts.phone;
   if (!email && !phone) {
-    return `<div class="contact-stack contact-stack-missing"><span class="contact-line muted">Contact not found</span></div>`;
+    return `<span class="contact-detail-line muted"><strong>Contact</strong><span>No direct contact captured</span></span>`;
   }
-  return `<div class="contact-stack">${email ? `<span class="contact-line"><strong>Email:</strong> ${escapeHtml(email)}</span>` : `<span class="contact-line muted"><strong>Email:</strong> Not found</span>`}${phone ? `<span class="contact-line"><strong>Phone:</strong> ${escapeHtml(phone)}</span>` : `<span class="contact-line muted"><strong>Phone:</strong> Not found</span>`}</div>`;
-}
-
-function formatContactLine(lead) {
-  const { email, phone } = contactParts(lead);
-  const parts = [];
-  if (email) parts.push(`Email: ${email}`);
-  if (phone) parts.push(`Phone: ${phone}`);
-  return parts.join(" | ") || "No direct contact captured";
+  return `${email
+    ? `<span class="contact-detail-line"><strong>Email</strong><span>${escapeHtml(email)}</span></span>`
+    : `<span class="contact-detail-line muted"><strong>Email</strong><span>Not found</span></span>`}${phone
+    ? `<span class="contact-detail-line"><strong>Phone</strong><span>${escapeHtml(phone)}</span></span>`
+    : `<span class="contact-detail-line muted"><strong>Phone</strong><span>Not found</span></span>`}`;
 }
 
 function statusClass(value) {
@@ -344,7 +354,7 @@ function getVisibleLeads() {
     if (lead.listId !== selectedList.id) return false;
     if (statusFilter !== "all" && lead.status !== statusFilter) return false;
     if (numberValue(lead.overallScore) < minScore) return false;
-    if (contactReady && !hasReachableContact(lead)) return false;
+    if (contactReady && !lead.email && !lead.phone) return false;
     if (paidAdsOnly && !lead.paidAdsDetected) return false;
     return true;
   });
@@ -1041,7 +1051,7 @@ function renderDashboardPage() {
       <tr>
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
         <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
-        <td>${renderContactCell(lead)}</td>
+        <td>${contactCellHtml(lead)}</td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
       </tr>`).join("")
@@ -1123,7 +1133,7 @@ function renderLeadsPage() {
       <tr data-lead-id="${lead.id}">
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
         <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
-        <td>${renderContactCell(lead)}</td>
+        <td>${contactCellHtml(lead)}</td>
         <td><span class="score-pill">${lead.seoScore || 0}</span></td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
@@ -1169,10 +1179,10 @@ function renderLeadDetailPage() {
   setText("detailSecondaryProblem", selectedLead.secondaryProblem || "Secondary issue not set");
   setText("detailDecisionMaker", selectedLead.decisionMaker || "No named contact yet");
   setText("detailDecisionRole", selectedLead.role || "Needs contact enrichment");
-  setText("detailContactLine", formatContactLine(selectedLead));
+  setHtml("#detailContactLine", contactDetailHtml(selectedLead));
   setText("detailContactChannel", selectedLead.recommendedChannel ? `Recommended channel: ${titleCase(selectedLead.recommendedChannel)}` : "Recommended channel not set");
-  setText("detailNextAction", hasReachableContact(selectedLead) ? "Reach out with the selected SEO angle." : "Prioritize manual contact enrichment first.");
-  setText("detailRiskNote", hasReachableContact(selectedLead) ? "Main risk is moderate; focus on message quality and offer fit." : "Main risk: contact path is still weak.");
+  setText("detailNextAction", hasReachableContact(selectedLead) ? "Reach out using the best contact path, anchored to the SEO problem and recommended offer." : "Do manual contact enrichment before outreach.");
+  setText("detailRiskNote", hasReachableContact(selectedLead) ? "Contact path exists. Main risk is fit/message quality, not reachability." : "High risk: contact path is missing or unreliable.");
   setHtml("#detailSignalList", `<li>${selectedLead.primaryProblem || "Review SEO weakness signals."}</li><li>${selectedLead.secondaryProblem || "Review secondary issues."}</li><li>${selectedLead.paidAdsDetected ? "Paid ads budget signal detected." : "No paid ads signal detected."}</li>`);
   setHtml("#detailPlaybookList", `<li>${selectedLead.outreachAngle || "Define an outreach angle."}</li><li>${selectedLead.recommendedOffer || "Choose the right offer."}</li><li>${selectedLead.firstLine || "Prepare a first-line personalization."}</li>`);
   setText("exportTargetList", selectedList ? selectedList.name : "No selected list");

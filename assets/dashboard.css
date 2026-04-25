@@ -1573,3 +1573,121 @@ select:focus {
     grid-auto-flow: row;
   }
 }
+
+
+/* Lead detail and contact readability upgrade */
+.contact-stack-formatted {
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+  margin-top: 0;
+}
+
+.contact-line {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.contact-line strong {
+  color: var(--muted-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.contact-line span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contact-line.muted span {
+  color: var(--muted);
+}
+
+.detail-decision-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.detail-decision-strip > div {
+  display: grid;
+  gap: 5px;
+  padding: 15px 16px;
+  border: 1px solid rgba(21, 94, 239, 0.12);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(21, 94, 239, 0.055), rgba(255, 255, 255, 0.88));
+}
+
+.detail-decision-strip strong {
+  font-size: 15px;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.contact-detail-line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  font-weight: 600;
+}
+
+.contact-detail-line:last-child {
+  border-bottom: none;
+}
+
+.contact-detail-line strong {
+  color: var(--muted-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contact-detail-line span {
+  overflow-wrap: anywhere;
+}
+
+.contact-detail-line.muted span {
+  color: var(--muted);
+}
+
+.detail-contact-card #detailContactLine {
+  display: grid;
+  gap: 0;
+  font-weight: 600;
+}
+
+.detail-story-card,
+.detail-action-card,
+.detail-list-card,
+.detail-contact-card,
+.detail-score-card {
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.detail-story-card:hover,
+.detail-action-card:hover,
+.detail-list-card:hover,
+.detail-contact-card:hover,
+.detail-score-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(21, 94, 239, 0.16);
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 1260px) {
+  .detail-decision-strip {
+    grid-template-columns: 1fr;
+  }
+}

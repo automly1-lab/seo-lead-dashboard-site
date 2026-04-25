@@ -1,4 +1,4 @@
-// RANKFORGE CONTACT FIX ACTIVE: raw-contact-force-2
+// RANKFORGE CONTACT FORMATTING FIX ACTIVE: contact-format-1
 const APP_STORAGE_KEY = "rankforge-clean-app-state-v1";
 const APP_USER_ID_KEY = "rankforge-current-user-id-v1";
 const APP_WEBHOOK_KEY = "rankforge-search-submit-webhook-v1";
@@ -214,6 +214,37 @@ function cleanPhone(value) {
   return "";
 }
 
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function contactParts(lead) {
+  const email = cleanEmail(lead?.email || "");
+  const phone = cleanPhone(lead?.phone || "");
+  return { email, phone };
+}
+
+function renderContactCell(lead) {
+  const { email, phone } = contactParts(lead);
+  if (!email && !phone) {
+    return `<div class="contact-stack contact-stack-missing"><span class="contact-line muted">Contact not found</span></div>`;
+  }
+  return `<div class="contact-stack">${email ? `<span class="contact-line"><strong>Email:</strong> ${escapeHtml(email)}</span>` : `<span class="contact-line muted"><strong>Email:</strong> Not found</span>`}${phone ? `<span class="contact-line"><strong>Phone:</strong> ${escapeHtml(phone)}</span>` : `<span class="contact-line muted"><strong>Phone:</strong> Not found</span>`}</div>`;
+}
+
+function formatContactLine(lead) {
+  const { email, phone } = contactParts(lead);
+  const parts = [];
+  if (email) parts.push(`Email: ${email}`);
+  if (phone) parts.push(`Phone: ${phone}`);
+  return parts.join(" | ") || "No direct contact captured";
+}
+
 function statusClass(value) {
   const normalized = String(value || "").toLowerCase();
   if (normalized === "qualified" || normalized === "completed" || normalized === "active") {
@@ -313,7 +344,7 @@ function getVisibleLeads() {
     if (lead.listId !== selectedList.id) return false;
     if (statusFilter !== "all" && lead.status !== statusFilter) return false;
     if (numberValue(lead.overallScore) < minScore) return false;
-    if (contactReady && !lead.email && !lead.phone) return false;
+    if (contactReady && !hasReachableContact(lead)) return false;
     if (paidAdsOnly && !lead.paidAdsDetected) return false;
     return true;
   });
@@ -1010,7 +1041,7 @@ function renderDashboardPage() {
       <tr>
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
         <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
-        <td class="contact-stack"><span>${lead.email || "No email"}</span><span>${lead.phone || "No phone"}</span></td>
+        <td>${renderContactCell(lead)}</td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
       </tr>`).join("")
@@ -1092,7 +1123,7 @@ function renderLeadsPage() {
       <tr data-lead-id="${lead.id}">
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
         <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
-        <td class="contact-stack"><span>${lead.email || "No email"}</span><span>${lead.phone || "No phone"}</span></td>
+        <td>${renderContactCell(lead)}</td>
         <td><span class="score-pill">${lead.seoScore || 0}</span></td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
@@ -1138,10 +1169,10 @@ function renderLeadDetailPage() {
   setText("detailSecondaryProblem", selectedLead.secondaryProblem || "Secondary issue not set");
   setText("detailDecisionMaker", selectedLead.decisionMaker || "No named contact yet");
   setText("detailDecisionRole", selectedLead.role || "Needs contact enrichment");
-  setText("detailContactLine", [selectedLead.email, selectedLead.phone].filter(Boolean).join(" | ") || "No direct contact captured");
+  setText("detailContactLine", formatContactLine(selectedLead));
   setText("detailContactChannel", selectedLead.recommendedChannel ? `Recommended channel: ${titleCase(selectedLead.recommendedChannel)}` : "Recommended channel not set");
-  setText("detailNextAction", selectedLead.email || selectedLead.phone ? "Reach out with the selected SEO angle." : "Prioritize manual contact enrichment first.");
-  setText("detailRiskNote", selectedLead.email || selectedLead.phone ? "Main risk is moderate; focus on message quality and offer fit." : "Main risk: contact path is still weak.");
+  setText("detailNextAction", hasReachableContact(selectedLead) ? "Reach out with the selected SEO angle." : "Prioritize manual contact enrichment first.");
+  setText("detailRiskNote", hasReachableContact(selectedLead) ? "Main risk is moderate; focus on message quality and offer fit." : "Main risk: contact path is still weak.");
   setHtml("#detailSignalList", `<li>${selectedLead.primaryProblem || "Review SEO weakness signals."}</li><li>${selectedLead.secondaryProblem || "Review secondary issues."}</li><li>${selectedLead.paidAdsDetected ? "Paid ads budget signal detected." : "No paid ads signal detected."}</li>`);
   setHtml("#detailPlaybookList", `<li>${selectedLead.outreachAngle || "Define an outreach angle."}</li><li>${selectedLead.recommendedOffer || "Choose the right offer."}</li><li>${selectedLead.firstLine || "Prepare a first-line personalization."}</li>`);
   setText("exportTargetList", selectedList ? selectedList.name : "No selected list");

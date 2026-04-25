@@ -1,4 +1,4 @@
-// RANKFORGE CONTACT FIX ACTIVE: raw-contact-force-2
+// RANKFORGE LEAD DETAIL HUMANIZED ACTIVE: lead-detail-humanized-1
 const APP_STORAGE_KEY = "rankforge-clean-app-state-v1";
 const APP_USER_ID_KEY = "rankforge-current-user-id-v1";
 const APP_WEBHOOK_KEY = "rankforge-search-submit-webhook-v1";
@@ -101,6 +101,109 @@ function titleCase(value) {
   return String(value || "")
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+
+function humanizeLeadLabel(value, fallback) {
+  const raw = String(value || "").trim();
+  if (!raw) return fallback || "Not set";
+  const normalized = raw.toLowerCase().replace(/[\s-]+/g, "_");
+  const dictionary = {
+    high_seo_need_contact_missing: "Strong SEO opportunity, but no direct email found",
+    website_access_issue: "Website access or crawl quality issue detected",
+    website_not_accessible: "Website is difficult to access or audit",
+    no_detectable_blog_service_or_location_pages_to_support_seo_content: "No clear blog, service, or location pages supporting SEO growth",
+    no_detectable_blog_service_or_location_pages: "No clear blog, service, or location pages found",
+    contact_missing: "Direct contact is incomplete",
+    no_contact_info_found: "No reliable contact path found",
+    local_seo_gap: "Local SEO gap detected",
+    weak_local_seo: "Weak local SEO signals detected",
+    weak_service_pages: "Service pages look thin or incomplete",
+    weak_location_pages: "Location pages look thin or missing",
+    missing_location_pages: "Location landing pages appear to be missing",
+    paid_ads_no_organic: "Paid traffic signal found, but organic visibility appears weak",
+    low_content_depth: "Website content depth appears weak",
+    thin_content: "Website content looks thin for commercial SEO",
+    maps_phone_only: "Phone contact available, but direct email is missing",
+    review_needed: "Needs manual review",
+    qualified: "Qualified lead",
+    rejected: "Rejected lead"
+  };
+  if (dictionary[normalized]) return dictionary[normalized];
+  return titleCase(raw).replace(/\bSeo\b/g, "SEO").replace(/\bPpc\b/g, "PPC").replace(/\bUrl\b/g, "URL");
+}
+
+function humanizeOffer(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "SEO Opportunity Audit";
+  const normalized = raw.toLowerCase().replace(/[\s-]+/g, "_");
+  const dictionary = {
+    local_seo_opportunity_audit: "Local SEO Opportunity Audit",
+    seo_audit: "SEO Audit",
+    local_seo_audit: "Local SEO Audit",
+    google_maps_optimization: "Google Maps Optimization",
+    maps_seo_optimization: "Google Maps Optimization",
+    content_gap_audit: "Content Gap Audit",
+    technical_seo_audit: "Technical SEO Audit",
+    service_page_expansion: "Service Page Expansion",
+    location_page_expansion: "Location Page Expansion",
+    restoration_seo_audit: "Restoration SEO Audit",
+    lead_generation_seo: "Lead Generation SEO"
+  };
+  if (dictionary[normalized]) return dictionary[normalized];
+  return titleCase(raw).replace(/\bSeo\b/g, "SEO").replace(/\bPpc\b/g, "PPC").replace(/\bUrl\b/g, "URL");
+}
+
+function humanizeChannel(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "Recommended channel not set";
+  const normalized = raw.toLowerCase().replace(/[\s-]+/g, "_");
+  const dictionary = {
+    email: "Recommended channel: Email",
+    phone: "Recommended channel: Phone",
+    manual_review: "Recommended channel: Manual review",
+    email_then_phone: "Recommended channel: Email, then phone",
+    phone_then_email: "Recommended channel: Phone, then email"
+  };
+  return dictionary[normalized] || `Recommended channel: ${humanizeLeadLabel(raw, titleCase(raw))}`;
+}
+
+function cleanNarrative(value, fallback) {
+  const raw = String(value || "").trim();
+  if (!raw) return fallback || "No narrative available yet.";
+  if (/^[a-z0-9_\-]+$/i.test(raw)) return humanizeLeadLabel(raw, fallback);
+  return raw
+    .replace(/\bhigh_seo_need_contact_missing\b/gi, "a strong SEO opportunity with incomplete direct contact data")
+    .replace(/\bwebsite_access_issue\b/gi, "a website access or crawl quality issue")
+    .replace(/\blocal_seo_opportunity_audit\b/gi, "Local SEO Opportunity Audit")
+    .replace(/_/g, " ");
+}
+
+function decisionMakerTitle(lead) {
+  if (lead && cleanContactValue(lead.decisionMaker)) return lead.decisionMaker;
+  if (lead && hasReachableContact(lead)) return "Business contact available";
+  return "No named contact yet";
+}
+
+function decisionMakerSubtitle(lead) {
+  if (lead && cleanContactValue(lead.role)) return lead.role;
+  if (lead && hasReachableContact(lead)) return "No named decision maker found yet";
+  return "Needs contact enrichment";
+}
+
+function signalItemsForLead(lead) {
+  const items = [];
+  const primary = humanizeLeadLabel(lead && lead.primaryProblem, "Review SEO weakness signals.");
+  const secondary = humanizeLeadLabel(lead && lead.secondaryProblem, "Review secondary SEO issues.");
+  if (primary) items.push(primary);
+  if (secondary && secondary !== primary) items.push(secondary);
+  items.push(lead && lead.paidAdsDetected ? "Paid ads budget signal detected." : "No paid ads signal detected.");
+  if (lead && hasReachableContact(lead)) items.push("Reachable contact path exists.");
+  return items.filter(Boolean).slice(0, 5);
+}
+
+function listHtml(items) {
+  return (items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
 function numberValue(value) {
@@ -1164,27 +1267,27 @@ function renderLeadDetailPage() {
     websiteNode.href = selectedLead.website || "#";
   }
   setText("detailLocation", selectedList ? `${selectedList.city}, ${selectedList.country}` : "-");
-  setText("detailPrimaryProblem", selectedLead.primaryProblem || "Not set");
-  setText("detailOffer", selectedLead.recommendedOffer || "Not set");
-  setText("detailReason", selectedLead.whyItMatters || "No qualification reason yet.");
-  setText("detailAngle", selectedLead.outreachAngle || "No outreach angle yet.");
-  setText("detailValue", selectedLead.valueHypothesis || "No value hypothesis yet.");
-  setText("detailPersonalization", selectedLead.firstLine || "No personalization yet.");
+  setText("detailPrimaryProblem", humanizeLeadLabel(selectedLead.primaryProblem, "SEO opportunity needs review"));
+  setText("detailOffer", humanizeOffer(selectedLead.recommendedOffer));
+  setText("detailReason", cleanNarrative(selectedLead.whyItMatters, "SEO opportunity detected; review the visible site signals and contact path before outreach."));
+  setText("detailAngle", cleanNarrative(selectedLead.outreachAngle, "Lead with a relevant SEO gap; anchor outreach to the clearest site weakness and recommended offer."));
+  setText("detailValue", cleanNarrative(selectedLead.valueHypothesis, "Likely opportunity to improve local search visibility and capture more commercial demand."));
+  setText("detailPersonalization", cleanNarrative(selectedLead.firstLine, "No first-line personalization generated yet."));
   setText("detailSeoScore", String(selectedLead.seoScore || 0));
   setText("detailOverallScore", String(selectedLead.overallScore || 0));
   setText("detailCommercialFit", String(selectedLead.commercialFit || 0));
   setText("detailContactConfidence", String(selectedLead.contactConfidence || 0));
-  setText("detailOutreachReadiness", `Outreach: ${titleCase(selectedLead.outreachReadiness || "needs_review")}`);
+  setText("detailOutreachReadiness", `Outreach: ${humanizeLeadLabel(selectedLead.outreachReadiness || "needs_review")}`);
   setText("detailPaidAds", `Paid ads: ${selectedLead.paidAdsDetected ? "detected" : "not detected"}`);
-  setText("detailSecondaryProblem", selectedLead.secondaryProblem || "Secondary issue not set");
-  setText("detailDecisionMaker", selectedLead.decisionMaker || "No named contact yet");
-  setText("detailDecisionRole", selectedLead.role || "Needs contact enrichment");
+  setText("detailSecondaryProblem", humanizeLeadLabel(selectedLead.secondaryProblem, "Secondary issue not set"));
+  setText("detailDecisionMaker", decisionMakerTitle(selectedLead));
+  setText("detailDecisionRole", decisionMakerSubtitle(selectedLead));
   setHtml("#detailContactLine", contactDetailHtml(selectedLead));
-  setText("detailContactChannel", selectedLead.recommendedChannel ? `Recommended channel: ${titleCase(selectedLead.recommendedChannel)}` : "Recommended channel not set");
-  setText("detailNextAction", hasReachableContact(selectedLead) ? "Reach out using the best contact path, anchored to the SEO problem and recommended offer." : "Do manual contact enrichment before outreach.");
+  setText("detailContactChannel", humanizeChannel(selectedLead.recommendedChannel));
+  setText("detailNextAction", hasReachableContact(selectedLead) ? `Reach out using the best contact path and offer a ${humanizeOffer(selectedLead.recommendedOffer).toLowerCase()}.` : "Do manual contact enrichment before outreach.");
   setText("detailRiskNote", hasReachableContact(selectedLead) ? "Contact path exists. Main risk is fit/message quality, not reachability." : "High risk: contact path is missing or unreliable.");
-  setHtml("#detailSignalList", `<li>${selectedLead.primaryProblem || "Review SEO weakness signals."}</li><li>${selectedLead.secondaryProblem || "Review secondary issues."}</li><li>${selectedLead.paidAdsDetected ? "Paid ads budget signal detected." : "No paid ads signal detected."}</li>`);
-  setHtml("#detailPlaybookList", `<li>${selectedLead.outreachAngle || "Define an outreach angle."}</li><li>${selectedLead.recommendedOffer || "Choose the right offer."}</li><li>${selectedLead.firstLine || "Prepare a first-line personalization."}</li>`);
+  setHtml("#detailSignalList", listHtml(signalItemsForLead(selectedLead)));
+  setHtml("#detailPlaybookList", listHtml([cleanNarrative(selectedLead.outreachAngle, "Anchor outreach to the clearest SEO gap."), `Offer: ${humanizeOffer(selectedLead.recommendedOffer)}`, cleanNarrative(selectedLead.firstLine, "Prepare a short first-line personalization before sending.")]));
   setText("exportTargetList", selectedList ? selectedList.name : "No selected list");
   setText("exportTargetListMirror", selectedList ? selectedList.name : "No selected list");
   setText("exportTargetMeta", selectedList ? `${getVisibleLeads().length} visible leads in this selected list.` : "0 visible leads ready for export.");

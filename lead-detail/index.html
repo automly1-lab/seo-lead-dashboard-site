@@ -15,7 +15,7 @@
     </aside>
     <main class="dashboard-main">
       <header class="topbar">
-        <div><p class="kicker">Lead Detail</p><h1>One lead, fully explained</h1><p class="topbar-copy">Use this view when the team needs the full narrative: why the lead matters, how to approach it, and what to do next.</p></div>
+        <div><p class="kicker">Lead Detail</p><h1>One lead, fully explained</h1><p class="topbar-copy">Review the company, contact path, SEO need, commercial fit, and next action in one focused workspace.</p></div>
         <div class="topbar-actions"><div class="data-status" id="dataStatus">Local workspace</div><button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button><a class="button ghost" href="../leads/">Back to Leads</a></div>
       </header>
       <section class="workspace-strip">
@@ -29,7 +29,7 @@
             <div class="detail-hero-copy">
               <p class="panel-eyebrow">Selected Lead Detail</p>
               <h2 id="detailCompany">No lead selected</h2>
-              <p class="detail-hero-note">This screen should make one thing obvious: whether this business is worth agency attention right now, and what the outreach angle should be.</p>
+              <p class="detail-hero-note">Use this page to decide if the account deserves outreach now, needs manual review, or should be rejected.</p>
             </div>
             <div class="detail-hero-meta">
               <span class="pill pill-soft" id="detailStatus">review_needed</span>
@@ -37,11 +37,26 @@
             </div>
           </div>
 
+          <section class="detail-decision-strip" aria-label="Lead decision summary">
+            <div>
+              <span class="workspace-label">Decision Focus</span>
+              <strong>Is this reachable and worth outreach?</strong>
+            </div>
+            <div>
+              <span class="workspace-label">Contact Standard</span>
+              <strong>Email or phone required</strong>
+            </div>
+            <div>
+              <span class="workspace-label">Operator Rule</span>
+              <strong>Use the SEO reason before pitching</strong>
+            </div>
+          </section>
+
           <section class="detail-section detail-section-framed">
             <div class="detail-section-head">
               <div>
                 <p class="panel-eyebrow">Lead Snapshot</p>
-                <h3>Commercial and market context</h3>
+                <h3>Lead quality snapshot</h3>
               </div>
             </div>
             <dl class="detail-matrix detail-matrix-premium">
@@ -76,7 +91,7 @@
             <div class="detail-section-head">
               <div>
                 <p class="panel-eyebrow">Lead Narrative</p>
-                <h3>What to say, sell, and emphasize</h3>
+                <h3>Why this business deserves attention</h3>
               </div>
             </div>
             <div class="detail-copy-grid detail-copy-grid-premium">
@@ -91,7 +106,7 @@
             <div class="detail-section-head">
               <div>
                 <p class="panel-eyebrow">Contact Readiness</p>
-                <h3>Who to reach and how to reach them</h3>
+                <h3>Reachability and contact path</h3>
               </div>
             </div>
             <div class="detail-contact-grid detail-contact-grid-premium">
@@ -104,7 +119,7 @@
             <div class="detail-section-head">
               <div>
                 <p class="panel-eyebrow">Operator Actions</p>
-                <h3>What the team should do next</h3>
+                <h3>Operator decision and next step</h3>
               </div>
             </div>
             <div class="detail-action-grid detail-action-grid-premium">
@@ -142,6 +157,6 @@
     </main>
   </div>
   <script src="../assets/auth.js"></script>
- <script src="../assets/app.js?v=contact-format-1"></script>
+ <script src="../assets/app.js?v=lead-detail-upgrade-1"></script>
 </body>
 </html>

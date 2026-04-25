@@ -107,6 +107,30 @@ function numberValue(value) {
   return Number.isFinite(parsed) ? Math.round(parsed) : 0;
 }
 
+function cleanContactValue(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const normalized = text.toLowerCase().replace(/\s+/g, " " );
+  if (["missing", "none", "null", "undefined", "no email", "no phone", "n/a", "na", "not found", "no contact"].includes(normalized)) return "";
+  if (/^(user|test|example)@domain\.com$/i.test(text)) return "";
+  return text;
+}
+
+function hasReachableContact(lead) {
+  return Boolean(cleanContactValue(lead.email) || cleanContactValue(lead.phone));
+}
+
+function domainFromAnyUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    return new URL(url).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    return raw.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase();
+  }
+}
+
 function statusClass(value) {
   const normalized = String(value || "").toLowerCase();
   if (normalized === "qualified" || normalized === "completed" || normalized === "active") {
@@ -195,22 +219,18 @@ function getSelectedList() {
   return runtimeData.lists.find((item) => item.id === appState.selectedListId) || runtimeData.lists[0] || null;
 }
 
-function hasReachableContact(lead) {
-  return Boolean(String(lead?.email || "").trim() || String(lead?.phone || "").trim());
-}
-
 function getVisibleLeads() {
   const selectedList = getSelectedList();
   if (!selectedList) return [];
   const statusFilter = document.getElementById("qualificationFilter")?.value || "all";
   const minScore = Number(document.getElementById("scoreFilter")?.value || 0);
+  const contactReady = document.getElementById("contactReadyFilter")?.checked || false;
   const paidAdsOnly = document.getElementById("paidAdsFilter")?.checked || false;
   return runtimeData.leads.filter((lead) => {
     if (lead.listId !== selectedList.id) return false;
-    // Product rule: no contact = not a usable lead, so do not show it in the lead workspace.
-    if (!hasReachableContact(lead)) return false;
     if (statusFilter !== "all" && lead.status !== statusFilter) return false;
     if (numberValue(lead.overallScore) < minScore) return false;
+    if (contactReady && !lead.email && !lead.phone) return false;
     if (paidAdsOnly && !lead.paidAdsDetected) return false;
     return true;
   });
@@ -499,61 +519,39 @@ function buildRemoteData(data) {
   const finalLeads = data.final_leads || [];
 
   const rawByProspect = {};
-  for (const prospect of rawProspects) {
-    if (!prospect.prospect_id) continue;
-    rawByProspect[prospect.prospect_id] = prospect;
-  }
-
-  function firstContactValue(...values) {
-    const bad = new Set(["missing", "no email", "no phone", "none", "null", "undefined", "n/a", "na"]);
-    return values
-      .flatMap((value) => String(value || "").split(','))
-      .map((value) => String(value || "").trim())
-      .filter((value) => value && !bad.has(value.toLowerCase()))[0] || "";
+  const rawByDomain = {};
+  const rawBySearchAndDomain = {};
+  for (const raw of rawProspects) {
+    const prospectId = normalizeKey(raw.prospect_id);
+    const domain = domainFromAnyUrl(raw.domain || raw.root_domain || raw.website_url);
+    const searchId = normalizeKey(raw.search_id);
+    if (prospectId) rawByProspect[prospectId] = raw;
+    if (domain && !rawByDomain[domain]) rawByDomain[domain] = raw;
+    if (searchId && domain) rawBySearchAndDomain[`${searchId}|${domain}`] = raw;
   }
 
   const contactByProspect = {};
+  const contactById = {};
   for (const contact of contacts) {
-    if (!contact.prospect_id) continue;
-    const current = contactByProspect[contact.prospect_id];
-    if (!current || numberValue(contact.contact_confidence_score) > numberValue(current.contact_confidence_score)) {
-      contactByProspect[contact.prospect_id] = contact;
+    if (contact.contact_id) contactById[normalizeKey(contact.contact_id)] = contact;
+    const prospectId = normalizeKey(contact.prospect_id);
+    if (!prospectId) continue;
+    const current = contactByProspect[prospectId];
+    const score = numberValue(contact.contact_confidence_score);
+    const currentScore = current ? numberValue(current.contact_confidence_score) : -1;
+    const hasContact = Boolean(cleanContactValue(contact.email) || cleanContactValue(contact.phone));
+    const currentHasContact = current ? Boolean(cleanContactValue(current.email) || cleanContactValue(current.phone)) : false;
+    if (!current || (hasContact && !currentHasContact) || score > currentScore) {
+      contactByProspect[prospectId] = contact;
     }
-  }
-
-  function contactForLeadLike(row, audit = {}) {
-    const raw = rawByProspect[row.prospect_id || audit.prospect_id] || {};
-    const directContact = contacts.find((item) => item.contact_id && item.contact_id === row.primary_contact_id) || {};
-    const prospectContact = contactByProspect[row.prospect_id || audit.prospect_id] || {};
-    const contact = Object.keys(directContact).length ? directContact : prospectContact;
-    const email = firstContactValue(
-      row.decision_maker_email,
-      contact.email,
-      audit.homepage_primary_email,
-      row.homepage_primary_email,
-      raw.raw_email,
-      raw.email,
-      raw.homepage_primary_email
-    );
-    const phone = firstContactValue(
-      row.decision_maker_phone,
-      contact.phone,
-      audit.homepage_primary_phone,
-      row.homepage_primary_phone,
-      raw.raw_phone,
-      raw.phone,
-      raw.place_phone,
-      raw.homepage_primary_phone
-    );
-    return { contact, raw, email, phone };
   }
 
   const auditById = {};
   for (const audit of audits) {
-    if (audit.audit_id) auditById[audit.audit_id] = audit;
+    if (audit.audit_id) auditById[normalizeKey(audit.audit_id)] = audit;
   }
 
-  const auditHasFinalLead = new Set(finalLeads.map((item) => item.audit_id).filter(Boolean));
+  const auditHasFinalLead = new Set(finalLeads.map((item) => normalizeKey(item.audit_id)).filter(Boolean));
 
   const searchMap = new Map();
   for (const search of searches) {
@@ -573,27 +571,24 @@ function buildRemoteData(data) {
     if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
 
+  function statusOf(item) {
+    return normalizeKey(item.qualification_status || item.status).toLowerCase();
+  }
+
   const lists = Array.from(searchMap.values()).map((search) => {
     const searchId = normalizeKey(search.search_id);
     const searchAudits = audits.filter((item) => normalizeKey(item.search_id) === searchId);
     const searchProspects = rawProspects.filter((item) => normalizeKey(item.search_id) === searchId);
-    const leadRowsForSearch = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId);
-    const contactableLeadRows = leadRowsForSearch.filter((item) => {
-      const audit = auditById[item.audit_id] || {};
-      const linked = contactForLeadLike(item, audit);
-      return Boolean(linked.email || linked.phone);
-    });
-    const qualifiedCount = contactableLeadRows.filter((item) => normalizeKey(item.qualification_status || item.status) === "qualified").length;
-    const reviewNeededCount = contactableLeadRows.filter((item) => normalizeKey(item.qualification_status || item.status) === "review_needed").length;
-    const rejectedCount = leadRowsForSearch.filter((item) => normalizeKey(item.qualification_status || item.status) === "rejected").length;
+    const searchContacts = contacts.filter((item) => normalizeKey(item.search_id) === searchId);
+    const searchFinalLeads = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId);
+    const qualifiedCount = searchFinalLeads.filter((item) => statusOf(item) === "qualified").length;
+    const reviewNeededCount = searchFinalLeads.filter((item) => statusOf(item) === "review_needed").length;
+    const rejectedCount = searchFinalLeads.filter((item) => statusOf(item) === "rejected").length;
     let derivedStatus = search.status || "active";
-    if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) {
-      derivedStatus = "completed";
-    } else if (searchAudits.length > 0 || searchProspects.length > 0) {
-      derivedStatus = "running";
-    } else if (derivedStatus === "active") {
-      derivedStatus = "queued";
-    }
+    if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) derivedStatus = "completed";
+    else if (searchAudits.length > 0 || searchProspects.length > 0) derivedStatus = "running";
+    else if (derivedStatus === "active") derivedStatus = "queued";
+
     return {
       id: searchId,
       userId: normalizeKey(search.user_id || "usr_mvp"),
@@ -605,10 +600,11 @@ function buildRemoteData(data) {
       description: `${titleCase(search.niche)} opportunities for ${search.city}.`,
       status: derivedStatus,
       lastRun: search.completed_at || search.updated_at || search.created_at || "",
-      discovered: searchProspects.length || numberValue(search.max_results_requested),
+      discovered: Math.max(searchProspects.length, searchAudits.length, searchFinalLeads.length, numberValue(search.max_results_requested)),
       audited: searchAudits.length,
-      enriched: contacts.filter((item) => item.search_id === search.search_id).length,
+      enriched: searchContacts.length,
       qualified: qualifiedCount,
+      reviewNeeded: reviewNeededCount,
       rejected: rejectedCount,
       minSeoScore: numberValue(search.min_audit_score || 60),
       minLeadScore: numberValue(search.min_lead_score || 70),
@@ -616,24 +612,45 @@ function buildRemoteData(data) {
     };
   }).filter((item) => item.id);
 
-  const leads = finalLeads.map((lead, index) => {
-    const audit = auditById[lead.audit_id] || {};
-    const linked = contactForLeadLike(lead, audit);
-    const contact = linked.contact || {};
+  function resolveEvidence(lead, audit) {
+    const prospectId = normalizeKey(lead.prospect_id || audit.prospect_id);
+    const primaryContactId = normalizeKey(lead.primary_contact_id);
+    const leadDomain = domainFromAnyUrl(lead.domain || lead.website_url || audit.domain || audit.website_url);
+    const searchId = normalizeKey(lead.search_id || audit.search_id);
+    const raw = rawByProspect[prospectId] || rawBySearchAndDomain[`${searchId}|${leadDomain}`] || rawByDomain[leadDomain] || {};
+    const contact = contactById[primaryContactId] || contactByProspect[prospectId] || {};
+    return { raw, contact };
+  }
+
+  function buildLeadFromFinal(lead, index) {
+    const audit = auditById[normalizeKey(lead.audit_id)] || {};
+    const { raw, contact } = resolveEvidence(lead, audit);
+    const email = cleanContactValue(lead.decision_maker_email)
+      || cleanContactValue(contact.email)
+      || cleanContactValue(raw.raw_email)
+      || cleanContactValue(audit.homepage_primary_email)
+      || cleanContactValue(raw.email);
+    const phone = cleanContactValue(lead.decision_maker_phone)
+      || cleanContactValue(contact.phone)
+      || cleanContactValue(raw.raw_phone)
+      || cleanContactValue(raw.place_phone)
+      || cleanContactValue(audit.homepage_primary_phone)
+      || cleanContactValue(raw.phone);
+
     return {
       id: lead.lead_id || `remote_lead_${index + 1}`,
-      listId: normalizeKey(lead.search_id || audit.search_id || ""),
-      userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id || "usr_mvp"),
-      company: lead.company_name || audit.company_name || "Unknown company",
-      website: lead.website_url || audit.website_url || "",
+      listId: normalizeKey(lead.search_id || audit.search_id || raw.search_id || ""),
+      userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id || raw.user_id || "usr_mvp"),
+      company: lead.company_name || audit.company_name || raw.company_name || "Unknown company",
+      website: lead.website_url || audit.website_url || raw.website_url || "",
       decisionMaker: lead.decision_maker_name || contact.contact_name || "",
       role: lead.decision_maker_role || contact.contact_role || "",
-      email: linked.email,
-      phone: linked.phone,
+      email,
+      phone,
       seoScore: numberValue(lead.seo_need_score || audit.seo_need_score),
       overallScore: numberValue(lead.overall_lead_score || lead.seo_need_score || audit.seo_need_score),
       commercialFit: numberValue(lead.commercial_fit_score || audit.commercial_fit_score),
-      contactConfidence: numberValue(lead.contact_confidence_score || contact.contact_confidence_score),
+      contactConfidence: numberValue(lead.contact_confidence_score || contact.contact_confidence_score || raw.raw_contact_confidence || (email || phone ? 80 : 0)),
       status: lead.qualification_status || lead.status || "review_needed",
       outreachReadiness: lead.outreach_readiness || "needs_review",
       paidAdsDetected: String(lead.paid_ads_detected || audit.paid_ads_detected || "").toLowerCase() === "true",
@@ -644,30 +661,34 @@ function buildRemoteData(data) {
       valueHypothesis: lead.client_value_hypothesis || "",
       firstLine: lead.first_line_personalization || "",
       recommendedOffer: lead.recommended_offer || "",
-      recommendedChannel: lead.recommended_channel || (linked.email ? "email" : (linked.phone ? "phone" : "")),
+      recommendedChannel: lead.recommended_channel || (email ? "email" : (phone ? "phone" : "manual_review")),
     };
-  });
+  }
+
+  const leads = finalLeads.map(buildLeadFromFinal);
 
   const fallbackLeads = audits
-    .filter((audit) => !auditHasFinalLead.has(audit.audit_id))
+    .filter((audit) => !auditHasFinalLead.has(normalizeKey(audit.audit_id)))
     .map((audit, index) => {
-      const linked = contactForLeadLike(audit, audit);
-      const contact = linked.contact || {};
-      const fallbackStatus = (linked.email || linked.phone) && numberValue(audit.seo_need_score) >= numberValue(audit.min_lead_score || 70) ? "review_needed" : "rejected";
+      const raw = rawByProspect[normalizeKey(audit.prospect_id)] || rawByDomain[domainFromAnyUrl(audit.domain || audit.website_url)] || {};
+      const contact = contactByProspect[normalizeKey(audit.prospect_id)] || {};
+      const email = cleanContactValue(contact.email) || cleanContactValue(raw.raw_email) || cleanContactValue(audit.homepage_primary_email) || cleanContactValue(raw.email);
+      const phone = cleanContactValue(contact.phone) || cleanContactValue(raw.raw_phone) || cleanContactValue(raw.place_phone) || cleanContactValue(audit.homepage_primary_phone) || cleanContactValue(raw.phone);
+      const fallbackStatus = numberValue(audit.seo_need_score) >= numberValue(audit.min_lead_score || 70) ? "review_needed" : "rejected";
       return {
         id: `audit_fallback_${audit.audit_id || index + 1}`,
-        listId: normalizeKey(audit.search_id || ""),
-        userId: normalizeKey(audit.user_id || contact.user_id || "usr_mvp"),
-        company: audit.company_name || "Unknown company",
-        website: audit.website_url || audit.final_url || "",
+        listId: normalizeKey(audit.search_id || raw.search_id || ""),
+        userId: normalizeKey(audit.user_id || contact.user_id || raw.user_id || "usr_mvp"),
+        company: audit.company_name || raw.company_name || "Unknown company",
+        website: audit.website_url || audit.final_url || raw.website_url || "",
         decisionMaker: contact.contact_name || "",
         role: contact.contact_role || "",
-        email: linked.email,
-        phone: linked.phone,
+        email,
+        phone,
         seoScore: numberValue(audit.seo_need_score),
         overallScore: numberValue(audit.seo_need_score),
         commercialFit: numberValue(audit.commercial_fit_score),
-        contactConfidence: numberValue(contact.contact_confidence_score),
+        contactConfidence: numberValue(contact.contact_confidence_score || raw.raw_contact_confidence || (email || phone ? 80 : 0)),
         status: fallbackStatus,
         outreachReadiness: fallbackStatus === "review_needed" ? "needs_review" : "not_ready",
         paidAdsDetected: String(audit.paid_ads_detected || "").toLowerCase() === "true",
@@ -678,11 +699,14 @@ function buildRemoteData(data) {
         valueHypothesis: "",
         firstLine: "",
         recommendedOffer: "SEO audit",
-        recommendedChannel: contact.email ? "email" : (contact.phone ? "phone" : "manual_review"),
+        recommendedChannel: email ? "email" : (phone ? "phone" : "manual_review"),
       };
     });
 
-  return { lists, leads: uniqueBy([...leads, ...fallbackLeads], (item) => item.id) };
+  const allLeads = uniqueBy([...leads, ...fallbackLeads], (item) => item.id)
+    .filter((lead) => hasReachableContact(lead));
+
+  return { lists, leads: allLeads };
 }
 
 async function syncSheets(event) {

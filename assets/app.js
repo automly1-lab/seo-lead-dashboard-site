@@ -451,13 +451,15 @@ function getVisibleLeads() {
   if (!selectedList) return [];
   const statusFilter = document.getElementById("qualificationFilter")?.value || "all";
   const minScore = Number(document.getElementById("scoreFilter")?.value || 0);
-  const contactReady = document.getElementById("contactReadyFilter")?.checked || false;
   const paidAdsOnly = document.getElementById("paidAdsFilter")?.checked || false;
+
+  // Product rule: a lead is only useful if it has a reachable contact path.
+  // This keeps contactless rows out of the Leads workspace even if old sheet rows exist.
   return runtimeData.leads.filter((lead) => {
     if (lead.listId !== selectedList.id) return false;
+    if (!hasReachableContact(lead)) return false;
     if (statusFilter !== "all" && lead.status !== statusFilter) return false;
     if (numberValue(lead.overallScore) < minScore) return false;
-    if (contactReady && !lead.email && !lead.phone) return false;
     if (paidAdsOnly && !lead.paidAdsDetected) return false;
     return true;
   });
@@ -1117,7 +1119,7 @@ function renderDashboardPage() {
   setText("metricQualified", String(qualified));
   setText("metricReviewNeeded", String(reviewNeeded));
   setText("metricAverageScore", String(averageScore));
-  setText("visibleLeadCount", `${leads.length} leads`);
+  setText("visibleLeadCount", `${leads.length} contact-ready leads`);
 
   if (!selected) return;
   setText("workspaceSelectedListHealth", selected.qualified > 0 ? "List has qualified leads" : "List needs review");
@@ -1153,7 +1155,7 @@ function renderDashboardPage() {
     ? leads.slice(0, 6).map((lead) => `
       <tr>
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
-        <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
+        <td><strong>${lead.decisionMaker || "Business contact available"}</strong><span class="status-note">${lead.role || "No named decision maker yet"}</span></td>
         <td>${contactCellHtml(lead)}</td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
@@ -1226,7 +1228,7 @@ function renderLeadsPage() {
   setText("workspaceUserBadge", getCurrentUserId());
   setText("workspaceDataSource", appState.syncMode === "sheets" ? "Live Sheets" : "Local workspace");
   setText("workspaceLastSync", appState.lastSyncAt ? `Last sync ${formatDate(appState.lastSyncAt)}` : "Waiting for first sync");
-  setText("visibleLeadCount", `${leads.length} leads`);
+  setText("visibleLeadCount", `${leads.length} contact-ready leads`);
   setText("exportTargetList", selected ? selected.name : "No selected list");
   setText("exportTargetListMirror", selected ? selected.name : "No selected list");
   setText("exportTargetMeta", selected ? `${leads.length} visible leads from ${titleCase(selected.niche)} in ${selected.city}.` : "0 visible leads ready for export.");
@@ -1235,7 +1237,7 @@ function renderLeadsPage() {
     ? leads.map((lead) => `
       <tr data-lead-id="${lead.id}">
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
-        <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
+        <td><strong>${lead.decisionMaker || "Business contact available"}</strong><span class="status-note">${lead.role || "No named decision maker yet"}</span></td>
         <td>${contactCellHtml(lead)}</td>
         <td><span class="score-pill">${lead.seoScore || 0}</span></td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>

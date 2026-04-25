@@ -1691,3 +1691,38 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* Lead list contact cell polish */
+.leads-table td .contact-stack-formatted,
+#leadsTable td .contact-stack-formatted {
+  display: grid;
+  gap: 7px;
+  min-width: 190px;
+  line-height: 1.35;
+}
+
+.leads-table td .contact-line,
+#leadsTable td .contact-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  white-space: normal;
+}
+
+.leads-table td .contact-line strong,
+#leadsTable td .contact-line strong {
+  display: block;
+  color: var(--muted-strong);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.leads-table td .contact-line span,
+#leadsTable td .contact-line span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

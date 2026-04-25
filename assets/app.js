@@ -1,3 +1,4 @@
+// RANKFORGE CONTACT FIX ACTIVE: raw-contact-force-2
 const APP_STORAGE_KEY = "rankforge-clean-app-state-v1";
 const APP_USER_ID_KEY = "rankforge-current-user-id-v1";
 const APP_WEBHOOK_KEY = "rankforge-search-submit-webhook-v1";

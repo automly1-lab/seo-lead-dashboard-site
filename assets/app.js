@@ -632,8 +632,15 @@ function buildRemoteData(data) {
       website: lead.website_url || audit.website_url || prospect.website_url || "",
       decisionMaker: lead.decision_maker_name || contact.contact_name || "",
       role: lead.decision_maker_role || contact.contact_role || "",
-      email: lead.decision_maker_email || contact.email || "",
-      phone: lead.decision_maker_phone || contact.phone || "",
+      email: lead.decision_maker_email 
+  || contact.email 
+  || audit.homepage_primary_email 
+  || "",
+
+phone: lead.decision_maker_phone 
+  || contact.phone 
+  || audit.homepage_primary_phone 
+  || ""
       seoScore: numberValue(lead.seo_need_score || audit.seo_need_score),
       overallScore: numberValue(lead.overall_lead_score || lead.seo_need_score || audit.seo_need_score),
       commercialFit: numberValue(lead.commercial_fit_score || audit.commercial_fit_score),

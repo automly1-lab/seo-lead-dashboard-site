@@ -527,6 +527,22 @@ function buildRemoteData(data) {
     if (audit.audit_id) auditById[audit.audit_id] = audit;
   }
 
+  const prospectById = {};
+  for (const prospect of rawProspects) {
+    if (prospect.prospect_id) prospectById[prospect.prospect_id] = prospect;
+  }
+
+  function resolvedLeadSearchId(lead) {
+    const audit = auditById[lead.audit_id] || {};
+    const prospect = prospectById[lead.prospect_id] || prospectById[audit.prospect_id] || {};
+    const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || contactByProspect[audit.prospect_id] || {};
+    return normalizeKey(lead.search_id || audit.search_id || prospect.search_id || contact.search_id || "");
+  }
+
+  function resolvedLeadStatus(lead) {
+    return normalizeStatus(lead.qualification_status || lead.status || "review_needed");
+  }
+
   const auditHasFinalLead = new Set(finalLeads.map((item) => item.audit_id).filter(Boolean));
 
   const searchMap = new Map();
@@ -551,13 +567,28 @@ function buildRemoteData(data) {
     const searchId = normalizeKey(search.search_id);
     const searchAudits = audits.filter((item) => normalizeKey(item.search_id) === searchId);
     const searchProspects = rawProspects.filter((item) => normalizeKey(item.search_id) === searchId);
-    const leadRowsForSearch = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId);
-    const qualifiedCount = leadRowsForSearch.filter((item) => normalizeStatus(item.qualification_status || item.status) === "qualified").length;
-    const reviewNeededCount = leadRowsForSearch.filter((item) => {
-      const status = normalizeStatus(item.qualification_status || item.status);
+    const searchContacts = contacts.filter((item) => normalizeKey(item.search_id) === searchId);
+    const finalLeadsForSearch = finalLeads.filter((item) => resolvedLeadSearchId(item) === searchId);
+
+    // Be conservative with display counts: never let the list page show "1 discovered"
+    // just because only one downstream row was matched. Prefer the largest reliable
+    // signal we have from raw prospects, audits, contacts, final leads, or the
+    // requested cap stored on the search row.
+    const discoveredCount = Math.max(
+      uniqueBy(searchProspects, (item) => item.prospect_id || item.domain || item.website_url || item.company_name).length,
+      uniqueBy(searchAudits, (item) => item.prospect_id || item.audit_id || item.website_url || item.company_name).length,
+      uniqueBy(searchContacts, (item) => item.prospect_id || item.contact_id || item.email || item.phone).length,
+      uniqueBy(finalLeadsForSearch, (item) => item.prospect_id || item.lead_id || item.website_url || item.company_name).length,
+      numberValue(search.discovered),
+      numberValue(search.max_results_requested)
+    );
+
+    const qualifiedCount = finalLeadsForSearch.filter((item) => resolvedLeadStatus(item) === "qualified").length;
+    const reviewNeededCount = finalLeadsForSearch.filter((item) => {
+      const status = resolvedLeadStatus(item);
       return status === "review_needed" || status === "review needed";
     }).length;
-    const rejectedCount = leadRowsForSearch.filter((item) => normalizeStatus(item.qualification_status || item.status) === "rejected").length;
+    const rejectedCount = finalLeadsForSearch.filter((item) => resolvedLeadStatus(item) === "rejected").length;
     let derivedStatus = search.status || "active";
     if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) {
       derivedStatus = "completed";
@@ -577,9 +608,9 @@ function buildRemoteData(data) {
       description: `${titleCase(search.niche)} opportunities for ${search.city}.`,
       status: derivedStatus,
       lastRun: search.completed_at || search.updated_at || search.created_at || "",
-      discovered: searchProspects.length || numberValue(search.max_results_requested),
+      discovered: discoveredCount,
       audited: searchAudits.length,
-      enriched: contacts.filter((item) => item.search_id === search.search_id).length,
+      enriched: searchContacts.length,
       qualified: qualifiedCount,
       reviewNeeded: reviewNeededCount,
       rejected: rejectedCount,
@@ -591,13 +622,14 @@ function buildRemoteData(data) {
 
   const leads = finalLeads.map((lead, index) => {
     const audit = auditById[lead.audit_id] || {};
-    const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || {};
+    const prospect = prospectById[lead.prospect_id] || prospectById[audit.prospect_id] || {};
+    const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || contactByProspect[audit.prospect_id] || {};
     return {
       id: lead.lead_id || `remote_lead_${index + 1}`,
-      listId: normalizeKey(lead.search_id || audit.search_id || ""),
-      userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id || "usr_mvp"),
-      company: lead.company_name || audit.company_name || "Unknown company",
-      website: lead.website_url || audit.website_url || "",
+      listId: resolvedLeadSearchId(lead),
+      userId: normalizeKey(lead.user_id || audit.user_id || prospect.user_id || contact.user_id || "usr_mvp"),
+      company: lead.company_name || audit.company_name || prospect.company_name || "Unknown company",
+      website: lead.website_url || audit.website_url || prospect.website_url || "",
       decisionMaker: lead.decision_maker_name || contact.contact_name || "",
       role: lead.decision_maker_role || contact.contact_role || "",
       email: lead.decision_maker_email || contact.email || "",
@@ -606,7 +638,7 @@ function buildRemoteData(data) {
       overallScore: numberValue(lead.overall_lead_score || lead.seo_need_score || audit.seo_need_score),
       commercialFit: numberValue(lead.commercial_fit_score || audit.commercial_fit_score),
       contactConfidence: numberValue(lead.contact_confidence_score || contact.contact_confidence_score),
-      status: normalizeStatus(lead.qualification_status || lead.status || "review_needed"),
+      status: resolvedLeadStatus(lead),
       outreachReadiness: lead.outreach_readiness || "needs_review",
       paidAdsDetected: String(lead.paid_ads_detected || audit.paid_ads_detected || "").toLowerCase() === "true",
       primaryProblem: lead.primary_problem || "",
@@ -849,7 +881,7 @@ function renderDashboardPage() {
   setText("activeListMarket", `${titleCase(selected.niche)} - ${selected.city} - ${selected.country}`);
   setText("activeListRun", formatDate(selected.lastRun));
   setText("pipelineListTitle", `${selected.name} funnel`);
-  setText("pipelineDiscovered", String(selected.discovered));
+  setText("pipelineDiscovered", String(numberValue(selected.discovered)));
   setText("pipelineAudited", String(selected.audited));
   setText("pipelineEnriched", String(selected.enriched));
   setText("pipelineQualified", String(selectedQualified));
@@ -916,13 +948,13 @@ function renderListsPage() {
     setText("workspaceSelectedListHealth", qualified > 0 ? "List has qualified leads" : (reviewNeeded > 0 ? "List has review-needed leads" : "List needs review"));
     setText("workspaceSelectedListMeta", `${qualified} qualified, ${reviewNeeded} review needed, ${rejected} rejected.`);
     setText("pipelineListTitle", `${selected.name} funnel`);
-    setText("pipelineDiscovered", String(selected.discovered));
+    setText("pipelineDiscovered", String(numberValue(selected.discovered)));
     setText("pipelineAudited", String(selected.audited));
     setText("pipelineEnriched", String(selected.enriched));
     setText("pipelineQualified", String(qualified));
     setText("pipelineRejected", String(rejected));
     setText("listThresholdSummary", `SEO ${selected.minSeoScore} / Lead ${selected.minLeadScore}`);
-    setText("listCoverageSummary", `${selected.discovered} discovered / ${selected.audited} audited`);
+    setText("listCoverageSummary", `${numberValue(selected.discovered)} discovered / ${numberValue(selected.audited)} audited`);
     setText("listQualificationSummary", `${qualified} qualified / ${reviewNeeded} review needed / ${rejected} rejected`);
   }
   setHtml("#savedListsTable tbody", lists.length
@@ -932,7 +964,7 @@ function renderListsPage() {
         <td>${titleCase(item.niche)} - ${item.city}</td>
         <td><span class="status-pill ${statusClass(item.status)}">${item.status}</span></td>
         <td>${formatDate(item.lastRun)}</td>
-        <td>${item.discovered}</td>
+        <td>${numberValue(item.discovered)}</td>
         <td>${listLeadCounts(item.id).qualified || numberValue(item.qualified)}</td>
       </tr>`).join("")
     : `<tr><td colspan="6" class="empty-state">No saved lists yet.</td></tr>`);

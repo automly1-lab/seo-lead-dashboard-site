@@ -10,5 +10,5 @@
   - DO NOT put service_role key here.
 */
 
-window.RANKFORGE_SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
-window.RANKFORGE_SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY_HERE";
+window.RANKFORGE_SUPABASE_URL = "https://pjnwiniilysqunjuoual.supabase.co";
+window.RANKFORGE_SUPABASE_ANON_KEY = "sb_publishable_MzdExPt_hrpHrF7cVNB_Yw_uCXCaooj";

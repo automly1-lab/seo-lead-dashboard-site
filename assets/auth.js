@@ -1,257 +1,274 @@
-const AUTH_USERS_KEY = "rankforge-auth-users-v1";
-const AUTH_SESSION_KEY = "rankforge-auth-session-v1";
-const CURRENT_USER_STORAGE_KEY = "rankforge-current-user-id-v1";
+/*
+  RankForge Supabase Auth Adapter
+  Replaces localStorage-only auth with Supabase Auth while keeping the old app contract:
+  - window.rankforgeAuth.getSession()
+  - localStorage rankforge-auth-session-v1
+  - localStorage rankforge-current-user-id-v1
+  - protected pages with body[data-auth="protected"]
+*/
 
-function authNormalizeEmail(value) {
-  return String(value || "").trim().toLowerCase();
-}
+(function () {
+  "use strict";
 
-function authSlugify(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 24) || "user";
-}
+  const AUTH_SESSION_KEY = "rankforge-auth-session-v1";
+  const CURRENT_USER_KEY = "rankforge-current-user-id-v1";
+  const SUPABASE_URL = window.RANKFORGE_SUPABASE_URL || "";
+  const SUPABASE_ANON_KEY = window.RANKFORGE_SUPABASE_ANON_KEY || "";
+  const DASHBOARD_PATH = "../dashboard/";
+  const LOGIN_PATH = "../login/";
 
-function authLoadUsers() {
-  try {
-    const raw = localStorage.getItem(AUTH_USERS_KEY);
-    const users = raw ? JSON.parse(raw) : [];
-    return Array.isArray(users) ? users : [];
-  } catch {
-    return [];
+  function byId(id) {
+    return document.getElementById(id);
   }
-}
 
-function authSaveUsers(users) {
-  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
-}
-
-function authLoadSession() {
-  try {
-    const raw = localStorage.getItem(AUTH_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
+  function safeJson(raw, fallback) {
+    try {
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
   }
-}
 
-function authSaveSession(session) {
-  if (!session) {
+  function setStatus(message, tone) {
+    const ids = ["authStatus", "loginStatus", "signupStatus", "formStatus"];
+    ids.forEach((id) => {
+      const node = byId(id);
+      if (!node) return;
+      node.textContent = message;
+      node.classList.remove("is-success", "is-error");
+      if (tone === "success") node.classList.add("is-success");
+      if (tone === "error") node.classList.add("is-error");
+    });
+  }
+
+  function getClient() {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.warn("[RankForge Auth] Missing Supabase config. Fill assets/supabase-config.js");
+      return null;
+    }
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      console.warn("[RankForge Auth] Supabase JS library is not loaded. Add CDN script before auth.js.");
+      return null;
+    }
+    if (!window.rankforgeSupabaseClient) {
+      window.rankforgeSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+    }
+    return window.rankforgeSupabaseClient;
+  }
+
+  function normalizeSession(supabaseSession) {
+    if (!supabaseSession || !supabaseSession.user) return null;
+    const user = supabaseSession.user;
+    return {
+      userId: user.id,
+      email: user.email || "",
+      provider: "supabase",
+      createdAt: user.created_at || "",
+      expiresAt: supabaseSession.expires_at || null
+    };
+  }
+
+  function saveSession(session) {
+    if (!session) {
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      return;
+    }
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+    localStorage.setItem(CURRENT_USER_KEY, session.userId);
+  }
+
+  async function refreshSession() {
+    const client = getClient();
+    if (!client) {
+      return safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
+    }
+
+    const { data, error } = await client.auth.getSession();
+    if (error) {
+      console.warn("[RankForge Auth] getSession error:", error.message);
+      return safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
+    }
+
+    const session = normalizeSession(data && data.session);
+    saveSession(session);
+    return session;
+  }
+
+  async function requireAuthIfNeeded() {
+    const isProtected = document.body && document.body.dataset.auth === "protected";
+    if (!isProtected) return;
+
+    const session = await refreshSession();
+    if (!session || !session.userId) {
+      window.location.replace(LOGIN_PATH);
+    }
+  }
+
+  function readAuthFields() {
+    const email =
+      byId("emailInput")?.value ||
+      byId("loginEmail")?.value ||
+      byId("signupEmail")?.value ||
+      document.querySelector('input[type="email"]')?.value ||
+      "";
+
+    const password =
+      byId("passwordInput")?.value ||
+      byId("loginPassword")?.value ||
+      byId("signupPassword")?.value ||
+      document.querySelector('input[type="password"]')?.value ||
+      "";
+
+    const name =
+      byId("nameInput")?.value ||
+      byId("signupName")?.value ||
+      byId("fullNameInput")?.value ||
+      "";
+
+    return {
+      email: String(email).trim(),
+      password: String(password),
+      name: String(name).trim()
+    };
+  }
+
+  async function login(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const client = getClient();
+    if (!client) {
+      setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error");
+      return false;
+    }
+
+    const { email, password } = readAuthFields();
+    if (!email || !password) {
+      setStatus("Enter your email and password.", "error");
+      return false;
+    }
+
+    setStatus("Signing in...", "");
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setStatus(error.message || "Sign in failed.", "error");
+      return false;
+    }
+
+    const session = normalizeSession(data.session);
+    saveSession(session);
+    setStatus("Signed in. Opening dashboard...", "success");
+    window.location.href = DASHBOARD_PATH;
+    return false;
+  }
+
+  async function signup(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const client = getClient();
+    if (!client) {
+      setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error");
+      return false;
+    }
+
+    const { email, password, name } = readAuthFields();
+    if (!email || !password) {
+      setStatus("Enter your email and password.", "error");
+      return false;
+    }
+    if (password.length < 6) {
+      setStatus("Password must be at least 6 characters.", "error");
+      return false;
+    }
+
+    setStatus("Creating account...", "");
+    const { data, error } = await client.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name || ""
+        },
+        emailRedirectTo: window.location.origin + "/dashboard/"
+      }
+    });
+
+    if (error) {
+      setStatus(error.message || "Signup failed.", "error");
+      return false;
+    }
+
+    const session = normalizeSession(data.session);
+    if (session) {
+      saveSession(session);
+      setStatus("Account created. Opening dashboard...", "success");
+      window.location.href = DASHBOARD_PATH;
+    } else {
+      setStatus("Account created. Check your email to confirm your account.", "success");
+    }
+    return false;
+  }
+
+  async function logout(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const client = getClient();
+    if (client) {
+      await client.auth.signOut();
+    }
     localStorage.removeItem(AUTH_SESSION_KEY);
-    return;
+    localStorage.removeItem(CURRENT_USER_KEY);
+    window.location.href = LOGIN_PATH;
   }
-  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
-  localStorage.setItem(CURRENT_USER_STORAGE_KEY, session.userId);
-}
 
-function authSeedUsers() {
-  const users = authLoadUsers();
-  if (users.length) return;
-  authSaveUsers([
-    {
-      id: "usr_demo_owner",
-      fullName: "Demo Owner",
-      agencyName: "RankForge Demo",
-      email: "demo@rankforge.app",
-      password: "rankforge123",
-      createdAt: new Date().toISOString(),
-    },
-  ]);
-}
+  function bindForms() {
+    const loginForm =
+      byId("loginForm") ||
+      document.querySelector('form[data-auth-form="login"]') ||
+      (document.body?.classList.contains("app-page-login") ? document.querySelector("form") : null);
 
-function authGetNextUrl() {
-  const next = new URLSearchParams(window.location.search).get("next");
-  return next || "../dashboard/";
-}
+    const signupForm =
+      byId("signupForm") ||
+      document.querySelector('form[data-auth-form="signup"]') ||
+      (document.body?.classList.contains("app-page-signup") ? document.querySelector("form") : null);
 
-function authGetProvider() {
-  return {
-    name: "local",
-    getSession: authLoadSession,
-    signOut() {
-      authSaveSession(null);
-      localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+    if (loginForm) loginForm.onsubmit = login;
+    if (signupForm) signupForm.onsubmit = signup;
+
+    document.querySelectorAll("[data-logout], #logoutButton").forEach((node) => {
+      node.addEventListener("click", logout);
+    });
+  }
+
+  window.rankforgeAuth = {
+    getSession: function () {
+      return safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
     },
-    signIn({ email, password }) {
-      const users = authLoadUsers();
-      const match = users.find((user) => user.email === authNormalizeEmail(email) && user.password === password);
-      if (!match) {
-        throw new Error("Email veya sifre hatali.");
-      }
-      const session = {
-        userId: match.id,
-        email: match.email,
-        fullName: match.fullName,
-        agencyName: match.agencyName,
-        provider: "local",
-        signedInAt: new Date().toISOString(),
-      };
-      authSaveSession(session);
-      return session;
-    },
-    signUp({ fullName, agencyName, email, password }) {
-      const normalizedEmail = authNormalizeEmail(email);
-      const users = authLoadUsers();
-      if (users.some((user) => user.email === normalizedEmail)) {
-        throw new Error("Bu email ile zaten bir hesap var.");
-      }
-      const newUser = {
-        id: `usr_${authSlugify(normalizedEmail.split("@")[0])}_${Date.now().toString().slice(-6)}`,
-        fullName: String(fullName || "").trim(),
-        agencyName: String(agencyName || "").trim(),
-        email: normalizedEmail,
-        password,
-        createdAt: new Date().toISOString(),
-      };
-      users.push(newUser);
-      authSaveUsers(users);
-      const session = {
-        userId: newUser.id,
-        email: newUser.email,
-        fullName: newUser.fullName,
-        agencyName: newUser.agencyName,
-        provider: "local",
-        signedInAt: new Date().toISOString(),
-      };
-      authSaveSession(session);
-      return session;
-    },
+    refreshSession,
+    login,
+    signup,
+    logout,
+    getSupabaseClient: getClient
   };
-}
 
-function authInjectAccountPanel(session) {
-  if (!session || document.getElementById("authAccountPanel")) return;
-  const sidebar = document.querySelector(".sidebar");
-  if (!sidebar) return;
-  const panel = document.createElement("section");
-  panel.className = "sidebar-panel sidebar-panel-auth";
-  panel.id = "authAccountPanel";
-  panel.innerHTML = `
-    <p class="panel-eyebrow">Account</p>
-    <h2>${session.agencyName || session.fullName || "Workspace"}</h2>
-    <p class="auth-account-copy">${session.email}</p>
-    <div class="auth-account-meta">
-      <span>${session.userId}</span>
-      <span>Authenticated workspace</span>
-    </div>
-    <button class="button ghost button-block" id="signOutButton" type="button">Sign Out</button>
-  `;
-  sidebar.appendChild(panel);
-  panel.querySelector("#signOutButton")?.addEventListener("click", () => {
-    authGetProvider().signOut();
-    window.location.href = "../login/";
-  });
-}
+  async function boot() {
+    bindForms();
+    await requireAuthIfNeeded();
 
-function authHydrateWorkspacePanel(session) {
-  const input = document.getElementById("currentUserIdInput");
-  if (input) {
-    input.value = session?.userId || "";
-    input.setAttribute("readonly", "readonly");
-  }
-  const status = document.getElementById("currentUserStatus");
-  if (status && session) {
-    status.textContent = `${session.fullName || session.email} | ${session.userId}`;
-    status.classList.add("is-success");
-  }
-}
-
-function authProtectPage() {
-  authSeedUsers();
-  const provider = authGetProvider();
-  const session = provider.getSession();
-  const isProtected = document.body?.dataset?.auth === "protected";
-  const isAuthPage = document.body?.dataset?.authPage === "true";
-
-  if (isProtected && !session) {
-    const next = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.replace(`../login/?next=${next}`);
-    return;
-  }
-
-  if (isAuthPage && session) {
-    window.location.replace(authGetNextUrl());
-    return;
-  }
-
-  if (session) {
-    authSaveSession(session);
-    authInjectAccountPanel(session);
-    authHydrateWorkspacePanel(session);
-  }
-}
-
-function authBindForms() {
-  const provider = authGetProvider();
-  const loginForm = document.getElementById("loginForm");
-  const signupForm = document.getElementById("signupForm");
-
-  loginForm?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const formData = new FormData(loginForm);
-    const status = document.getElementById("authFormStatus");
-    try {
-      provider.signIn({
-        email: formData.get("email"),
-        password: formData.get("password"),
+    const client = getClient();
+    if (client) {
+      client.auth.onAuthStateChange((_event, supabaseSession) => {
+        saveSession(normalizeSession(supabaseSession));
       });
-      if (status) {
-        status.textContent = "Giris yapildi. Yonetim ekranina gidiliyor...";
-        status.className = "auth-form-status is-success";
-      }
-      window.location.href = authGetNextUrl();
-    } catch (error) {
-      if (status) {
-        status.textContent = error.message;
-        status.className = "auth-form-status is-error";
-      }
     }
-  });
+  }
 
-  signupForm?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const formData = new FormData(signupForm);
-    const status = document.getElementById("authFormStatus");
-    const password = String(formData.get("password") || "");
-    const confirm = String(formData.get("confirm_password") || "");
-    if (password.length < 8) {
-      status.textContent = "Sifre en az 8 karakter olmali.";
-      status.className = "auth-form-status is-error";
-      return;
-    }
-    if (password !== confirm) {
-      status.textContent = "Sifreler eslesmiyor.";
-      status.className = "auth-form-status is-error";
-      return;
-    }
-    try {
-      provider.signUp({
-        fullName: formData.get("full_name"),
-        agencyName: formData.get("agency_name"),
-        email: formData.get("email"),
-        password,
-      });
-      if (status) {
-        status.textContent = "Hesap olusturuldu. Workspace aciliyor...";
-        status.className = "auth-form-status is-success";
-      }
-      window.location.href = authGetNextUrl();
-    } catch (error) {
-      if (status) {
-        status.textContent = error.message;
-        status.className = "auth-form-status is-error";
-      }
-    }
-  });
-}
-
-window.rankforgeAuth = {
-  provider: "local",
-  getSession: authLoadSession,
-  signOut: () => authGetProvider().signOut(),
-};
-
-authProtectPage();
-authBindForms();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();

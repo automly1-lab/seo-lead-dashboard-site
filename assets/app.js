@@ -1,4 +1,3 @@
-// RANKFORGE LEAD DETAIL HUMANIZED ACTIVE: lead-detail-humanized-1
 const APP_STORAGE_KEY = "rankforge-clean-app-state-v1";
 const APP_USER_ID_KEY = "rankforge-current-user-id-v1";
 const APP_WEBHOOK_KEY = "rankforge-search-submit-webhook-v1";
@@ -23,25 +22,75 @@ function normalizeKey(value) {
   return String(value || "").trim();
 }
 
+function recordUserId(item) {
+  return normalizeKey((item && (item.userId || item.user_id)) || "");
+}
+
+function belongsToCurrentUser(item, currentUserId) {
+  const itemUserId = recordUserId(item);
+  return Boolean(currentUserId && itemUserId && itemUserId === currentUserId);
+}
+
+function isSupabaseUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || "").trim());
+}
+
+function getSupabaseSessionFromStorage() {
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index) || "";
+      if (!/^sb-.+-auth-token$/.test(key)) continue;
+      const parsed = safeParse(localStorage.getItem(key), null);
+      const user = parsed?.user || parsed?.currentSession?.user || parsed?.session?.user;
+      if (user?.id) {
+        return {
+          userId: normalizeKey(user.id),
+          email: user.email || "",
+          source: "supabase-storage",
+        };
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function getSession() {
   if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
-    return window.rankforgeAuth.getSession();
+    const session = window.rankforgeAuth.getSession();
+    if (session && session.userId) return session;
   }
-  return safeParse(localStorage.getItem("rankforge-auth-session-v1"), null);
+
+  const supabaseSession = getSupabaseSessionFromStorage();
+  if (supabaseSession && supabaseSession.userId) return supabaseSession;
+
+  const legacySession = safeParse(localStorage.getItem("rankforge-auth-session-v1"), null);
+  if (legacySession && isSupabaseUuid(legacySession.userId)) return legacySession;
+
+  return null;
 }
 
 function getCurrentUserId() {
   const session = getSession();
-  if (session && session.userId) {
+  if (session && isSupabaseUuid(session.userId)) {
     const normalized = normalizeKey(session.userId);
     localStorage.setItem(APP_USER_ID_KEY, normalized);
     return normalized;
   }
-  return normalizeKey(localStorage.getItem(APP_USER_ID_KEY) || "usr_mvp");
+
+  const stored = normalizeKey(localStorage.getItem(APP_USER_ID_KEY) || "");
+  if (isSupabaseUuid(stored)) return stored;
+
+  // Hard isolation: never fall back to usr_mvp / usr_dashboard on protected app pages.
+  return "";
 }
 
 function loadState() {
   const state = safeParse(localStorage.getItem(APP_STORAGE_KEY), {});
+  const currentUserId = getCurrentUserId();
+  const previousUserId = normalizeKey(state.currentUserId || "");
+
   if (!Array.isArray(state.localLists)) state.localLists = [];
   if (!Array.isArray(state.localLeads)) state.localLeads = [];
   if (!Array.isArray(state.archivedListIds)) state.archivedListIds = [];
@@ -49,11 +98,27 @@ function loadState() {
   if (!state.remoteCache || typeof state.remoteCache !== "object") state.remoteCache = { lists: [], leads: [] };
   if (!Array.isArray(state.remoteCache.lists)) state.remoteCache.lists = [];
   if (!Array.isArray(state.remoteCache.leads)) state.remoteCache.leads = [];
+
+  // Hard user isolation: never keep another workspace user's cached data in memory.
+  state.localLists = state.localLists.filter((item) => belongsToCurrentUser(item, currentUserId));
+  state.localLeads = state.localLeads.filter((item) => belongsToCurrentUser(item, currentUserId));
+  state.remoteCache.lists = state.remoteCache.lists.filter((item) => belongsToCurrentUser(item, currentUserId));
+  state.remoteCache.leads = state.remoteCache.leads.filter((item) => belongsToCurrentUser(item, currentUserId));
+
+  if (previousUserId && previousUserId !== currentUserId) {
+    state.selectedListId = null;
+    state.selectedLeadId = null;
+    state.archivedListIds = [];
+    state.deletedListIds = [];
+    state.syncMode = "local";
+    state.lastSyncAt = null;
+  }
+
   state.selectedListId = state.selectedListId || null;
   state.selectedLeadId = state.selectedLeadId || null;
   state.syncMode = state.syncMode || "local";
   state.lastSyncAt = state.lastSyncAt || null;
-  state.currentUserId = getCurrentUserId();
+  state.currentUserId = currentUserId;
   return state;
 }
 
@@ -103,259 +168,9 @@ function titleCase(value) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-
-function humanizeLeadLabel(value, fallback) {
-  const raw = String(value || "").trim();
-  if (!raw) return fallback || "Not set";
-  const normalized = raw.toLowerCase().replace(/[\s-]+/g, "_");
-  const dictionary = {
-    high_seo_need_contact_missing: "Strong SEO opportunity, but no direct email found",
-    website_access_issue: "Website access or crawl quality issue detected",
-    website_not_accessible: "Website is difficult to access or audit",
-    no_detectable_blog_service_or_location_pages_to_support_seo_content: "No clear blog, service, or location pages supporting SEO growth",
-    no_detectable_blog_service_or_location_pages: "No clear blog, service, or location pages found",
-    contact_missing: "Direct contact is incomplete",
-    no_contact_info_found: "No reliable contact path found",
-    local_seo_gap: "Local SEO gap detected",
-    weak_local_seo: "Weak local SEO signals detected",
-    weak_service_pages: "Service pages look thin or incomplete",
-    weak_location_pages: "Location pages look thin or missing",
-    missing_location_pages: "Location landing pages appear to be missing",
-    paid_ads_no_organic: "Paid traffic signal found, but organic visibility appears weak",
-    low_content_depth: "Website content depth appears weak",
-    thin_content: "Website content looks thin for commercial SEO",
-    maps_phone_only: "Phone contact available, but direct email is missing",
-    review_needed: "Needs manual review",
-    qualified: "Qualified lead",
-    rejected: "Rejected lead"
-  };
-  if (dictionary[normalized]) return dictionary[normalized];
-  return titleCase(raw).replace(/\bSeo\b/g, "SEO").replace(/\bPpc\b/g, "PPC").replace(/\bUrl\b/g, "URL");
-}
-
-function humanizeOffer(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "SEO Opportunity Audit";
-  const normalized = raw.toLowerCase().replace(/[\s-]+/g, "_");
-  const dictionary = {
-    local_seo_opportunity_audit: "Local SEO Opportunity Audit",
-    seo_audit: "SEO Audit",
-    local_seo_audit: "Local SEO Audit",
-    google_maps_optimization: "Google Maps Optimization",
-    maps_seo_optimization: "Google Maps Optimization",
-    content_gap_audit: "Content Gap Audit",
-    technical_seo_audit: "Technical SEO Audit",
-    service_page_expansion: "Service Page Expansion",
-    location_page_expansion: "Location Page Expansion",
-    restoration_seo_audit: "Restoration SEO Audit",
-    lead_generation_seo: "Lead Generation SEO"
-  };
-  if (dictionary[normalized]) return dictionary[normalized];
-  return titleCase(raw).replace(/\bSeo\b/g, "SEO").replace(/\bPpc\b/g, "PPC").replace(/\bUrl\b/g, "URL");
-}
-
-function humanizeChannel(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "Recommended channel not set";
-  const normalized = raw.toLowerCase().replace(/[\s-]+/g, "_");
-  const dictionary = {
-    email: "Recommended channel: Email",
-    phone: "Recommended channel: Phone",
-    manual_review: "Recommended channel: Manual review",
-    email_then_phone: "Recommended channel: Email, then phone",
-    phone_then_email: "Recommended channel: Phone, then email"
-  };
-  return dictionary[normalized] || `Recommended channel: ${humanizeLeadLabel(raw, titleCase(raw))}`;
-}
-
-function cleanNarrative(value, fallback) {
-  const raw = String(value || "").trim();
-  if (!raw) return fallback || "No narrative available yet.";
-  if (/^[a-z0-9_\-]+$/i.test(raw)) return humanizeLeadLabel(raw, fallback);
-  return raw
-    .replace(/\bhigh_seo_need_contact_missing\b/gi, "a strong SEO opportunity with incomplete direct contact data")
-    .replace(/\bwebsite_access_issue\b/gi, "a website access or crawl quality issue")
-    .replace(/\blocal_seo_opportunity_audit\b/gi, "Local SEO Opportunity Audit")
-    .replace(/_/g, " ");
-}
-
-function decisionMakerTitle(lead) {
-  if (lead && cleanContactValue(lead.decisionMaker)) return lead.decisionMaker;
-  if (lead && hasReachableContact(lead)) return "Business contact available";
-  return "No named contact yet";
-}
-
-function decisionMakerSubtitle(lead) {
-  if (lead && cleanContactValue(lead.role)) return lead.role;
-  if (lead && hasReachableContact(lead)) return "No named decision maker found yet";
-  return "Needs contact enrichment";
-}
-
-function signalItemsForLead(lead) {
-  const items = [];
-  const primary = humanizeLeadLabel(lead && lead.primaryProblem, "Review SEO weakness signals.");
-  const secondary = humanizeLeadLabel(lead && lead.secondaryProblem, "Review secondary SEO issues.");
-  if (primary) items.push(primary);
-  if (secondary && secondary !== primary) items.push(secondary);
-  items.push(lead && lead.paidAdsDetected ? "Paid ads budget signal detected." : "No paid ads signal detected.");
-  if (lead && hasReachableContact(lead)) items.push("Reachable contact path exists.");
-  return items.filter(Boolean).slice(0, 5);
-}
-
-function listHtml(items) {
-  return (items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-}
-
 function numberValue(value) {
   const parsed = Number(value || 0);
   return Number.isFinite(parsed) ? Math.round(parsed) : 0;
-}
-
-function cleanContactValue(value) {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  const normalized = text.toLowerCase().replace(/\s+/g, " " );
-  if (["missing", "none", "null", "undefined", "no email", "no phone", "n/a", "na", "not found", "no contact"].includes(normalized)) return "";
-  if (/^(user|test|example)@domain\.com$/i.test(text)) return "";
-  return text;
-}
-
-function hasReachableContact(lead) {
-  return Boolean(cleanContactValue(lead.email) || cleanContactValue(lead.phone));
-}
-
-function domainFromAnyUrl(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  try {
-    const url = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-    return new URL(url).hostname.replace(/^www\./i, "").toLowerCase();
-  } catch {
-    return raw.replace(/^https?:\/\//i, "").replace(/^www\./i, "").split("/")[0].toLowerCase();
-  }
-}
-
-
-function normalizeHeaderKey(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-function canonicalizeRow(row) {
-  const out = { ...(row || {}) };
-  Object.keys(row || {}).forEach((key) => {
-    const normalized = normalizeHeaderKey(key);
-    if (normalized && out[normalized] === undefined) out[normalized] = row[key];
-  });
-  return out;
-}
-
-function canonicalizeRows(rows) {
-  return (Array.isArray(rows) ? rows : []).map(canonicalizeRow);
-}
-
-function pickField(row, ...names) {
-  if (!row) return "";
-  for (const name of names) {
-    const direct = row[name];
-    if (direct !== undefined && direct !== null && String(direct).trim() !== "") return direct;
-    const normalized = normalizeHeaderKey(name);
-    if (row[normalized] !== undefined && row[normalized] !== null && String(row[normalized]).trim() !== "") return row[normalized];
-  }
-  return "";
-}
-
-function normalizedCompany(value) {
-  return String(value || "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\b(ltd|llc|inc|co|company|limited|plc|gmbh|sa|sarl|bv)\b/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function rootDomainFromAnyUrl(value) {
-  const domain = domainFromAnyUrl(value);
-  if (!domain) return "";
-  const parts = domain.split(".").filter(Boolean);
-  if (parts.length <= 2) return domain;
-  const secondLevel = parts[parts.length - 2];
-  const last = parts[parts.length - 1];
-  const commonSecondLevel = new Set(["co", "com", "org", "net", "ac", "gov", "edu"]);
-  if (last.length === 2 && commonSecondLevel.has(secondLevel) && parts.length >= 3) {
-    return parts.slice(-3).join(".");
-  }
-  return parts.slice(-2).join(".");
-}
-
-function cleanEmail(value) {
-  const text = cleanContactValue(value);
-  if (!text) return "";
-  const match = String(text).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-  if (!match) return "";
-  const email = match[0].toLowerCase();
-  if (/(noreply|no-reply|donotreply|privacy|legal|abuse|example|test)@/i.test(email)) return "";
-  return email;
-}
-
-function cleanPhone(value) {
-  const text = cleanContactValue(value);
-  if (!text) return "";
-  const parts = String(text).split(/[,;|]/).map((part) => part.trim()).filter(Boolean);
-  for (const part of parts.length ? parts : [text]) {
-    const candidate = part.replace(/^(phone|tel|telephone|call)\s*:?\s*/i, "").trim();
-    const digits = candidate.replace(/\D/g, "");
-    if (digits.length < 7 || digits.length > 15) continue;
-    if (/^(0000000|1111111|1234567)/.test(digits)) continue;
-    return candidate;
-  }
-  return "";
-}
-
-function escapeHtml(value) {
-  return String(value == null ? "" : value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function contactParts(lead) {
-  return {
-    email: cleanEmail(lead && lead.email),
-    phone: cleanPhone(lead && lead.phone),
-  };
-}
-
-function contactCellHtml(lead) {
-  const parts = contactParts(lead);
-  const email = parts.email;
-  const phone = parts.phone;
-  return `<div class="contact-stack contact-stack-formatted">${email
-    ? `<span class="contact-line"><strong>Email</strong><span>${escapeHtml(email)}</span></span>`
-    : `<span class="contact-line muted"><strong>Email</strong><span>Not found</span></span>`}${phone
-    ? `<span class="contact-line"><strong>Phone</strong><span>${escapeHtml(phone)}</span></span>`
-    : `<span class="contact-line muted"><strong>Phone</strong><span>Not found</span></span>`}</div>`;
-}
-
-function contactDetailHtml(lead) {
-  const parts = contactParts(lead);
-  const email = parts.email;
-  const phone = parts.phone;
-  if (!email && !phone) {
-    return `<span class="contact-detail-line muted"><strong>Contact</strong><span>No direct contact captured</span></span>`;
-  }
-  return `${email
-    ? `<span class="contact-detail-line"><strong>Email</strong><span>${escapeHtml(email)}</span></span>`
-    : `<span class="contact-detail-line muted"><strong>Email</strong><span>Not found</span></span>`}${phone
-    ? `<span class="contact-detail-line"><strong>Phone</strong><span>${escapeHtml(phone)}</span></span>`
-    : `<span class="contact-detail-line muted"><strong>Phone</strong><span>Not found</span></span>`}`;
 }
 
 function statusClass(value) {
@@ -417,16 +232,20 @@ function mergeRuntime(remote) {
   appState.currentUserId = currentUserId;
   const archived = new Set(appState.archivedListIds);
   const deleted = new Set(appState.deletedListIds);
-  const localLists = appState.localLists || [];
-  const remoteLists = remote.lists || [];
-  const localLeads = appState.localLeads || [];
-  const remoteLeads = remote.leads || [];
+
+  const localLists = (appState.localLists || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+  const remoteLists = (remote.lists || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+  const localLeads = (appState.localLeads || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+  const remoteLeads = (remote.leads || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+
+  appState.localLists = localLists;
+  appState.localLeads = localLeads;
 
   runtimeData = {
     lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id)
       .filter((item) => !archived.has(item.id) && !deleted.has(item.id)),
     leads: uniqueBy([...remoteLeads, ...localLeads], (item) => item.id)
-      .filter((item) => !deleted.has(normalizeKey(item.listId))),
+      .filter((item) => !deleted.has(normalizeKey(item.listId)) && belongsToCurrentUser(item, currentUserId)),
   };
 
   if (!runtimeData.lists.find((item) => item.id === appState.selectedListId)) {
@@ -451,15 +270,13 @@ function getVisibleLeads() {
   if (!selectedList) return [];
   const statusFilter = document.getElementById("qualificationFilter")?.value || "all";
   const minScore = Number(document.getElementById("scoreFilter")?.value || 0);
+  const contactReady = document.getElementById("contactReadyFilter")?.checked || false;
   const paidAdsOnly = document.getElementById("paidAdsFilter")?.checked || false;
-
-  // Product rule: a lead is only useful if it has a reachable contact path.
-  // This keeps contactless rows out of the Leads workspace even if old sheet rows exist.
   return runtimeData.leads.filter((lead) => {
     if (lead.listId !== selectedList.id) return false;
-    if (!hasReachableContact(lead)) return false;
     if (statusFilter !== "all" && lead.status !== statusFilter) return false;
     if (numberValue(lead.overallScore) < minScore) return false;
+    if (contactReady && !lead.email && !lead.phone) return false;
     if (paidAdsOnly && !lead.paidAdsDetected) return false;
     return true;
   });
@@ -655,7 +472,7 @@ function parseGvizText(payload) {
 }
 
 async function fetchSheetRowsViaScript(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json&ts=${Date.now()}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
   return new Promise((resolve, reject) => {
     const previousGoogle = window.google;
     const script = document.createElement("script");
@@ -699,7 +516,7 @@ async function fetchSheetRowsViaScript(sheetName) {
 }
 
 async function fetchSheetRows(sheetName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json&ts=${Date.now()}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&tqx=out:json`;
   try {
     const response = await fetch(url, { headers: { Accept: "text/plain, application/json, */*" } });
     if (!response.ok) throw new Error(`sheet-${sheetName}`);
@@ -741,206 +558,151 @@ async function fetchStaticDashboardData() {
 }
 
 function buildRemoteData(data) {
-  const searches = canonicalizeRows(data.searches || []);
-  const rawProspects = canonicalizeRows(data.raw_prospects || []);
-  const audits = canonicalizeRows(data.seo_audits || []);
-  const contacts = canonicalizeRows(data.contacts || []);
-  const finalLeads = canonicalizeRows(data.final_leads || []);
+  const currentUserId = getCurrentUserId();
+  const searches = (data.searches || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const rawProspects = (data.raw_prospects || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const audits = (data.seo_audits || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const contacts = (data.contacts || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const finalLeads = (data.final_leads || []).filter((row) => belongsToCurrentUser(row, currentUserId));
 
-  function makeEvidence(row, sourceType) {
-    const website = pickField(row, "website_url", "final_url", "source_url");
-    const domain = domainFromAnyUrl(pickField(row, "domain", "root_domain", "website_url", "final_url", "source_url"));
-    const rootDomain = rootDomainFromAnyUrl(pickField(row, "root_domain", "domain", "website_url", "final_url", "source_url"));
-    const email = cleanEmail(pickField(row, "raw_email", "decision_maker_email", "email", "homepage_primary_email", "primary_email", "contact_email", "all_found_emails", "raw_all_found_emails"));
-    const phone = cleanPhone(pickField(row, "raw_phone", "place_phone", "decision_maker_phone", "phone", "homepage_primary_phone", "primary_phone", "contact_phone", "all_found_phones", "raw_all_found_phones"));
-    return {
-      row,
-      sourceType,
-      prospectId: normalizeKey(pickField(row, "prospect_id")),
-      auditId: normalizeKey(pickField(row, "audit_id")),
-      contactId: normalizeKey(pickField(row, "contact_id", "primary_contact_id")),
-      leadId: normalizeKey(pickField(row, "lead_id")),
-      searchId: normalizeKey(pickField(row, "search_id")),
-      company: normalizedCompany(pickField(row, "company_name", "normalized_company_name")),
-      website,
-      domain,
-      rootDomain,
-      email,
-      phone,
-      score: numberValue(pickField(row, "contact_confidence_score", "raw_contact_confidence", "contact_email_confidence", "contact_phone_confidence")) || (email || phone ? 80 : 0),
-    };
-  }
-
-  const evidenceRows = [
-    ...rawProspects.map((row) => makeEvidence(row, "raw_prospects")),
-    ...contacts.map((row) => makeEvidence(row, "contacts")),
-    ...finalLeads.map((row) => makeEvidence(row, "final_leads")),
-    ...audits.map((row) => makeEvidence(row, "seo_audits")),
-  ].filter((item) => item.email || item.phone);
-
-  const evidenceIndex = new Map();
-  function addEvidenceKey(key, evidence) {
-    if (!key || key.endsWith(":") || key.includes("|undefined")) return;
-    const existing = evidenceIndex.get(key);
-    const existingStrength = existing ? ((existing.email ? 50 : 0) + (existing.phone ? 40 : 0) + existing.score) : -1;
-    const nextStrength = (evidence.email ? 50 : 0) + (evidence.phone ? 40 : 0) + evidence.score;
-    if (!existing || nextStrength > existingStrength) evidenceIndex.set(key, evidence);
-  }
-  for (const evidence of evidenceRows) {
-    addEvidenceKey("prospect:" + evidence.prospectId, evidence);
-    addEvidenceKey("audit:" + evidence.auditId, evidence);
-    addEvidenceKey("contact:" + evidence.contactId, evidence);
-    addEvidenceKey("lead:" + evidence.leadId, evidence);
-    addEvidenceKey("domain:" + evidence.domain, evidence);
-    addEvidenceKey("root:" + evidence.rootDomain, evidence);
-    addEvidenceKey("company:" + evidence.company, evidence);
-    addEvidenceKey("search-domain:" + evidence.searchId + "|" + evidence.domain, evidence);
-    addEvidenceKey("search-root:" + evidence.searchId + "|" + evidence.rootDomain, evidence);
-    addEvidenceKey("search-company:" + evidence.searchId + "|" + evidence.company, evidence);
+  const contactByProspect = {};
+  for (const contact of contacts) {
+    if (!contact.prospect_id) continue;
+    const current = contactByProspect[contact.prospect_id];
+    if (!current || numberValue(contact.contact_confidence_score) > numberValue(current.contact_confidence_score)) {
+      contactByProspect[contact.prospect_id] = contact;
+    }
   }
 
   const auditById = {};
   for (const audit of audits) {
-    const auditId = normalizeKey(pickField(audit, "audit_id"));
-    if (auditId) auditById[auditId] = audit;
+    if (audit.audit_id) auditById[audit.audit_id] = audit;
   }
-  const auditHasFinalLead = new Set(finalLeads.map((item) => normalizeKey(pickField(item, "audit_id"))).filter(Boolean));
+
+  const auditHasFinalLead = new Set(finalLeads.map((item) => item.audit_id).filter(Boolean));
 
   const searchMap = new Map();
   for (const search of searches) {
-    const searchId = normalizeKey(pickField(search, "search_id"));
+    const searchId = normalizeKey(search.search_id);
     if (searchId) searchMap.set(searchId, search);
   }
   for (const row of rawProspects) {
-    const searchId = normalizeKey(pickField(row, "search_id"));
+    const searchId = normalizeKey(row.search_id);
     if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
   for (const row of audits) {
-    const searchId = normalizeKey(pickField(row, "search_id"));
+    const searchId = normalizeKey(row.search_id);
     if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
   for (const row of finalLeads) {
-    const searchId = normalizeKey(pickField(row, "search_id"));
+    const searchId = normalizeKey(row.search_id);
     if (searchId && !searchMap.has(searchId)) searchMap.set(searchId, row);
   }
 
-  function statusOf(item) {
-    return normalizeKey(pickField(item, "qualification_status", "status")).toLowerCase();
-  }
-
-  function findEvidenceFor(row, audit) {
-    const prospectId = normalizeKey(pickField(row, "prospect_id") || pickField(audit, "prospect_id"));
-    const auditId = normalizeKey(pickField(row, "audit_id") || pickField(audit, "audit_id"));
-    const contactId = normalizeKey(pickField(row, "primary_contact_id", "contact_id"));
-    const leadId = normalizeKey(pickField(row, "lead_id"));
-    const searchId = normalizeKey(pickField(row, "search_id") || pickField(audit, "search_id"));
-    const domain = domainFromAnyUrl(pickField(row, "domain", "website_url") || pickField(audit, "domain", "website_url", "final_url"));
-    const rootDomain = rootDomainFromAnyUrl(pickField(row, "root_domain", "domain", "website_url") || pickField(audit, "root_domain", "domain", "website_url", "final_url"));
-    const company = normalizedCompany(pickField(row, "company_name", "normalized_company_name") || pickField(audit, "company_name", "normalized_company_name"));
-    const keys = [
-      "lead:" + leadId,
-      "contact:" + contactId,
-      "prospect:" + prospectId,
-      "audit:" + auditId,
-      "search-domain:" + searchId + "|" + domain,
-      "search-root:" + searchId + "|" + rootDomain,
-      "search-company:" + searchId + "|" + company,
-      "domain:" + domain,
-      "root:" + rootDomain,
-      "company:" + company,
-    ];
-    for (const key of keys) if (evidenceIndex.has(key)) return evidenceIndex.get(key);
-    return null;
-  }
-
   const lists = Array.from(searchMap.values()).map((search) => {
-    const searchId = normalizeKey(pickField(search, "search_id"));
-    const searchAudits = audits.filter((item) => normalizeKey(pickField(item, "search_id")) === searchId);
-    const searchProspects = rawProspects.filter((item) => normalizeKey(pickField(item, "search_id")) === searchId);
-    const searchContacts = contacts.filter((item) => normalizeKey(pickField(item, "search_id")) === searchId);
-    const searchFinalLeads = finalLeads.filter((item) => normalizeKey(pickField(item, "search_id")) === searchId);
-    const qualifiedCount = searchFinalLeads.filter((item) => statusOf(item) === "qualified").length;
-    const reviewNeededCount = searchFinalLeads.filter((item) => statusOf(item) === "review_needed").length;
-    const rejectedCount = searchFinalLeads.filter((item) => statusOf(item) === "rejected").length;
-    let derivedStatus = pickField(search, "status") || "active";
-    if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) derivedStatus = "completed";
-    else if (searchAudits.length > 0 || searchProspects.length > 0) derivedStatus = "running";
-    else if (derivedStatus === "active") derivedStatus = "queued";
+    const searchId = normalizeKey(search.search_id);
+    const searchAudits = audits.filter((item) => normalizeKey(item.search_id) === searchId);
+    const searchProspects = rawProspects.filter((item) => normalizeKey(item.search_id) === searchId);
+    const qualifiedCount = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId && normalizeKey(item.qualification_status) === "qualified").length;
+    const reviewNeededCount = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId && normalizeKey(item.qualification_status) === "review_needed").length;
+    const rejectedCount = finalLeads.filter((item) => normalizeKey(item.search_id) === searchId && normalizeKey(item.qualification_status) === "rejected").length;
+    let derivedStatus = search.status || "active";
+    if (qualifiedCount > 0 || reviewNeededCount > 0 || rejectedCount > 0) {
+      derivedStatus = "completed";
+    } else if (searchAudits.length > 0 || searchProspects.length > 0) {
+      derivedStatus = "running";
+    } else if (derivedStatus === "active") {
+      derivedStatus = "queued";
+    }
     return {
       id: searchId,
-      userId: normalizeKey(pickField(search, "user_id") || "usr_mvp"),
-      name: pickField(search, "search_name") || (titleCase(pickField(search, "niche")) + " - " + pickField(search, "city")),
-      niche: pickField(search, "niche") || "",
-      businessType: pickField(search, "business_type") || "",
-      city: pickField(search, "city") || "",
-      country: pickField(search, "country") || "",
-      description: titleCase(pickField(search, "niche")) + " opportunities for " + pickField(search, "city") + ".",
+      userId: normalizeKey(search.user_id || "usr_mvp"),
+      name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
+      niche: search.niche || "",
+      businessType: search.business_type || "",
+      city: search.city || "",
+      country: search.country || "",
+      description: `${titleCase(search.niche)} opportunities for ${search.city}.`,
       status: derivedStatus,
-      lastRun: pickField(search, "completed_at", "updated_at", "created_at") || "",
-      discovered: Math.max(searchProspects.length, searchAudits.length, searchFinalLeads.length, numberValue(pickField(search, "max_results_requested"))),
+      lastRun: search.completed_at || search.updated_at || search.created_at || "",
+      discovered: searchProspects.length || numberValue(search.max_results_requested),
       audited: searchAudits.length,
-      enriched: searchContacts.length,
+      enriched: contacts.filter((item) => item.search_id === search.search_id).length,
       qualified: qualifiedCount,
-      reviewNeeded: reviewNeededCount,
       rejected: rejectedCount,
-      minSeoScore: numberValue(pickField(search, "min_audit_score") || 60),
-      minLeadScore: numberValue(pickField(search, "min_lead_score") || 70),
+      minSeoScore: numberValue(search.min_audit_score || 60),
+      minLeadScore: numberValue(search.min_lead_score || 70),
       isRemote: true,
     };
   }).filter((item) => item.id);
 
-  function buildLead(row, audit, index, idPrefix) {
-    const evidence = findEvidenceFor(row, audit) || {};
-    const evidenceRow = evidence.row || {};
-    const email = cleanEmail(pickField(evidenceRow, "raw_email", "decision_maker_email", "email", "homepage_primary_email", "all_found_emails", "raw_all_found_emails"))
-      || cleanEmail(pickField(row, "raw_email", "decision_maker_email", "email", "homepage_primary_email", "all_found_emails"))
-      || cleanEmail(pickField(audit, "raw_email", "homepage_primary_email", "email"))
-      || evidence.email
-      || "";
-    const phone = cleanPhone(pickField(evidenceRow, "raw_phone", "place_phone", "decision_maker_phone", "phone", "homepage_primary_phone", "all_found_phones", "raw_all_found_phones"))
-      || cleanPhone(pickField(row, "raw_phone", "place_phone", "decision_maker_phone", "phone", "homepage_primary_phone", "all_found_phones"))
-      || cleanPhone(pickField(audit, "raw_phone", "place_phone", "homepage_primary_phone", "phone"))
-      || evidence.phone
-      || "";
+  const leads = finalLeads.map((lead, index) => {
+    const audit = auditById[lead.audit_id] || {};
+    const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || {};
     return {
-      id: pickField(row, "lead_id") || (idPrefix + "_" + (pickField(row, "audit_id") || index + 1)),
-      listId: normalizeKey(pickField(row, "search_id") || pickField(audit, "search_id") || pickField(evidenceRow, "search_id")),
-      userId: normalizeKey(pickField(row, "user_id") || pickField(audit, "user_id") || pickField(evidenceRow, "user_id") || "usr_mvp"),
-      company: pickField(row, "company_name") || pickField(audit, "company_name") || pickField(evidenceRow, "company_name") || "Unknown company",
-      website: pickField(row, "website_url") || pickField(audit, "website_url", "final_url") || pickField(evidenceRow, "website_url") || "",
-      decisionMaker: pickField(row, "decision_maker_name") || pickField(evidenceRow, "contact_name", "decision_maker_name") || "",
-      role: pickField(row, "decision_maker_role") || pickField(evidenceRow, "contact_role", "decision_maker_role") || "",
-      email,
-      phone,
-      seoScore: numberValue(pickField(row, "seo_need_score") || pickField(audit, "seo_need_score")),
-      overallScore: numberValue(pickField(row, "overall_lead_score", "seo_need_score") || pickField(audit, "seo_need_score")),
-      commercialFit: numberValue(pickField(row, "commercial_fit_score") || pickField(audit, "commercial_fit_score")),
-      contactConfidence: numberValue(pickField(row, "contact_confidence_score") || pickField(evidenceRow, "contact_confidence_score", "raw_contact_confidence") || (email || phone ? 80 : 0)),
-      status: pickField(row, "qualification_status", "status") || "review_needed",
-      outreachReadiness: pickField(row, "outreach_readiness") || "needs_review",
-      paidAdsDetected: String(pickField(row, "paid_ads_detected") || pickField(audit, "paid_ads_detected") || "").toLowerCase() === "true",
-      primaryProblem: pickField(row, "primary_problem") || "",
-      secondaryProblem: pickField(row, "secondary_problem") || "",
-      whyItMatters: pickField(row, "qualification_reason") || pickField(audit, "audit_summary") || "",
-      outreachAngle: pickField(row, "outreach_angle") || pickField(audit, "recommended_outreach_angle") || "",
-      valueHypothesis: pickField(row, "client_value_hypothesis") || "",
-      firstLine: pickField(row, "first_line_personalization") || "",
-      recommendedOffer: pickField(row, "recommended_offer") || "SEO audit",
-      recommendedChannel: pickField(row, "recommended_channel") || (email ? "email" : (phone ? "phone" : "manual_review")),
+      id: lead.lead_id || `remote_lead_${index + 1}`,
+      listId: normalizeKey(lead.search_id || audit.search_id || ""),
+      userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id || "usr_mvp"),
+      company: lead.company_name || audit.company_name || "Unknown company",
+      website: lead.website_url || audit.website_url || "",
+      decisionMaker: lead.decision_maker_name || contact.contact_name || "",
+      role: lead.decision_maker_role || contact.contact_role || "",
+      email: lead.decision_maker_email || contact.email || "",
+      phone: lead.decision_maker_phone || contact.phone || "",
+      seoScore: numberValue(lead.seo_need_score || audit.seo_need_score),
+      overallScore: numberValue(lead.overall_lead_score || lead.seo_need_score || audit.seo_need_score),
+      commercialFit: numberValue(lead.commercial_fit_score || audit.commercial_fit_score),
+      contactConfidence: numberValue(lead.contact_confidence_score || contact.contact_confidence_score),
+      status: lead.qualification_status || lead.status || "review_needed",
+      outreachReadiness: lead.outreach_readiness || "needs_review",
+      paidAdsDetected: String(lead.paid_ads_detected || audit.paid_ads_detected || "").toLowerCase() === "true",
+      primaryProblem: lead.primary_problem || "",
+      secondaryProblem: lead.secondary_problem || "",
+      whyItMatters: lead.qualification_reason || audit.audit_summary || "",
+      outreachAngle: lead.outreach_angle || audit.recommended_outreach_angle || "",
+      valueHypothesis: lead.client_value_hypothesis || "",
+      firstLine: lead.first_line_personalization || "",
+      recommendedOffer: lead.recommended_offer || "",
+      recommendedChannel: lead.recommended_channel || "",
     };
-  }
+  });
 
-  const leads = finalLeads.map((lead, index) => buildLead(lead, auditById[normalizeKey(pickField(lead, "audit_id"))] || {}, index, "remote_lead"));
   const fallbackLeads = audits
-    .filter((audit) => !auditHasFinalLead.has(normalizeKey(pickField(audit, "audit_id"))))
+    .filter((audit) => !auditHasFinalLead.has(audit.audit_id))
     .map((audit, index) => {
-      const fallbackStatus = numberValue(pickField(audit, "seo_need_score")) >= numberValue(pickField(audit, "min_lead_score") || 70) ? "review_needed" : "rejected";
-      return buildLead({ ...audit, qualification_status: fallbackStatus }, audit, index, "audit_fallback");
+      const contact = contactByProspect[audit.prospect_id] || {};
+      const fallbackStatus = numberValue(audit.seo_need_score) >= numberValue(audit.min_lead_score || 70) ? "review_needed" : "rejected";
+      return {
+        id: `audit_fallback_${audit.audit_id || index + 1}`,
+        listId: normalizeKey(audit.search_id || ""),
+        userId: normalizeKey(audit.user_id || contact.user_id || "usr_mvp"),
+        company: audit.company_name || "Unknown company",
+        website: audit.website_url || audit.final_url || "",
+        decisionMaker: contact.contact_name || "",
+        role: contact.contact_role || "",
+        email: contact.email || audit.homepage_primary_email || "",
+        phone: contact.phone || audit.homepage_primary_phone || "",
+        seoScore: numberValue(audit.seo_need_score),
+        overallScore: numberValue(audit.seo_need_score),
+        commercialFit: numberValue(audit.commercial_fit_score),
+        contactConfidence: numberValue(contact.contact_confidence_score),
+        status: fallbackStatus,
+        outreachReadiness: fallbackStatus === "review_needed" ? "needs_review" : "not_ready",
+        paidAdsDetected: String(audit.paid_ads_detected || "").toLowerCase() === "true",
+        primaryProblem: (audit.seo_need_reasons || "").split("|")[0]?.trim() || "",
+        secondaryProblem: (audit.seo_need_reasons || "").split("|")[1]?.trim() || "",
+        whyItMatters: audit.audit_summary || "",
+        outreachAngle: audit.recommended_outreach_angle || "",
+        valueHypothesis: "",
+        firstLine: "",
+        recommendedOffer: "SEO audit",
+        recommendedChannel: contact.email ? "email" : (contact.phone ? "phone" : "manual_review"),
+      };
     });
 
-  const allLeads = uniqueBy([...leads, ...fallbackLeads], (item) => item.id).filter((lead) => hasReachableContact(lead));
-  return { lists, leads: allLeads };
+  return { lists, leads: uniqueBy([...leads, ...fallbackLeads], (item) => item.id) };
 }
+
 async function syncSheets(event) {
   if (event) event.preventDefault();
   updateStatus("dataStatus", "Syncing sheets...", "");
@@ -1119,7 +881,7 @@ function renderDashboardPage() {
   setText("metricQualified", String(qualified));
   setText("metricReviewNeeded", String(reviewNeeded));
   setText("metricAverageScore", String(averageScore));
-  setText("visibleLeadCount", `${leads.length} contact-ready leads`);
+  setText("visibleLeadCount", `${leads.length} leads`);
 
   if (!selected) return;
   setText("workspaceSelectedListHealth", selected.qualified > 0 ? "List has qualified leads" : "List needs review");
@@ -1155,8 +917,8 @@ function renderDashboardPage() {
     ? leads.slice(0, 6).map((lead) => `
       <tr>
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
-        <td><strong>${lead.decisionMaker || "Business contact available"}</strong><span class="status-note">${lead.role || "No named decision maker yet"}</span></td>
-        <td>${contactCellHtml(lead)}</td>
+        <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
+        <td class="contact-stack"><span>${lead.email || "No email"}</span><span>${lead.phone || "No phone"}</span></td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
       </tr>`).join("")
@@ -1228,7 +990,7 @@ function renderLeadsPage() {
   setText("workspaceUserBadge", getCurrentUserId());
   setText("workspaceDataSource", appState.syncMode === "sheets" ? "Live Sheets" : "Local workspace");
   setText("workspaceLastSync", appState.lastSyncAt ? `Last sync ${formatDate(appState.lastSyncAt)}` : "Waiting for first sync");
-  setText("visibleLeadCount", `${leads.length} contact-ready leads`);
+  setText("visibleLeadCount", `${leads.length} leads`);
   setText("exportTargetList", selected ? selected.name : "No selected list");
   setText("exportTargetListMirror", selected ? selected.name : "No selected list");
   setText("exportTargetMeta", selected ? `${leads.length} visible leads from ${titleCase(selected.niche)} in ${selected.city}.` : "0 visible leads ready for export.");
@@ -1237,8 +999,8 @@ function renderLeadsPage() {
     ? leads.map((lead) => `
       <tr data-lead-id="${lead.id}">
         <td class="company-cell"><strong>${lead.company}</strong><span>${String(lead.website || "").replace(/^https?:\/\//, "")}</span></td>
-        <td><strong>${lead.decisionMaker || "Business contact available"}</strong><span class="status-note">${lead.role || "No named decision maker yet"}</span></td>
-        <td>${contactCellHtml(lead)}</td>
+        <td><strong>${lead.decisionMaker || "No named contact yet"}</strong><span class="status-note">${lead.role || "Needs review"}</span></td>
+        <td class="contact-stack"><span>${lead.email || "No email"}</span><span>${lead.phone || "No phone"}</span></td>
         <td><span class="score-pill">${lead.seoScore || 0}</span></td>
         <td><span class="score-pill">${lead.overallScore || 0}</span></td>
         <td><span class="status-pill ${statusClass(lead.status)}">${lead.status}</span></td>
@@ -1269,27 +1031,27 @@ function renderLeadDetailPage() {
     websiteNode.href = selectedLead.website || "#";
   }
   setText("detailLocation", selectedList ? `${selectedList.city}, ${selectedList.country}` : "-");
-  setText("detailPrimaryProblem", humanizeLeadLabel(selectedLead.primaryProblem, "SEO opportunity needs review"));
-  setText("detailOffer", humanizeOffer(selectedLead.recommendedOffer));
-  setText("detailReason", cleanNarrative(selectedLead.whyItMatters, "SEO opportunity detected; review the visible site signals and contact path before outreach."));
-  setText("detailAngle", cleanNarrative(selectedLead.outreachAngle, "Lead with a relevant SEO gap; anchor outreach to the clearest site weakness and recommended offer."));
-  setText("detailValue", cleanNarrative(selectedLead.valueHypothesis, "Likely opportunity to improve local search visibility and capture more commercial demand."));
-  setText("detailPersonalization", cleanNarrative(selectedLead.firstLine, "No first-line personalization generated yet."));
+  setText("detailPrimaryProblem", selectedLead.primaryProblem || "Not set");
+  setText("detailOffer", selectedLead.recommendedOffer || "Not set");
+  setText("detailReason", selectedLead.whyItMatters || "No qualification reason yet.");
+  setText("detailAngle", selectedLead.outreachAngle || "No outreach angle yet.");
+  setText("detailValue", selectedLead.valueHypothesis || "No value hypothesis yet.");
+  setText("detailPersonalization", selectedLead.firstLine || "No personalization yet.");
   setText("detailSeoScore", String(selectedLead.seoScore || 0));
   setText("detailOverallScore", String(selectedLead.overallScore || 0));
   setText("detailCommercialFit", String(selectedLead.commercialFit || 0));
   setText("detailContactConfidence", String(selectedLead.contactConfidence || 0));
-  setText("detailOutreachReadiness", `Outreach: ${humanizeLeadLabel(selectedLead.outreachReadiness || "needs_review")}`);
+  setText("detailOutreachReadiness", `Outreach: ${titleCase(selectedLead.outreachReadiness || "needs_review")}`);
   setText("detailPaidAds", `Paid ads: ${selectedLead.paidAdsDetected ? "detected" : "not detected"}`);
-  setText("detailSecondaryProblem", humanizeLeadLabel(selectedLead.secondaryProblem, "Secondary issue not set"));
-  setText("detailDecisionMaker", decisionMakerTitle(selectedLead));
-  setText("detailDecisionRole", decisionMakerSubtitle(selectedLead));
-  setHtml("#detailContactLine", contactDetailHtml(selectedLead));
-  setText("detailContactChannel", humanizeChannel(selectedLead.recommendedChannel));
-  setText("detailNextAction", hasReachableContact(selectedLead) ? `Reach out using the best contact path and offer a ${humanizeOffer(selectedLead.recommendedOffer).toLowerCase()}.` : "Do manual contact enrichment before outreach.");
-  setText("detailRiskNote", hasReachableContact(selectedLead) ? "Contact path exists. Main risk is fit/message quality, not reachability." : "High risk: contact path is missing or unreliable.");
-  setHtml("#detailSignalList", listHtml(signalItemsForLead(selectedLead)));
-  setHtml("#detailPlaybookList", listHtml([cleanNarrative(selectedLead.outreachAngle, "Anchor outreach to the clearest SEO gap."), `Offer: ${humanizeOffer(selectedLead.recommendedOffer)}`, cleanNarrative(selectedLead.firstLine, "Prepare a short first-line personalization before sending.")]));
+  setText("detailSecondaryProblem", selectedLead.secondaryProblem || "Secondary issue not set");
+  setText("detailDecisionMaker", selectedLead.decisionMaker || "No named contact yet");
+  setText("detailDecisionRole", selectedLead.role || "Needs contact enrichment");
+  setText("detailContactLine", [selectedLead.email, selectedLead.phone].filter(Boolean).join(" | ") || "No direct contact captured");
+  setText("detailContactChannel", selectedLead.recommendedChannel ? `Recommended channel: ${titleCase(selectedLead.recommendedChannel)}` : "Recommended channel not set");
+  setText("detailNextAction", selectedLead.email || selectedLead.phone ? "Reach out with the selected SEO angle." : "Prioritize manual contact enrichment first.");
+  setText("detailRiskNote", selectedLead.email || selectedLead.phone ? "Main risk is moderate; focus on message quality and offer fit." : "Main risk: contact path is still weak.");
+  setHtml("#detailSignalList", `<li>${selectedLead.primaryProblem || "Review SEO weakness signals."}</li><li>${selectedLead.secondaryProblem || "Review secondary issues."}</li><li>${selectedLead.paidAdsDetected ? "Paid ads budget signal detected." : "No paid ads signal detected."}</li>`);
+  setHtml("#detailPlaybookList", `<li>${selectedLead.outreachAngle || "Define an outreach angle."}</li><li>${selectedLead.recommendedOffer || "Choose the right offer."}</li><li>${selectedLead.firstLine || "Prepare a first-line personalization."}</li>`);
   setText("exportTargetList", selectedList ? selectedList.name : "No selected list");
   setText("exportTargetListMirror", selectedList ? selectedList.name : "No selected list");
   setText("exportTargetMeta", selectedList ? `${getVisibleLeads().length} visible leads in this selected list.` : "0 visible leads ready for export.");

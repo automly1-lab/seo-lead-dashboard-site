@@ -1,1 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankForge Intelligence | Account Settings</title>
+  <link rel="stylesheet" href="../assets/dashboard.css">
+  <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
+  <link rel="stylesheet" href="../assets/account-settings.css?v=account-settings-1">
+</head>
+<body class="dashboard-body app-page-settings" data-auth="protected" data-page="settings">
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">RF</span>
+        <span class="brand-copy"><strong>RankForge</strong><small>by CrestlineOps</small></span>
+      </a>
+      <nav class="sidebar-nav">
+        <a href="../dashboard/">Dashboard</a>
+        <a href="../lists/">Saved Lists</a>
+        <a href="../leads/">Leads</a>
+        <a href="../lead-detail/">Lead Detail</a>
+        <a class="active" href="../settings/">Settings</a>
+      </nav>
+      <section class="sidebar-panel">
+        <p class="panel-eyebrow">Account</p>
+        <h2>Workspace identity.</h2>
+        <p>Manage the signed-in workspace session and confirm which user ID owns new searches and leads.</p>
+      </section>
+    </aside>
 
+    <main class="dashboard-main">
+      <header class="topbar">
+        <div>
+          <p class="kicker">Account Settings</p>
+          <h1>Workspace and account</h1>
+          <p class="topbar-copy">Confirm your RankForge account, current user ID, data isolation status, and sign out safely.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="data-status" id="settingsStatus">Protected workspace</div>
+          <a class="button ghost" href="../dashboard/">Back to Dashboard</a>
+        </div>
+      </header>
+
+      <section class="workspace-strip">
+        <article class="workspace-card"><span class="workspace-label">Signed-in Email</span><strong id="accountEmail">Loading...</strong><small>Supabase Auth account email</small></article>
+        <article class="workspace-card"><span class="workspace-label">Workspace User ID</span><strong class="settings-user-id" id="accountUserId">Loading...</strong><small>Used to isolate searches, leads, and exports</small></article>
+        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Session Status</span><strong id="accountSessionStatus">Checking</strong><small id="accountSessionMeta">Waiting for session validation.</small></article>
+      </section>
+
+      <section class="content-grid settings-grid">
+        <article class="panel panel-wide">
+          <div class="panel-header">
+            <div>
+              <p class="panel-eyebrow">Current Workspace</p>
+              <h2>Account details</h2>
+            </div>
+          </div>
+          <div class="settings-card-grid">
+            <div class="settings-info-card">
+              <span class="workspace-label">Auth Provider</span>
+              <strong>Supabase Auth</strong>
+              <p>Email/password authentication is active. Email confirmation can be enabled later after the production domain is connected.</p>
+            </div>
+            <div class="settings-info-card">
+              <span class="workspace-label">Data Isolation</span>
+              <strong>User-scoped</strong>
+              <p>Dashboard data is filtered by your Supabase user ID. Other users should not see your saved lists or leads.</p>
+            </div>
+            <div class="settings-info-card">
+              <span class="workspace-label">Current Plan</span>
+              <strong>Launch Plan</strong>
+              <p>Plan limits are not enforced yet. Stripe and monthly usage tracking can be added later.</p>
+            </div>
+            <div class="settings-info-card">
+              <span class="workspace-label">Webhook</span>
+              <strong id="accountWebhookStatus">Configured in browser</strong>
+              <p id="accountWebhookValue">Webhook URL is stored locally for now and can remain configurable while n8n changes.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel panel-compact">
+          <div class="panel-header"><div><p class="panel-eyebrow">Session Control</p><h2>Sign out</h2></div></div>
+          <p class="panel-copy">Signing out clears local RankForge workspace cache from this browser and returns you to the login page.</p>
+          <div class="panel-actions top-space">
+            <button class="button danger" type="button" id="logoutButton">Log out</button>
+          </div>
+          <p class="form-status" id="logoutStatus"></p>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/auth.js?v=user-isolation-1"></script>
+  <script src="../assets/account-settings.js?v=account-settings-1"></script>
+  <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
+</body>
+</html>

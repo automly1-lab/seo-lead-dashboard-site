@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence | Dashboard</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/search-presets-clean.css?v=search-presets-clean-1">
+  <link rel="stylesheet" href="../assets/search-presets-clean.css?v=search-progress-panel-1">
   <link rel="stylesheet" href="../assets/app-polish.css?v=onboarding-settings-1">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
 
@@ -236,7 +236,7 @@
               <label><span>Min SEO Score</span><input id="seoThresholdInput" type="number" min="0" max="100" value="60"></label>
               <label><span>Min Lead Score</span><input id="leadThresholdInput" type="number" min="0" max="100" value="70"></label>
             </div>
-            <p class="form-status" id="createSearchStatus">Create a saved list and push it into the search workflow.</p>
+            <p class="form-status" id="createSearchStatus">Create a saved list and start collecting prioritized leads.</p>
             <button class="button primary button-block" type="submit">Create Search Batch</button>
           </form>
         </div>
@@ -245,7 +245,7 @@
       <section class="workspace-strip">
         <article class="workspace-card">
           <span class="workspace-label">Current Workspace User</span>
-          <strong id="workspaceUserBadge">usr_mvp</strong>
+          <strong id="workspaceUserBadge">Loading user…</strong>
           <small>User-scoped lists and leads only</small>
         </article>
         <article class="workspace-card">
@@ -281,8 +281,6 @@
             <button class="button danger small" type="button" onclick="window.rankforgeApp.deleteSelectedList()">Delete</button>
           </div>
         </article>
-
-
       </section>
 
       <section class="metrics-grid">
@@ -342,8 +340,8 @@
 <script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
 <script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
 <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
-<script src="../assets/app-polish.js?v=onboarding-settings-1"></script>
+<script src="../assets/app-polish.js?v=lead-quality-loader-1"></script>
 <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
-<script src="../assets/search-presets-clean.js?v=search-presets-clean-1"></script>
+<script src="../assets/search-presets-clean.js?v=search-progress-panel-1"></script>
 </body>
 </html>

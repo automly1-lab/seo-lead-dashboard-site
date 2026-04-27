@@ -1,6 +1,7 @@
 /* RankForge clean search presets - works with top Create Search section */
 (function () {
   const PAGE = document.body?.dataset?.page || "";
+  let activePreset = null;
 
   const PRESETS = [
     {
@@ -105,12 +106,68 @@
     node.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
-  function applyPreset(preset) {
+  function currentLocationForPreset(preset) {
     const cityOverride = document.querySelector(".rf-clean-preset-city")?.value.trim();
     const countryOverride = document.querySelector(".rf-clean-preset-country")?.value.trim();
 
-    const city = cityOverride || preset.city;
-    const country = countryOverride || preset.country;
+    return {
+      city: cityOverride || preset.city,
+      country: countryOverride || preset.country,
+    };
+  }
+
+  function updateSelectedCards() {
+    document.querySelectorAll(".rf-clean-preset-card").forEach((card) => {
+      const isSelected = activePreset && card.dataset.presetLabel === activePreset.label;
+      card.classList.toggle("is-selected", Boolean(isSelected));
+      card.setAttribute("aria-pressed", isSelected ? "true" : "false");
+      const badge = card.querySelector(".rf-clean-preset-selected");
+      if (badge) badge.textContent = isSelected ? "Selected" : "Apply preset";
+    });
+  }
+
+  function ensurePresetBridge() {
+    const form = document.getElementById("quickCreateForm");
+    if (!form || form.querySelector(".rf-active-preset-bridge")) return;
+
+    const bridge = document.createElement("div");
+    bridge.className = "rf-active-preset-bridge";
+    bridge.hidden = true;
+    bridge.innerHTML = `
+      <div>
+        <span class="rf-active-preset-label">Preset selected</span>
+        <strong class="rf-active-preset-name">No preset selected</strong>
+        <small class="rf-active-preset-meta">Choose a preset below to fill this form faster.</small>
+      </div>
+      <button class="rf-active-preset-clear" type="button">Clear preset</button>
+    `;
+
+    const clearButton = bridge.querySelector(".rf-active-preset-clear");
+    clearButton.addEventListener("click", () => {
+      activePreset = null;
+      bridge.hidden = true;
+      updateSelectedCards();
+      const status = document.querySelector(".rf-clean-presets-status");
+      if (status) status.textContent = "Preset cleared. You can edit the Create Search form manually.";
+    });
+
+    form.insertBefore(bridge, form.firstChild);
+  }
+
+  function updatePresetBridge(preset, city, country) {
+    ensurePresetBridge();
+    const bridge = document.querySelector(".rf-active-preset-bridge");
+    if (!bridge) return;
+
+    bridge.hidden = false;
+    bridge.querySelector(".rf-active-preset-name").textContent = `Using preset: ${preset.label}`;
+    bridge.querySelector(".rf-active-preset-meta").textContent = `${city || "No city"}, ${country || "No country"} · ${preset.businessType}`;
+  }
+
+  function applyPreset(preset, options) {
+    const shouldFocus = !(options && options.skipFocus);
+    activePreset = preset;
+    const { city, country } = currentLocationForPreset(preset);
 
     setValue("searchNameInput", city ? `${city} ${preset.searchName}` : preset.searchName);
     setValue("nicheInput", preset.niche);
@@ -120,19 +177,49 @@
     setValue("seoThresholdInput", preset.seo);
     setValue("leadThresholdInput", preset.lead);
 
+    updatePresetBridge(preset, city, country);
+    updateSelectedCards();
+
     const status = document.querySelector(".rf-clean-presets-status");
     if (status) {
-      status.textContent = `${preset.label} preset loaded. Review the city/country and click Create Search Batch.`;
+      status.textContent = `${preset.label} preset applied to the form above. Review the city, country, and thresholds, then click Create Search Batch.`;
     }
+
+    const createStatus = document.getElementById("createSearchStatus");
+    if (createStatus) {
+      createStatus.textContent = `${preset.label} preset applied. Confirm the location and create the search batch.`;
+    }
+
+    if (shouldFocus) {
+      const focusTarget = document.getElementById("cityInput") || document.getElementById("searchNameInput");
+      if (focusTarget) focusTarget.focus({ preventScroll: true });
+    }
+  }
+
+  function bindLocationOverrides() {
+    document.querySelectorAll(".rf-clean-preset-city, .rf-clean-preset-country").forEach((input) => {
+      if (input.dataset.rfPresetBound === "true") return;
+      input.dataset.rfPresetBound = "true";
+      input.addEventListener("input", () => {
+        if (activePreset) applyPreset(activePreset, { skipFocus: true });
+      });
+    });
   }
 
   function mount() {
     if (PAGE !== "dashboard") return;
-    if (document.querySelector(".rf-clean-presets")) return;
+    if (document.querySelector(".rf-clean-presets")) {
+      ensurePresetBridge();
+      bindLocationOverrides();
+      updateSelectedCards();
+      return;
+    }
 
     const hero = document.querySelector(".create-search-top");
     const form = document.getElementById("quickCreateForm");
     if (!hero || !form) return;
+
+    ensurePresetBridge();
 
     const section = document.createElement("section");
     section.className = "rf-clean-presets";
@@ -141,7 +228,7 @@
         <div>
           <p class="panel-eyebrow">Search presets</p>
           <h2>Start with a proven local SEO category.</h2>
-          <p>Pick a template, optionally change city/country, then run a focused search.</p>
+          <p>Pick a template below. It fills the Create Search form above, then you only adjust the location and thresholds.</p>
         </div>
         <div class="rf-clean-presets-location">
           <label><span>City / metro override</span><input class="rf-clean-preset-city" type="text" placeholder="e.g. Miami"></label>
@@ -157,16 +244,20 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "rf-clean-preset-card";
+      button.dataset.presetLabel = preset.label;
+      button.setAttribute("aria-pressed", "false");
       button.innerHTML = `
         <span>${preset.badge}</span>
         <strong>${preset.label}</strong>
         <small>${preset.businessType}</small>
+        <em class="rf-clean-preset-selected">Apply preset</em>
       `;
       button.addEventListener("click", () => applyPreset(preset));
       grid.appendChild(button);
     });
 
     hero.insertAdjacentElement("afterend", section);
+    bindLocationOverrides();
   }
 
   if (document.readyState === "loading") {

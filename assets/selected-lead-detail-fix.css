@@ -1,0 +1,79 @@
+/* RankForge lead detail selected lead fix */
+.detail-contact-line {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 8px;
+}
+
+.detail-contact-line strong {
+  color: #667085;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail-contact-line span {
+  overflow-wrap: anywhere;
+}
+
+.rf-detail-lead-sidebar {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line, rgba(15, 23, 42, 0.09));
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.rf-detail-lead-sidebar-head {
+  display: grid;
+  gap: 6px;
+}
+
+.rf-detail-lead-sidebar-head strong {
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.rf-detail-lead-sidebar-head small {
+  color: var(--muted, #667085);
+  line-height: 1.5;
+}
+
+.rf-detail-lead-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.rf-detail-lead-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rf-detail-lead-item strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.rf-detail-lead-item span {
+  color: var(--muted, #667085);
+  font-size: 12px;
+}
+
+.rf-detail-lead-item:hover,
+.rf-detail-lead-item.is-active {
+  border-color: rgba(21, 94, 239, 0.26);
+  background: rgba(21, 94, 239, 0.06);
+}

@@ -67,12 +67,12 @@
 .app-page-dashboard .contact-stack .contact-value {
   display: block !important;
   flex: 1 1 auto !important;
-  min-width: 170px !important;
-  max-width: 280px !important;
+  min-width: 190px !important;
+  max-width: 320px !important;
   line-height: 1.45 !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: anywhere !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
 }
 
 /* If old app.js still renders plain spans, keep them readable too */

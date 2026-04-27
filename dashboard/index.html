@@ -7,8 +7,172 @@
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/app-polish.css?v=onboarding-settings-1">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <link rel="stylesheet" href="../assets/search-templates.css?v=search-templates-1">
-  <link rel="stylesheet" href="../assets/dashboard-home-polish.css?v=dashboard-home-polish-2">
+
+  <style>
+    /* Dashboard cleanup: make search creation the primary top action */
+    .topbar-actions .button.danger,
+    .topbar-actions button[onclick*="addDemoList"],
+    .topbar-actions button[onclick*="deleteSelectedList"] {
+      display: none !important;
+    }
+
+    .sidebar .sidebar-panel,
+    .sidebar form.sidebar-panel {
+      display: none;
+    }
+
+    .dashboard-main {
+      gap: 22px;
+    }
+
+    .create-search-top {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.85fr) minmax(420px, 1.15fr);
+      gap: 26px;
+      align-items: stretch;
+      margin: 0 0 6px;
+      padding: clamp(22px, 3vw, 36px);
+      border-radius: 32px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background:
+        radial-gradient(circle at top left, rgba(21, 94, 239, 0.16), transparent 34%),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(239,246,255,0.92));
+      box-shadow: 0 24px 65px rgba(15, 23, 42, 0.08);
+    }
+
+    .create-search-copy {
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .create-search-copy h2 {
+      margin: 0;
+      max-width: 650px;
+      font-size: clamp(34px, 5vw, 64px);
+      line-height: 0.96;
+      letter-spacing: -0.07em;
+      color: var(--ink, #07111f);
+    }
+
+    .create-search-copy p {
+      margin: 0;
+      max-width: 590px;
+      color: var(--muted, #667085);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .create-search-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .create-search-points span {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      color: #344054;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .create-search-card {
+      display: grid;
+      align-self: stretch;
+      min-width: 0;
+      padding: clamp(18px, 2vw, 26px);
+      border-radius: 26px;
+      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(255,255,255,0.97);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 16px 36px rgba(15, 23, 42, 0.07);
+    }
+
+    .create-search-card .quick-create-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      width: 100%;
+      margin: 0;
+    }
+
+    .create-search-card .quick-create-form > label:first-child,
+    .create-search-card .quick-create-form > .form-status,
+    .create-search-card .quick-create-form > button {
+      grid-column: 1 / -1;
+    }
+
+    .create-search-card label {
+      display: grid;
+      gap: 7px;
+    }
+
+    .create-search-card label span {
+      color: var(--muted, #667085);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .create-search-card input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid rgba(15, 23, 42, 0.13);
+      border-radius: 15px;
+      background: #fff;
+      padding: 10px 13px;
+      font: inherit;
+    }
+
+    .create-search-card .form-status {
+      margin: 0;
+      color: var(--muted, #667085);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .create-search-card button[type="submit"] {
+      min-height: 50px;
+      border-radius: 16px;
+      font-weight: 850;
+    }
+
+    .hero-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .hero-grid .hero-card-secondary {
+      display: none !important;
+    }
+
+    .metrics-grid {
+      margin-top: 0;
+    }
+
+    @media (max-width: 1180px) {
+      .create-search-top {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .create-search-top {
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      .create-search-card .quick-create-form,
+      .create-search-points {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
 </head>
 <body class="dashboard-body app-page-dashboard" data-auth="protected" data-page="dashboard">
   <div class="dashboard-shell">
@@ -22,31 +186,8 @@
         <a href="../lists/">Saved Lists</a>
         <a href="../leads/">Leads</a>
         <a href="../lead-detail/">Lead Detail</a>
+        <a href="../settings/">Settings</a>
       </nav>
-      <section class="sidebar-panel">
-        <p class="panel-eyebrow">Workspace Rule</p>
-        <h2>Lists persist until archived.</h2>
-        <p>Search batches stay available for later review, reruns, and exports.</p>
-      </section>
-      <form class="sidebar-panel sidebar-panel-muted" onsubmit="return window.rankforgeApp.saveWebhook(event)">
-        <p class="panel-eyebrow">n8n Connection</p>
-        <h2>Search submit webhook</h2>
-        <p>Connect a public n8n webhook so new searches enter the live pipeline immediately.</p>
-        <div class="webhook-config">
-          <label><span>Webhook URL</span><input id="webhookUrlInput" type="text" placeholder="https://your-n8n.app/webhook/create-search"></label>
-          <button class="button ghost button-block" type="submit">Save Webhook</button>
-          <p class="webhook-note" id="webhookStatus">Webhook not connected yet.</p>
-        </div>
-      </form>
-      <section class="sidebar-panel sidebar-panel-muted">
-        <p class="panel-eyebrow">Workspace Scope</p>
-        <h2>User-visible boundary</h2>
-        <p>Every signed-in user sees only their own searches, leads, and saved lists.</p>
-        <div class="webhook-config">
-          <label><span>Current User ID</span><input id="currentUserIdInput" type="text" readonly></label>
-          <p class="webhook-note" id="currentUserStatus">Signed-in workspace user not loaded yet.</p>
-        </div>
-      </section>
     </aside>
 
     <main class="dashboard-main">
@@ -64,11 +205,41 @@
         <div class="topbar-actions">
           <div class="data-status" id="dataStatus">Local workspace</div>
           <button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button>
-          <button class="button ghost" type="button" onclick="window.rankforgeApp.addDemoList()">Add Demo List</button>
-          <button class="button danger" type="button" onclick="window.rankforgeApp.deleteSelectedList()">Delete Selected List</button>
-          <button class="button primary" type="button" onclick="document.getElementById('quickCreateForm').requestSubmit()">Create Search List</button>
+          <button class="button primary" type="button" onclick="document.getElementById('quickCreateForm').requestSubmit()">Create Search</button>
         </div>
       </header>
+
+      <section class="create-search-top">
+        <div class="create-search-copy">
+          <p class="panel-eyebrow">Create Search Batch</p>
+          <h2>Find SEO-ready local businesses.</h2>
+          <p>Start with a focused niche and city. RankForge will discover companies, check contact paths, score SEO need, and organize the strongest opportunities in your workspace.</p>
+          <div class="create-search-points">
+            <span>Contact-ready leads</span>
+            <span>SEO need scoring</span>
+            <span>CSV export ready</span>
+          </div>
+        </div>
+        <div class="create-search-card">
+          <form class="quick-create-form" id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)">
+            <label><span>List Name</span><input id="searchNameInput" type="text" placeholder="Miami Restoration Companies"></label>
+            <div class="grid-two">
+              <label><span>Niche</span><input id="nicheInput" type="text" placeholder="home restoration"></label>
+              <label><span>Business Type</span><input id="businessTypeInput" type="text" placeholder="restoration contractor"></label>
+            </div>
+            <div class="grid-two">
+              <label><span>City</span><input id="cityInput" type="text" placeholder="Miami"></label>
+              <label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label>
+            </div>
+            <div class="grid-two">
+              <label><span>Min SEO Score</span><input id="seoThresholdInput" type="number" min="0" max="100" value="60"></label>
+              <label><span>Min Lead Score</span><input id="leadThresholdInput" type="number" min="0" max="100" value="70"></label>
+            </div>
+            <p class="form-status" id="createSearchStatus">Create a saved list and push it into the search workflow.</p>
+            <button class="button primary button-block" type="submit">Create Search Batch</button>
+          </form>
+        </div>
+      </section>
 
       <section class="workspace-strip">
         <article class="workspace-card">
@@ -110,26 +281,7 @@
           </div>
         </article>
 
-        <article class="hero-card hero-card-secondary">
-          <p class="panel-eyebrow">Create Search Batch</p>
-          <form class="quick-create-form" id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)">
-            <label><span>List Name</span><input id="searchNameInput" type="text" placeholder="Miami Restoration Companies"></label>
-            <div class="grid-two">
-              <label><span>Niche</span><input id="nicheInput" type="text" placeholder="home restoration"></label>
-              <label><span>Business Type</span><input id="businessTypeInput" type="text" placeholder="restoration contractor"></label>
-            </div>
-            <div class="grid-two">
-              <label><span>City</span><input id="cityInput" type="text" placeholder="Miami"></label>
-              <label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label>
-            </div>
-            <div class="grid-two">
-              <label><span>Min SEO Score</span><input id="seoThresholdInput" type="number" min="0" max="100" value="60"></label>
-              <label><span>Min Lead Score</span><input id="leadThresholdInput" type="number" min="0" max="100" value="70"></label>
-            </div>
-            <p class="form-status" id="createSearchStatus">Create a saved list and push it into the search workflow.</p>
-            <button class="button primary button-block" type="submit">Create Search Batch</button>
-          </form>
-        </article>
+
       </section>
 
       <section class="metrics-grid">
@@ -191,7 +343,5 @@
 <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
 <script src="../assets/app-polish.js?v=onboarding-settings-1"></script>
 <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
-<script src="../assets/search-templates.js?v=search-templates-1"></script>
-<script src="../assets/dashboard-home-polish.js?v=dashboard-home-polish-2"></script>
 </body>
 </html>

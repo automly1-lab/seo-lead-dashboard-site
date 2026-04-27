@@ -85,3 +85,27 @@
   word-break: normal !important;
   overflow-wrap: anywhere !important;
 }
+/* Keep email and phone readable in lead tables */
+.app-page-leads #leadsTable td:nth-child(3),
+.app-page-dashboard #leadsTable td:nth-child(3) {
+  min-width: 300px !important;
+  white-space: normal !important;
+}
+
+.app-page-leads .contact-stack,
+.app-page-dashboard .contact-stack {
+  width: max-content !important;
+  min-width: 280px !important;
+}
+
+.app-page-leads .contact-line,
+.app-page-dashboard .contact-line {
+  display: grid !important;
+  grid-template-columns: 58px minmax(190px, auto) !important;
+  align-items: start !important;
+}
+
+.app-page-leads .contact-value,
+.app-page-dashboard .contact-value {
+  font-variant-numeric: tabular-nums;
+}

@@ -33,10 +33,16 @@
   }
 
   function currentUserId() {
-    var session = safeParse(localStorage.getItem(SESSION_KEY), null);
-    if (session && session.userId) return clean(session.userId);
-    return clean(localStorage.getItem(USER_KEY) || "usr_mvp");
+  var session = safeParse(localStorage.getItem(SESSION_KEY), null);
+  if (session && session.userId) return clean(session.userId);
+
+  var storedUserId = clean(localStorage.getItem(USER_KEY) || "");
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storedUserId)) {
+    return storedUserId;
   }
+
+  return "";
+}
 
   function selectedListId() {
     var state = safeParse(localStorage.getItem(STATE_KEY), {});
@@ -337,6 +343,10 @@
     try {
       var data = await fetchAllSheets();
       var userId = currentUserId();
+      if (!userId) {
+  updateStatus("Please sign in before exporting leads.", "error");
+  return;
+}
       var listId = selectedListId();
 
       if (!listId) {

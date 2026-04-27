@@ -1,93 +1,127 @@
-.rf-switcher {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 18px;
-  padding: 18px 20px;
-  border: 1px solid rgba(15, 23, 42, 0.09);
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
-}
-
-.rf-switcher-copy {
+/* RankForge navigation + leads table layout fix */
+.rf-nav-switcher {
   display: grid;
-  gap: 5px;
-  min-width: 220px;
+  gap: 10px;
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.90);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
 }
 
-.rf-switcher-copy span,
-.rf-switcher-control span {
-  color: #165dff;
+.rf-nav-switcher-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.rf-nav-field {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+  flex: 1 1 240px;
+}
+
+.rf-nav-field label {
+  color: var(--muted, #667085);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
 }
 
-.rf-switcher-copy strong {
-  font-size: 22px;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-}
-
-.rf-switcher-copy small {
-  color: #667085;
-  line-height: 1.45;
-}
-
-.rf-switcher-control {
-  display: grid;
-  gap: 7px;
-  min-width: min(420px, 100%);
-}
-
-.rf-switcher-control select {
-  min-height: 46px;
+.rf-nav-field select {
+  width: 100%;
+  min-height: 42px;
   border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 14px;
+  border-radius: 13px;
   background: #fff;
-  color: #0f172a;
+  color: var(--ink, #0f172a);
   padding: 10px 12px;
   font: inherit;
 }
 
-.rf-switcher-grid {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.1fr) minmax(220px, 1.1fr) auto;
-  gap: 12px;
-  align-items: end;
-  flex: 1;
-}
-
-.rf-switcher-buttons {
+.rf-nav-buttons {
   display: flex;
   gap: 8px;
+  flex: 0 0 auto;
 }
 
-.rf-switcher-buttons button {
-  min-height: 46px;
+.rf-nav-button {
+  min-height: 42px;
+  padding: 10px 13px;
   border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 14px;
+  border-radius: 13px;
   background: #fff;
-  color: #0f172a;
-  font-weight: 750;
-  padding: 10px 14px;
+  color: var(--ink, #0f172a);
+  font-weight: 800;
   cursor: pointer;
 }
 
-.rf-switcher-buttons button:hover {
-  background: #f8fafc;
+.rf-nav-button:hover { box-shadow: 0 8px 18px rgba(15,23,42,0.08); }
+
+/* Fix: Leads table should not make the company column eat the whole screen */
+.app-page-leads .table-shell,
+.app-page-leads .saved-list-table-wrap,
+.app-page-leads .leads-table-wrap {
+  overflow-x: auto;
 }
 
-@media (max-width: 900px) {
-  .rf-switcher,
-  .rf-switcher-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
+.app-page-leads .leads-table,
+.app-page-leads #leadsTable,
+.app-page-dashboard #leadsTable {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 980px;
+}
 
-  .rf-switcher-control {
-    min-width: 0;
-  }
+.app-page-leads #leadsTable th,
+.app-page-leads #leadsTable td,
+.app-page-dashboard #leadsTable th,
+.app-page-dashboard #leadsTable td {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.app-page-leads #leadsTable th:nth-child(1),
+.app-page-leads #leadsTable td:nth-child(1) { width: 32%; }
+.app-page-leads #leadsTable th:nth-child(2),
+.app-page-leads #leadsTable td:nth-child(2) { width: 16%; }
+.app-page-leads #leadsTable th:nth-child(3),
+.app-page-leads #leadsTable td:nth-child(3) { width: 22%; }
+.app-page-leads #leadsTable th:nth-child(4),
+.app-page-leads #leadsTable td:nth-child(4) { width: 7%; }
+.app-page-leads #leadsTable th:nth-child(5),
+.app-page-leads #leadsTable td:nth-child(5) { width: 8%; }
+.app-page-leads #leadsTable th:nth-child(6),
+.app-page-leads #leadsTable td:nth-child(6) { width: 9%; }
+.app-page-leads #leadsTable th:nth-child(7),
+.app-page-leads #leadsTable td:nth-child(7) { width: 8%; }
+
+.app-page-leads .company-cell strong,
+.app-page-dashboard .company-cell strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.app-page-leads .company-cell span,
+.app-page-dashboard .company-cell span,
+.app-page-leads .contact-stack,
+.app-page-dashboard .contact-stack {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+.app-page-leads .contact-stack span,
+.app-page-dashboard .contact-stack span {
+  display: block;
+}
+
+@media (max-width: 980px) {
+  .app-page-leads #leadsTable,
+  .app-page-dashboard #leadsTable { min-width: 900px; }
+  .rf-nav-field { min-width: 100%; }
 }

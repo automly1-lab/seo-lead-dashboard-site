@@ -69,13 +69,11 @@
       if (reason) return "Qualified: " + reason;
       return "Qualified: reachable lead with meaningful SEO opportunity.";
     }
-
     if (status === "review_needed") {
       if (reason) return "Review needed: " + reason;
       if (problem) return "Review needed: " + problem + (offer ? " · Offer: " + offer : "");
       return "Review needed: valid signals found, manual check recommended.";
     }
-
     if (status === "rejected") {
       var rejection = shortText(lead.rejectionReason || lead.rejection_reason || reason, 118);
       return rejection ? "Rejected: " + rejection : "Rejected: did not meet quality rules.";
@@ -109,7 +107,7 @@
         existing.className = "lead-quality-reason";
         firstCell.appendChild(existing);
       }
-      existing.textContent = text;
+      if (existing.textContent !== text) existing.textContent = text;
     });
   }
 
@@ -137,12 +135,6 @@
   var timer = window.setInterval(function () {
     timerCount += 1;
     install();
-    if (timerCount > 20) window.clearInterval(timer);
-  }, 700);
-
-  var tableObserver = new MutationObserver(function () { install(); });
-  window.setTimeout(function () {
-    var table = document.getElementById("leadsTable");
-    if (table) tableObserver.observe(table, { childList: true, subtree: true });
-  }, 500);
+    if (timerCount >= 8) window.clearInterval(timer);
+  }, 1000);
 })();

@@ -1,169 +1,30 @@
-/* RankForge clean search presets - works with top Create Search section */
-(function () {
-  const PAGE = document.body?.dataset?.page || "";
-  let activePreset = null;
-  let payloadPatched = false;
-
-  const PRESETS = [
-    { label: "Restoration", badge: "High value", searchName: "Restoration Companies", niche: "restoration", businessType: "water damage restoration company", city: "Miami", country: "United States", seo: 65, lead: 70 },
-    { label: "Roofing", badge: "Local service", searchName: "Roofing Contractors", niche: "roof repair", businessType: "roofing contractor", city: "Dallas", country: "United States", seo: 60, lead: 70 },
-    { label: "Dental", badge: "Clinic", searchName: "Dental Clinics", niche: "dentist", businessType: "dental clinic", city: "Miami", country: "United States", seo: 60, lead: 70 },
-    { label: "HVAC", badge: "Emergency", searchName: "HVAC Repair Companies", niche: "hvac repair", businessType: "HVAC contractor", city: "Austin", country: "United States", seo: 60, lead: 70 },
-    { label: "Plumbing", badge: "Emergency", searchName: "Plumbing Companies", niche: "plumber", businessType: "plumbing company", city: "Phoenix", country: "United States", seo: 60, lead: 70 },
-    { label: "Law Firms", badge: "High CPC", searchName: "Personal Injury Law Firms", niche: "personal injury lawyer", businessType: "law firm", city: "Miami", country: "United States", seo: 65, lead: 75 },
-    { label: "Med Spa", badge: "Premium local", searchName: "Med Spas", niche: "med spa", businessType: "medical spa", city: "Los Angeles", country: "United States", seo: 60, lead: 70 },
-    { label: "Pest Control", badge: "Local service", searchName: "Pest Control Companies", niche: "pest control", businessType: "pest control company", city: "Orlando", country: "United States", seo: 60, lead: 70 }
-  ];
-
-  function $(id) { return document.getElementById(id); }
-
-  function setValue(id, value) {
-    const node = $(id);
-    if (!node) return;
-    node.value = value;
-    node.dispatchEvent(new Event("input", { bubbles: true }));
-    node.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-
-  function currentLocationForPreset(preset) {
-    const cityOverride = document.querySelector(".rf-clean-preset-city")?.value.trim();
-    const countryOverride = document.querySelector(".rf-clean-preset-country")?.value.trim();
-    return { city: cityOverride || preset.city, country: countryOverride || preset.country };
-  }
-
-  function updateSelectedCards() {
-    document.querySelectorAll(".rf-clean-preset-card").forEach((card) => {
-      const isSelected = activePreset && card.dataset.presetLabel === activePreset.label;
-      card.classList.toggle("is-selected", Boolean(isSelected));
-      card.setAttribute("aria-pressed", isSelected ? "true" : "false");
-      const badge = card.querySelector(".rf-clean-preset-selected");
-      if (badge) badge.textContent = isSelected ? "Selected" : "Apply preset";
-    });
-  }
-
-  function ensureSearchOptions() {
-    const form = document.getElementById("quickCreateForm");
-    if (!form || form.querySelector(".rf-search-quality-options")) return;
-    const status = document.getElementById("createSearchStatus");
-    const options = document.createElement("div");
-    options.className = "rf-search-quality-options";
-    options.innerHTML = `
-      <label><span>Max Leads Requested</span><input id="maxResultsInput" type="number" min="5" max="250" step="5" value="50"></label>
-      <label><span>Contact Requirement</span><select id="contactRequirementInput"><option value="either">Email or phone</option><option value="email">Email required</option><option value="phone">Phone required</option><option value="any">Any contact path</option></select></label>
-      <label class="rf-search-option-toggle"><input id="excludeChainsInput" type="checkbox" checked><span>Exclude chains / franchises</span></label>
-    `;
-    if (status) form.insertBefore(options, status);
-    else form.appendChild(options);
-  }
-
-  function patchSearchPayload() {
-    if (payloadPatched || typeof window.buildSearchPayload !== "function") return;
-    const originalBuildSearchPayload = window.buildSearchPayload;
-    window.buildSearchPayload = function () {
-      const payload = originalBuildSearchPayload();
-      payload.max_results_requested = String(document.getElementById("maxResultsInput")?.value || 50);
-      payload.contact_requirement = document.getElementById("contactRequirementInput")?.value || "either";
-      payload.exclude_chains_franchises = document.getElementById("excludeChainsInput")?.checked ? "true" : "false";
-      return payload;
-    };
-    payloadPatched = true;
-  }
-
-  function ensurePresetBridge() {
-    const form = document.getElementById("quickCreateForm");
-    if (!form || form.querySelector(".rf-active-preset-bridge")) return;
-    const bridge = document.createElement("div");
-    bridge.className = "rf-active-preset-bridge";
-    bridge.hidden = true;
-    bridge.innerHTML = `<div><span class="rf-active-preset-label">Preset selected</span><strong class="rf-active-preset-name">No preset selected</strong><small class="rf-active-preset-meta">Choose a preset below to fill this form faster.</small></div><button class="rf-active-preset-clear" type="button">Clear preset</button>`;
-    bridge.querySelector(".rf-active-preset-clear").addEventListener("click", () => {
-      activePreset = null;
-      bridge.hidden = true;
-      updateSelectedCards();
-      const status = document.querySelector(".rf-clean-presets-status");
-      if (status) status.textContent = "Preset cleared. You can edit the Create Search form manually.";
-    });
-    form.insertBefore(bridge, form.firstChild);
-  }
-
-  function updatePresetBridge(preset, city, country) {
-    ensurePresetBridge();
-    const bridge = document.querySelector(".rf-active-preset-bridge");
-    if (!bridge) return;
-    bridge.hidden = false;
-    bridge.querySelector(".rf-active-preset-name").textContent = `Using preset: ${preset.label}`;
-    bridge.querySelector(".rf-active-preset-meta").textContent = `${city || "No city"}, ${country || "No country"} · ${preset.businessType}`;
-  }
-
-  function applyPreset(preset, options) {
-    const shouldFocus = !(options && options.skipFocus);
-    activePreset = preset;
-    const { city, country } = currentLocationForPreset(preset);
-    setValue("searchNameInput", city ? `${city} ${preset.searchName}` : preset.searchName);
-    setValue("nicheInput", preset.niche);
-    setValue("businessTypeInput", preset.businessType);
-    setValue("cityInput", city);
-    setValue("countryInput", country);
-    setValue("seoThresholdInput", preset.seo);
-    setValue("leadThresholdInput", preset.lead);
-    updatePresetBridge(preset, city, country);
-    updateSelectedCards();
-    const status = document.querySelector(".rf-clean-presets-status");
-    if (status) status.textContent = `${preset.label} preset applied to the form above. Review the city, country, lead count, contact rule, and thresholds.`;
-    const createStatus = document.getElementById("createSearchStatus");
-    if (createStatus) createStatus.textContent = `${preset.label} preset applied. Confirm the search options and create the search batch.`;
-    if (shouldFocus) {
-      const focusTarget = document.getElementById("cityInput") || document.getElementById("searchNameInput");
-      if (focusTarget) focusTarget.focus({ preventScroll: true });
-    }
-  }
-
-  function bindLocationOverrides() {
-    document.querySelectorAll(".rf-clean-preset-city, .rf-clean-preset-country").forEach((input) => {
-      if (input.dataset.rfPresetBound === "true") return;
-      input.dataset.rfPresetBound = "true";
-      input.addEventListener("input", () => { if (activePreset) applyPreset(activePreset, { skipFocus: true }); });
-    });
-  }
-
-  function mount() {
-    if (PAGE !== "dashboard") return;
-    ensurePresetBridge();
-    ensureSearchOptions();
-    patchSearchPayload();
-    if (document.querySelector(".rf-clean-presets")) {
-      bindLocationOverrides();
-      updateSelectedCards();
-      return;
-    }
-    const hero = document.querySelector(".create-search-top");
-    const form = document.getElementById("quickCreateForm");
-    if (!hero || !form) return;
-    const section = document.createElement("section");
-    section.className = "rf-clean-presets";
-    section.innerHTML = `<div class="rf-clean-presets-head"><div><p class="panel-eyebrow">Search presets</p><h2>Start with a proven local SEO category.</h2><p>Pick a template below. It fills the Create Search form above, then you only adjust the location, lead count, contact rule, and thresholds.</p></div><div class="rf-clean-presets-location"><label><span>City / metro override</span><input class="rf-clean-preset-city" type="text" placeholder="e.g. Miami"></label><label><span>Country override</span><input class="rf-clean-preset-country" type="text" placeholder="e.g. United States"></label></div></div><div class="rf-clean-preset-grid"></div><p class="rf-clean-presets-status">Choose a preset to fill the Create Search form above.</p>`;
-    const grid = section.querySelector(".rf-clean-preset-grid");
-    PRESETS.forEach((preset) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "rf-clean-preset-card";
-      button.dataset.presetLabel = preset.label;
-      button.setAttribute("aria-pressed", "false");
-      button.innerHTML = `<span>${preset.badge}</span><strong>${preset.label}</strong><small>${preset.businessType}</small><em class="rf-clean-preset-selected">Apply preset</em>`;
-      button.addEventListener("click", () => applyPreset(preset));
-      grid.appendChild(button);
-    });
-    hero.insertAdjacentElement("afterend", section);
-    bindLocationOverrides();
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
-  else mount();
-
-  let tries = 0;
-  const timer = setInterval(() => {
-    tries += 1;
-    mount();
-    if (document.querySelector(".rf-clean-presets") || tries > 10) clearInterval(timer);
-  }, 500);
+(function(){
+const PAGE=document.body?.dataset?.page||"";if(PAGE!=="dashboard")return;
+let activePreset=null,payloadPatched=false,createPatched=false;
+const PRESETS=[
+{label:"Restoration",badge:"High value",searchName:"Restoration Companies",niche:"restoration",businessType:"water damage restoration company",city:"Miami",country:"United States",seo:65,lead:70},
+{label:"Roofing",badge:"Local service",searchName:"Roofing Contractors",niche:"roof repair",businessType:"roofing contractor",city:"Dallas",country:"United States",seo:60,lead:70},
+{label:"Dental",badge:"Clinic",searchName:"Dental Clinics",niche:"dentist",businessType:"dental clinic",city:"Miami",country:"United States",seo:60,lead:70},
+{label:"HVAC",badge:"Emergency",searchName:"HVAC Repair Companies",niche:"hvac repair",businessType:"HVAC contractor",city:"Austin",country:"United States",seo:60,lead:70},
+{label:"Plumbing",badge:"Emergency",searchName:"Plumbing Companies",niche:"plumber",businessType:"plumbing company",city:"Phoenix",country:"United States",seo:60,lead:70},
+{label:"Law Firms",badge:"High CPC",searchName:"Personal Injury Law Firms",niche:"personal injury lawyer",businessType:"law firm",city:"Miami",country:"United States",seo:65,lead:75},
+{label:"Med Spa",badge:"Premium local",searchName:"Med Spas",niche:"med spa",businessType:"medical spa",city:"Los Angeles",country:"United States",seo:60,lead:70},
+{label:"Pest Control",badge:"Local service",searchName:"Pest Control Companies",niche:"pest control",businessType:"pest control company",city:"Orlando",country:"United States",seo:60,lead:70}
+];
+const $=id=>document.getElementById(id);const clean=v=>String(v||"").trim();
+function setValue(id,value){const n=$(id);if(!n)return;n.value=value;n.dispatchEvent(new Event("input",{bubbles:true}));n.dispatchEvent(new Event("change",{bubbles:true}));}
+function loc(p){return{city:clean(document.querySelector(".rf-clean-preset-city")?.value)||p.city,country:clean(document.querySelector(".rf-clean-preset-country")?.value)||p.country};}
+function ensureOptions(){const form=$("quickCreateForm");if(!form||form.querySelector(".rf-search-quality-options"))return;const status=$("createSearchStatus");const box=document.createElement("div");box.className="rf-search-quality-options";box.innerHTML='<label><span>Max Leads Requested</span><input id="maxResultsInput" type="number" min="5" max="50" step="5" value="50"></label><label><span>Contact Requirement</span><select id="contactRequirementInput"><option value="either">Email or phone</option><option value="email">Email required</option><option value="phone">Phone required</option><option value="any">Any contact path</option></select></label><label class="rf-search-option-toggle"><input id="excludeChainsInput" type="checkbox" checked><span>Exclude chains / franchises</span></label>';status?form.insertBefore(box,status):form.appendChild(box);}
+function patchPayload(){if(payloadPatched||typeof window.buildSearchPayload!=="function")return;const original=window.buildSearchPayload;window.buildSearchPayload=function(){const p=original();const requested=Math.max(5,Math.min(50,Number($("maxResultsInput")?.value||50)));p.max_results_requested=String(requested);p.contact_requirement=$("contactRequirementInput")?.value||"either";p.exclude_chains_franchises=$("excludeChainsInput")?.checked?"true":"false";return p;};payloadPatched=true;}
+function ensureBridge(){const form=$("quickCreateForm");if(!form||form.querySelector(".rf-active-preset-bridge"))return;const b=document.createElement("div");b.className="rf-active-preset-bridge";b.hidden=true;b.innerHTML='<div><span class="rf-active-preset-label">Preset selected</span><strong class="rf-active-preset-name">No preset selected</strong><small class="rf-active-preset-meta">Choose a preset below to fill this form faster.</small></div><button class="rf-active-preset-clear" type="button">Clear preset</button>';b.querySelector("button").addEventListener("click",()=>{activePreset=null;b.hidden=true;cards();const s=document.querySelector(".rf-clean-presets-status");if(s)s.textContent="Preset cleared. You can edit the Create Search form manually.";});form.insertBefore(b,form.firstChild);}
+function ensureProgress(){const hero=document.querySelector(".create-search-top");if(!hero)return null;let p=document.querySelector(".rf-search-progress-panel");if(p)return p;p=document.createElement("section");p.className="rf-search-progress-panel";p.hidden=true;p.innerHTML='<div class="rf-search-progress-copy"><span class="rf-search-progress-kicker">Search running</span><strong class="rf-search-progress-title">Search started</strong><p class="rf-search-progress-body">We are finding businesses, checking websites, and looking for contact paths. New leads will appear automatically as they are found.</p><small class="rf-search-progress-meta"></small></div><div class="rf-search-progress-actions"><button class="rf-search-progress-button" type="button">Sync now</button><a class="rf-search-progress-link" href="#savedListsTable">View latest results</a></div>';p.querySelector("button").addEventListener("click",()=>{if(window.rankforgeApp?.sync)window.rankforgeApp.sync();});p.querySelector("a").addEventListener("click",e=>{e.preventDefault();const t=$("savedListsTable")||$("leadsTable");if(t)t.scrollIntoView({behavior:"smooth",block:"center"});});hero.insertAdjacentElement("afterend",p);return p;}
+function showProgress(){const p=ensureProgress();if(!p)return;const name=clean($("searchNameInput")?.value)||"Search batch";const city=clean($("cityInput")?.value);const country=clean($("countryInput")?.value);const max=clean($("maxResultsInput")?.value)||"50";const rule=$("contactRequirementInput")?.selectedOptions?.[0]?.textContent||"Email or phone";p.hidden=false;p.querySelector(".rf-search-progress-title").textContent=name+" is running";p.querySelector(".rf-search-progress-meta").textContent=([city,country].filter(Boolean).join(", ")||"Selected market")+" · "+max+" leads requested · "+rule;const s=$("createSearchStatus");if(s)s.textContent="Search started. New leads will appear automatically as they are found.";setTimeout(()=>p.scrollIntoView({behavior:"smooth",block:"center"}),200);}
+function patchCreate(){if(createPatched||!window.rankforgeApp||typeof window.rankforgeApp.createSearch!=="function")return;const original=window.rankforgeApp.createSearch;window.rankforgeApp.createSearch=async function(){const r=await original.apply(this,arguments);showProgress();return r;};createPatched=true;}
+function cards(){document.querySelectorAll(".rf-clean-preset-card").forEach(c=>{const on=activePreset&&c.dataset.presetLabel===activePreset.label;c.classList.toggle("is-selected",!!on);c.setAttribute("aria-pressed",on?"true":"false");const e=c.querySelector(".rf-clean-preset-selected");if(e)e.textContent=on?"Selected":"Apply preset";});}
+function updateBridge(p,city,country){ensureBridge();const b=document.querySelector(".rf-active-preset-bridge");if(!b)return;b.hidden=false;b.querySelector(".rf-active-preset-name").textContent="Using preset: "+p.label;b.querySelector(".rf-active-preset-meta").textContent=(city||"No city")+", "+(country||"No country")+" · "+p.businessType;}
+function applyPreset(p,opt){activePreset=p;const l=loc(p);setValue("searchNameInput",l.city?l.city+" "+p.searchName:p.searchName);setValue("nicheInput",p.niche);setValue("businessTypeInput",p.businessType);setValue("cityInput",l.city);setValue("countryInput",l.country);setValue("seoThresholdInput",p.seo);setValue("leadThresholdInput",p.lead);updateBridge(p,l.city,l.country);cards();const s=document.querySelector(".rf-clean-presets-status");if(s)s.textContent=p.label+" preset applied to the form above. Review the city, country, lead count, contact rule, and thresholds.";const cs=$("createSearchStatus");if(cs)cs.textContent=p.label+" preset applied. Confirm the search options and create the search batch.";if(!opt?.skipFocus)( $("cityInput")||$("searchNameInput") )?.focus({preventScroll:true});}
+function bindOverrides(){document.querySelectorAll(".rf-clean-preset-city,.rf-clean-preset-country").forEach(i=>{if(i.dataset.rfPresetBound==="true")return;i.dataset.rfPresetBound="true";i.addEventListener("input",()=>{if(activePreset)applyPreset(activePreset,{skipFocus:true});});});}
+function mount(){ensureBridge();ensureOptions();ensureProgress();patchPayload();patchCreate();if(document.querySelector(".rf-clean-presets")){bindOverrides();cards();return;}const hero=document.querySelector(".create-search-top");const form=$("quickCreateForm");if(!hero||!form)return;const sec=document.createElement("section");sec.className="rf-clean-presets";sec.innerHTML='<div class="rf-clean-presets-head"><div><p class="panel-eyebrow">Search presets</p><h2>Start with a proven local SEO category.</h2><p>Pick a template below. It fills the Create Search form above, then you only adjust the location, lead count, contact rule, and thresholds.</p></div><div class="rf-clean-presets-location"><label><span>City / metro override</span><input class="rf-clean-preset-city" type="text" placeholder="e.g. Miami"></label><label><span>Country override</span><input class="rf-clean-preset-country" type="text" placeholder="e.g. United States"></label></div></div><div class="rf-clean-preset-grid"></div><p class="rf-clean-presets-status">Choose a preset to fill the Create Search form above.</p>';const grid=sec.querySelector(".rf-clean-preset-grid");PRESETS.forEach(p=>{const b=document.createElement("button");b.type="button";b.className="rf-clean-preset-card";b.dataset.presetLabel=p.label;b.setAttribute("aria-pressed","false");b.innerHTML='<span>'+p.badge+'</span><strong>'+p.label+'</strong><small>'+p.businessType+'</small><em class="rf-clean-preset-selected">Apply preset</em>';b.addEventListener("click",()=>applyPreset(p));grid.appendChild(b);});const progress=document.querySelector(".rf-search-progress-panel");progress?progress.insertAdjacentElement("afterend",sec):hero.insertAdjacentElement("afterend",sec);bindOverrides();}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);else mount();
+let tries=0;const timer=setInterval(()=>{tries++;mount();if(document.querySelector(".rf-clean-presets")||tries>10)clearInterval(timer);},500);
 })();

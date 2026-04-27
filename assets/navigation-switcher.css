@@ -1,0 +1,93 @@
+.rf-switcher {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.92));
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+}
+
+.rf-switcher-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 220px;
+}
+
+.rf-switcher-copy span,
+.rf-switcher-control span {
+  color: #165dff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.rf-switcher-copy strong {
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.rf-switcher-copy small {
+  color: #667085;
+  line-height: 1.45;
+}
+
+.rf-switcher-control {
+  display: grid;
+  gap: 7px;
+  min-width: min(420px, 100%);
+}
+
+.rf-switcher-control select {
+  min-height: 46px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.rf-switcher-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(220px, 1.1fr) auto;
+  gap: 12px;
+  align-items: end;
+  flex: 1;
+}
+
+.rf-switcher-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.rf-switcher-buttons button {
+  min-height: 46px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 750;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.rf-switcher-buttons button:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 900px) {
+  .rf-switcher,
+  .rf-switcher-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .rf-switcher-control {
+    min-width: 0;
+  }
+}

@@ -58,6 +58,69 @@
   background: #fff;
 }
 
+.rf-active-preset-bridge {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 4px;
+  padding: 13px 14px;
+  border: 1px solid rgba(21, 94, 239, 0.18);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(21, 94, 239, 0.08), rgba(13, 148, 136, 0.06)),
+    rgba(255,255,255,0.96);
+}
+
+.rf-active-preset-bridge[hidden] {
+  display: none !important;
+}
+
+.rf-active-preset-label {
+  display: block;
+  margin-bottom: 3px;
+  color: #155eef;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+.rf-active-preset-name {
+  display: block;
+  color: var(--ink, #0f172a);
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.rf-active-preset-meta {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted, #667085);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rf-active-preset-clear {
+  flex: 0 0 auto;
+  min-height: 34px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink, #0f172a);
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.rf-active-preset-clear:hover {
+  border-color: rgba(21, 94, 239, 0.26);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+}
+
 .rf-clean-preset-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -74,13 +137,21 @@
   background: #fff;
   text-align: left;
   cursor: pointer;
-  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
 }
 
 .rf-clean-preset-card:hover {
   transform: translateY(-2px);
   border-color: rgba(21, 94, 239, 0.30);
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.rf-clean-preset-card.is-selected {
+  border-color: rgba(21, 94, 239, 0.48);
+  background:
+    linear-gradient(135deg, rgba(21, 94, 239, 0.10), rgba(13, 148, 136, 0.06)),
+    #fff;
+  box-shadow: 0 16px 34px rgba(21, 94, 239, 0.12);
 }
 
 .rf-clean-preset-card span {
@@ -95,6 +166,10 @@
   text-transform: uppercase;
 }
 
+.rf-clean-preset-card.is-selected span {
+  background: rgba(21, 94, 239, 0.14);
+}
+
 .rf-clean-preset-card strong {
   font-size: 17px;
   letter-spacing: -0.03em;
@@ -103,6 +178,15 @@
 .rf-clean-preset-card small {
   color: var(--muted, #667085);
   line-height: 1.4;
+}
+
+.rf-clean-preset-selected {
+  width: fit-content;
+  margin-top: 2px;
+  color: #155eef;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 850;
 }
 
 .rf-clean-presets-status {
@@ -128,5 +212,9 @@
 
   .rf-clean-presets-location label {
     min-width: 100%;
+  }
+
+  .rf-active-preset-bridge {
+    display: grid;
   }
 }

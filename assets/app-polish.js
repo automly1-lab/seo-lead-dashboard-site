@@ -28,15 +28,25 @@
     nav.appendChild(link);
   }
 
+  function loadScriptOnce(src, markerName) {
+    if (document.querySelector(`script[data-${markerName}="true"]`)) return;
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = true;
+    script.dataset[markerName.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = "true";
+    document.body.appendChild(script);
+  }
+
   function loadLeadQualityReasons() {
     const page = document.body?.dataset?.page || "";
     if (!["dashboard", "leads"].includes(page)) return;
-    if (document.querySelector('script[data-rf-lead-quality-reasons="true"]')) return;
-    const script = document.createElement("script");
-    script.src = `${getBasePrefix()}assets/lead-quality-reasons.js?v=lead-quality-reasons-1`;
-    script.defer = true;
-    script.dataset.rfLeadQualityReasons = "true";
-    document.body.appendChild(script);
+    loadScriptOnce(`${getBasePrefix()}assets/lead-quality-reasons.js?v=lead-quality-reasons-2`, "rf-lead-quality-reasons");
+  }
+
+  function loadLeadDetailQuality() {
+    const page = document.body?.dataset?.page || "";
+    if (page !== "lead-detail") return;
+    loadScriptOnce(`${getBasePrefix()}assets/lead-detail-quality.js?v=lead-detail-quality-1`, "rf-lead-detail-quality");
   }
 
   function addDashboardOnboarding() {
@@ -83,6 +93,7 @@
     addSettingsLink();
     addDashboardOnboarding();
     loadLeadQualityReasons();
+    loadLeadDetailQuality();
   }
 
   if (document.readyState === "loading") {

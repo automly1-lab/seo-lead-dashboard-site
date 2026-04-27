@@ -1,0 +1,132 @@
+/* Clean search preset cards for dashboard top search */
+.rf-clean-presets {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 26px;
+  padding: clamp(18px, 2vw, 24px);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 26px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.045);
+}
+
+.rf-clean-presets-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: end;
+}
+
+.rf-clean-presets-head h2 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 32px);
+  letter-spacing: -0.045em;
+}
+
+.rf-clean-presets-head p {
+  margin: 6px 0 0;
+  color: var(--muted, #667085);
+  line-height: 1.55;
+}
+
+.rf-clean-presets-location {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rf-clean-presets-location label {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.rf-clean-presets-location span {
+  color: var(--muted, #667085);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.rf-clean-presets-location input {
+  min-height: 42px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 13px;
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
+}
+
+.rf-clean-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rf-clean-preset-card {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 17px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.rf-clean-preset-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(21, 94, 239, 0.30);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.rf-clean-preset-card span {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(21, 94, 239, 0.08);
+  color: #155eef;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.rf-clean-preset-card strong {
+  font-size: 17px;
+  letter-spacing: -0.03em;
+}
+
+.rf-clean-preset-card small {
+  color: var(--muted, #667085);
+  line-height: 1.4;
+}
+
+.rf-clean-presets-status {
+  margin: 0;
+  color: var(--muted, #667085);
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  .rf-clean-presets-head {
+    display: grid;
+  }
+
+  .rf-clean-preset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .rf-clean-preset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rf-clean-presets-location label {
+    min-width: 100%;
+  }
+}

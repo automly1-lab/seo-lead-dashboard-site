@@ -81,9 +81,39 @@
   function setStatus(node, text, tone) {
     if (!node) return;
     node.textContent = text || "";
-    node.classList.remove("is-success", "is-error");
+    node.classList.remove("is-success", "is-error", "is-saving");
     if (tone === "success") node.classList.add("is-success");
     if (tone === "error") node.classList.add("is-error");
+    if (tone === "saving") node.classList.add("is-saving");
+  }
+
+  function feedbackLabel(feedbackType) {
+    var match = FEEDBACK_TYPES.find(function (type) { return type.key === feedbackType; });
+    return match ? match.label : String(feedbackType || "Feedback").replace(/_/g, " ");
+  }
+
+  function successMessage(feedbackType, lead) {
+    var label = feedbackLabel(feedbackType);
+    var company = String((lead && lead.company) || "this lead").trim() || "this lead";
+    if (feedbackType === "good_lead") {
+      return "Feedback saved: " + label + ". This helps RankForge learn what a strong lead looks like for this search.";
+    }
+    if (feedbackType === "bad_contact") {
+      return "Feedback saved: " + label + ". We’ll use this to improve contact filtering for " + company + " and similar leads.";
+    }
+    if (feedbackType === "wrong_niche" || feedbackType === "wrong_location") {
+      return "Feedback saved: " + label + ". This helps tighten future search matching for this batch.";
+    }
+    if (feedbackType === "duplicate") {
+      return "Feedback saved: " + label + ". This helps improve duplicate detection in future results.";
+    }
+    if (feedbackType === "already_contacted") {
+      return "Feedback saved: " + label + ". This will help keep review and outreach context cleaner.";
+    }
+    if (feedbackType === "weak_seo_opportunity") {
+      return "Feedback saved: " + label + ". This helps improve SEO opportunity scoring for similar businesses.";
+    }
+    return "Feedback saved: " + label + ". This will help improve future lead filtering for this search.";
   }
 
   function basePayload(lead, feedbackType, note) {
@@ -115,7 +145,7 @@
       return;
     }
     var payload = basePayload(lead, feedbackType, note || "", statusNode);
-    setStatus(statusNode, "Saving feedback...", "");
+    setStatus(statusNode, "Saving feedback: " + feedbackLabel(feedbackType) + "...", "saving");
     try {
       var body = new URLSearchParams();
       Object.keys(payload).forEach(function (key) { body.set(key, payload[key] == null ? "" : String(payload[key])); });
@@ -125,7 +155,7 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
         body: body.toString()
       });
-      setStatus(statusNode, "Feedback saved.", "success");
+      setStatus(statusNode, successMessage(feedbackType, lead), "success");
     } catch (error) {
       setStatus(statusNode, "Could not send feedback. Try again later.", "error");
     }
@@ -166,7 +196,7 @@
     if (!target || !target.parentNode) return;
     var panel = document.createElement("section");
     panel.className = "lead-feedback-panel";
-    panel.innerHTML = '<p class="lead-feedback-title">Lead quality feedback</p>';
+    panel.innerHTML = '<p class="lead-feedback-title">Lead quality feedback</p><p class="lead-feedback-help">Mark what looks right or wrong. Feedback is saved to improve future filtering and review quality.</p>';
     var controls = makeButtons(lead, false);
     panel.appendChild(controls.buttons);
     panel.appendChild(controls.status);

@@ -505,3 +505,21 @@ button, input { font: inherit; }
     grid-template-columns: 1fr;
   }
 }
+.footer-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.footer-legal-links a {
+  color: inherit;
+  opacity: 0.72;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.footer-legal-links a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}

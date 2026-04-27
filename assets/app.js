@@ -284,7 +284,24 @@ function getVisibleLeads() {
 
 function getSelectedLead() {
   const visibleLeads = getVisibleLeads();
-  return visibleLeads.find((item) => item.id === appState.selectedLeadId) || visibleLeads[0] || null;
+  let requestedLeadId = "";
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    requestedLeadId = params.get("lead_id") || "";
+  } catch {}
+  try {
+    requestedLeadId = requestedLeadId || sessionStorage.getItem("rankforge-selected-lead-id-v1") || localStorage.getItem("rankforge-selected-lead-id-v1") || "";
+  } catch {}
+  requestedLeadId = normalizeKey(requestedLeadId || appState.selectedLeadId || "");
+
+  const selected = visibleLeads.find((item) => normalizeKey(item.id) === requestedLeadId);
+  if (selected) {
+    appState.selectedLeadId = selected.id;
+    saveState(appState);
+    return selected;
+  }
+
+  return visibleLeads[0] || null;
 }
 
 function createLocalList(values) {
@@ -1015,11 +1032,81 @@ function renderLeadsPage() {
     : `<tr><td colspan="7" class="empty-state">No visible leads for this list yet.</td></tr>`);
   document.querySelectorAll("#leadsTable tbody tr[data-lead-id]").forEach((row) => {
     row.addEventListener("click", () => {
-      appState.selectedLeadId = row.dataset.leadId;
+      const leadId = row.dataset.leadId || "";
+      appState.selectedLeadId = leadId;
+      const activeList = getSelectedList();
+      if (activeList && activeList.id) appState.selectedListId = activeList.id;
       saveState(appState);
-      window.location.href = "../lead-detail/";
+      try {
+        sessionStorage.setItem("rankforge-selected-lead-id-v1", leadId);
+        localStorage.setItem("rankforge-selected-lead-id-v1", leadId);
+        if (appState.selectedListId) {
+          sessionStorage.setItem("rankforge-selected-list-id-v1", appState.selectedListId);
+          localStorage.setItem("rankforge-selected-list-id-v1", appState.selectedListId);
+        }
+      } catch {}
+      const q = new URLSearchParams();
+      if (leadId) q.set("lead_id", leadId);
+      if (appState.selectedListId) q.set("list_id", appState.selectedListId);
+      window.location.href = "../lead-detail/" + (q.toString() ? "?" + q.toString() : "");
     });
   });
+}
+
+
+function renderLeadDetailSidePicker(selectedLead) {
+  if (PAGE !== "lead-detail") return;
+  if (document.querySelector(".rf-detail-lead-sidebar")) return;
+  const selectedList = getSelectedList();
+  if (!selectedList) return;
+  const leads = getVisibleLeads();
+  if (!leads.length) return;
+
+  const host =
+    document.querySelector(".panel.panel-compact") ||
+    document.querySelector(".detail-sidebar") ||
+    document.querySelector(".detail-grid > aside") ||
+    document.querySelector(".dashboard-side") ||
+    document.querySelector("aside");
+
+  if (!host) return;
+
+  const box = document.createElement("div");
+  box.className = "rf-detail-lead-sidebar";
+  box.innerHTML = `
+    <div class="rf-detail-lead-sidebar-head">
+      <span class="workspace-label">Other leads</span>
+      <strong>Switch lead</strong>
+      <small>Choose another lead from this selected list.</small>
+    </div>
+    <div class="rf-detail-lead-list"></div>
+  `;
+
+  const list = box.querySelector(".rf-detail-lead-list");
+  leads.slice(0, 24).forEach((lead) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "rf-detail-lead-item" + (normalizeKey(lead.id) === normalizeKey(selectedLead?.id) ? " is-active" : "");
+    button.innerHTML = `<strong>${lead.company || "Unknown company"}</strong><span>Score ${lead.overallScore || 0} · ${titleCase(lead.status || "review_needed")}</span>`;
+    button.addEventListener("click", () => {
+      appState.selectedLeadId = lead.id;
+      appState.selectedListId = selectedList.id;
+      saveState(appState);
+      try {
+        sessionStorage.setItem("rankforge-selected-lead-id-v1", lead.id);
+        localStorage.setItem("rankforge-selected-lead-id-v1", lead.id);
+        sessionStorage.setItem("rankforge-selected-list-id-v1", selectedList.id);
+        localStorage.setItem("rankforge-selected-list-id-v1", selectedList.id);
+      } catch {}
+      const q = new URLSearchParams();
+      q.set("lead_id", lead.id);
+      q.set("list_id", selectedList.id);
+      window.location.href = "../lead-detail/?" + q.toString();
+    });
+    list.appendChild(button);
+  });
+
+  host.insertAdjacentElement("afterbegin", box);
 }
 
 function renderLeadDetailPage() {
@@ -1061,6 +1148,7 @@ function renderLeadDetailPage() {
   setText("exportTargetList", selectedList ? selectedList.name : "No selected list");
   setText("exportTargetListMirror", selectedList ? selectedList.name : "No selected list");
   setText("exportTargetMeta", selectedList ? `${getVisibleLeads().length} visible leads in this selected list.` : "0 visible leads ready for export.");
+  renderLeadDetailSidePicker(selectedLead);
 }
 
 function renderAll() {
@@ -1086,5 +1174,5 @@ window.rankforgeApp = {
   exportCsv,
 };
 
-mergeRuntime({ lists: [], leads: [] });
+mergeRuntime(runtimeData);
 renderAll();

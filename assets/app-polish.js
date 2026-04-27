@@ -28,6 +28,17 @@
     nav.appendChild(link);
   }
 
+  function loadLeadQualityReasons() {
+    const page = document.body?.dataset?.page || "";
+    if (!["dashboard", "leads"].includes(page)) return;
+    if (document.querySelector('script[data-rf-lead-quality-reasons="true"]')) return;
+    const script = document.createElement("script");
+    script.src = `${getBasePrefix()}assets/lead-quality-reasons.js?v=lead-quality-reasons-1`;
+    script.defer = true;
+    script.dataset.rfLeadQualityReasons = "true";
+    document.body.appendChild(script);
+  }
+
   function addDashboardOnboarding() {
     if ((document.body?.dataset?.page || "") !== "dashboard") return;
     if (localStorage.getItem(DISMISS_KEY) === "true") return;
@@ -51,7 +62,7 @@
       <div class="rf-onboarding-steps">
         <article class="rf-onboarding-step"><span>1</span><strong>Choose niche</strong><small>Pick a service category agencies can realistically sell SEO to.</small></article>
         <article class="rf-onboarding-step"><span>2</span><strong>Choose city</strong><small>Use one city at a time so the list stays focused and reviewable.</small></article>
-        <article class="rf-onboarding-step"><span>3</span><strong>Create search</strong><small>The request is sent to n8n and saved under your user workspace.</small></article>
+        <article class="rf-onboarding-step"><span>3</span><strong>Create search</strong><small>The request is sent to the search workflow and saved under your workspace.</small></article>
         <article class="rf-onboarding-step"><span>4</span><strong>Review leads</strong><small>Check contact path, SEO need, commercial fit, and lead priority.</small></article>
         <article class="rf-onboarding-step"><span>5</span><strong>Export</strong><small>Download a clean CSV for outreach once the list is ready.</small></article>
       </div>
@@ -71,6 +82,7 @@
   function init() {
     addSettingsLink();
     addDashboardOnboarding();
+    loadLeadQualityReasons();
   }
 
   if (document.readyState === "loading") {

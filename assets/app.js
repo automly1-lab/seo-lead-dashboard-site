@@ -22,25 +22,75 @@ function normalizeKey(value) {
   return String(value || "").trim();
 }
 
+function recordUserId(item) {
+  return normalizeKey((item && (item.userId || item.user_id)) || "");
+}
+
+function belongsToCurrentUser(item, currentUserId) {
+  const itemUserId = recordUserId(item);
+  return Boolean(currentUserId && itemUserId && itemUserId === currentUserId);
+}
+
+function isSupabaseUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || "").trim());
+}
+
+function getSupabaseSessionFromStorage() {
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index) || "";
+      if (!/^sb-.+-auth-token$/.test(key)) continue;
+      const parsed = safeParse(localStorage.getItem(key), null);
+      const user = parsed?.user || parsed?.currentSession?.user || parsed?.session?.user;
+      if (user?.id) {
+        return {
+          userId: normalizeKey(user.id),
+          email: user.email || "",
+          source: "supabase-storage",
+        };
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function getSession() {
   if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
-    return window.rankforgeAuth.getSession();
+    const session = window.rankforgeAuth.getSession();
+    if (session && session.userId) return session;
   }
-  return safeParse(localStorage.getItem("rankforge-auth-session-v1"), null);
+
+  const supabaseSession = getSupabaseSessionFromStorage();
+  if (supabaseSession && supabaseSession.userId) return supabaseSession;
+
+  const legacySession = safeParse(localStorage.getItem("rankforge-auth-session-v1"), null);
+  if (legacySession && isSupabaseUuid(legacySession.userId)) return legacySession;
+
+  return null;
 }
 
 function getCurrentUserId() {
   const session = getSession();
-  if (session && session.userId) {
+  if (session && isSupabaseUuid(session.userId)) {
     const normalized = normalizeKey(session.userId);
     localStorage.setItem(APP_USER_ID_KEY, normalized);
     return normalized;
   }
-  return normalizeKey(localStorage.getItem(APP_USER_ID_KEY) || "usr_mvp");
+
+  const stored = normalizeKey(localStorage.getItem(APP_USER_ID_KEY) || "");
+  if (isSupabaseUuid(stored)) return stored;
+
+  // Hard isolation: never fall back to usr_mvp / usr_dashboard on protected app pages.
+  return "";
 }
 
 function loadState() {
   const state = safeParse(localStorage.getItem(APP_STORAGE_KEY), {});
+  const currentUserId = getCurrentUserId();
+  const previousUserId = normalizeKey(state.currentUserId || "");
+
   if (!Array.isArray(state.localLists)) state.localLists = [];
   if (!Array.isArray(state.localLeads)) state.localLeads = [];
   if (!Array.isArray(state.archivedListIds)) state.archivedListIds = [];
@@ -48,11 +98,27 @@ function loadState() {
   if (!state.remoteCache || typeof state.remoteCache !== "object") state.remoteCache = { lists: [], leads: [] };
   if (!Array.isArray(state.remoteCache.lists)) state.remoteCache.lists = [];
   if (!Array.isArray(state.remoteCache.leads)) state.remoteCache.leads = [];
+
+  // Hard user isolation: never keep another workspace user's cached data in memory.
+  state.localLists = state.localLists.filter((item) => belongsToCurrentUser(item, currentUserId));
+  state.localLeads = state.localLeads.filter((item) => belongsToCurrentUser(item, currentUserId));
+  state.remoteCache.lists = state.remoteCache.lists.filter((item) => belongsToCurrentUser(item, currentUserId));
+  state.remoteCache.leads = state.remoteCache.leads.filter((item) => belongsToCurrentUser(item, currentUserId));
+
+  if (previousUserId && previousUserId !== currentUserId) {
+    state.selectedListId = null;
+    state.selectedLeadId = null;
+    state.archivedListIds = [];
+    state.deletedListIds = [];
+    state.syncMode = "local";
+    state.lastSyncAt = null;
+  }
+
   state.selectedListId = state.selectedListId || null;
   state.selectedLeadId = state.selectedLeadId || null;
   state.syncMode = state.syncMode || "local";
   state.lastSyncAt = state.lastSyncAt || null;
-  state.currentUserId = getCurrentUserId();
+  state.currentUserId = currentUserId;
   return state;
 }
 
@@ -166,16 +232,20 @@ function mergeRuntime(remote) {
   appState.currentUserId = currentUserId;
   const archived = new Set(appState.archivedListIds);
   const deleted = new Set(appState.deletedListIds);
-  const localLists = appState.localLists || [];
-  const remoteLists = remote.lists || [];
-  const localLeads = appState.localLeads || [];
-  const remoteLeads = remote.leads || [];
+
+  const localLists = (appState.localLists || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+  const remoteLists = (remote.lists || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+  const localLeads = (appState.localLeads || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+  const remoteLeads = (remote.leads || []).filter((item) => belongsToCurrentUser(item, currentUserId));
+
+  appState.localLists = localLists;
+  appState.localLeads = localLeads;
 
   runtimeData = {
     lists: uniqueBy([...remoteLists, ...localLists], (item) => item.id)
       .filter((item) => !archived.has(item.id) && !deleted.has(item.id)),
     leads: uniqueBy([...remoteLeads, ...localLeads], (item) => item.id)
-      .filter((item) => !deleted.has(normalizeKey(item.listId))),
+      .filter((item) => !deleted.has(normalizeKey(item.listId)) && belongsToCurrentUser(item, currentUserId)),
   };
 
   if (!runtimeData.lists.find((item) => item.id === appState.selectedListId)) {
@@ -488,11 +558,12 @@ async function fetchStaticDashboardData() {
 }
 
 function buildRemoteData(data) {
-  const searches = data.searches || [];
-  const rawProspects = data.raw_prospects || [];
-  const audits = data.seo_audits || [];
-  const contacts = data.contacts || [];
-  const finalLeads = data.final_leads || [];
+  const currentUserId = getCurrentUserId();
+  const searches = (data.searches || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const rawProspects = (data.raw_prospects || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const audits = (data.seo_audits || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const contacts = (data.contacts || []).filter((row) => belongsToCurrentUser(row, currentUserId));
+  const finalLeads = (data.final_leads || []).filter((row) => belongsToCurrentUser(row, currentUserId));
 
   const contactByProspect = {};
   for (const contact of contacts) {

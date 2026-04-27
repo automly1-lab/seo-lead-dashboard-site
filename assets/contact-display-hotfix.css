@@ -1,0 +1,87 @@
+/* RankForge CONTACT column emergency display fix */
+.app-page-leads #leadsTable,
+.app-page-dashboard #leadsTable {
+  table-layout: fixed !important;
+  width: 100% !important;
+  min-width: 1180px !important;
+}
+
+.app-page-leads #leadsTable th:nth-child(1),
+.app-page-leads #leadsTable td:nth-child(1) { width: 29% !important; }
+
+.app-page-leads #leadsTable th:nth-child(2),
+.app-page-leads #leadsTable td:nth-child(2) { width: 16% !important; }
+
+.app-page-leads #leadsTable th:nth-child(3),
+.app-page-leads #leadsTable td:nth-child(3) {
+  width: 28% !important;
+  min-width: 260px !important;
+}
+
+.app-page-leads #leadsTable th:nth-child(4),
+.app-page-leads #leadsTable td:nth-child(4) { width: 7% !important; }
+
+.app-page-leads #leadsTable th:nth-child(5),
+.app-page-leads #leadsTable td:nth-child(5) { width: 7% !important; }
+
+.app-page-leads #leadsTable th:nth-child(6),
+.app-page-leads #leadsTable td:nth-child(6) { width: 8% !important; }
+
+.app-page-leads #leadsTable th:nth-child(7),
+.app-page-leads #leadsTable td:nth-child(7) { width: 8% !important; }
+
+.app-page-leads .contact-stack,
+.app-page-dashboard .contact-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 240px !important;
+  max-width: 360px !important;
+  white-space: normal !important;
+}
+
+.app-page-leads .contact-stack .contact-line,
+.app-page-dashboard .contact-stack .contact-line {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+}
+
+.app-page-leads .contact-stack .contact-label,
+.app-page-dashboard .contact-stack .contact-label {
+  display: inline-block !important;
+  flex: 0 0 54px !important;
+  width: 54px !important;
+  color: #667085 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  line-height: 1.45 !important;
+  white-space: nowrap !important;
+}
+
+.app-page-leads .contact-stack .contact-value,
+.app-page-dashboard .contact-stack .contact-value {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 170px !important;
+  max-width: 280px !important;
+  line-height: 1.45 !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* If old app.js still renders plain spans, keep them readable too */
+.app-page-leads .contact-stack > span:not(.contact-line),
+.app-page-dashboard .contact-stack > span:not(.contact-line) {
+  display: block !important;
+  min-width: 220px !important;
+  max-width: 320px !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+}

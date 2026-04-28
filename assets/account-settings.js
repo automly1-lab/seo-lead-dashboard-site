@@ -1,4 +1,5 @@
 (function () {
+  const ADMIN_EMAIL = "automly1@gmail.com";
   const APP_STORAGE_KEYS = [
     "rankforge-clean-app-state-v1",
     "rankforge-dashboard-state-v3",
@@ -11,9 +12,9 @@
       name: "Starter",
       price: "$29/month",
       leadLimit: "50 prioritized leads/month",
-      searchLimit: "1 active search batch · 3 searches/month",
+      searchLimit: "3 active search batches · 3 searches/month",
       status: "Active",
-      description: "For testing one focused niche or city with automated scoring and CSV export. Manual lead review is not included."
+      description: "For testing a few focused niches or cities with automated scoring and CSV export. Manual lead review is not included."
     },
     growth: {
       name: "Growth",
@@ -30,6 +31,14 @@
       searchLimit: "More active search batches",
       status: "Coming soon",
       description: "Planned for deeper SEO analysis, competitor visibility signals, priority processing, and advanced agency workflows."
+    },
+    admin_unlimited: {
+      name: "Admin Unlimited",
+      price: "Internal admin account",
+      leadLimit: "Unlimited internal lead access",
+      searchLimit: "Unlimited internal search access",
+      status: "Admin",
+      description: "Full RankForge admin access for testing, quality review, admin portal visibility, and all current/future workspace capabilities."
     }
   };
 
@@ -52,6 +61,7 @@
 
   function normalizePlan(value) {
     const raw = clean(value).toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_");
+    if (["admin", "admin_unlimited", "unlimited"].includes(raw)) return "admin_unlimited";
     if (["starter", "start", "basic", "starter_plan"].includes(raw)) return "starter";
     if (["growth", "pro", "founding", "founding_plan"].includes(raw)) return "growth";
     if (["agency", "agency_intelligence", "enterprise"].includes(raw)) return "agency_intelligence";
@@ -118,8 +128,14 @@
     };
   }
 
+  function planKeyForSession(session) {
+    const email = clean(session && session.email).toLowerCase();
+    if (email === ADMIN_EMAIL) return "admin_unlimited";
+    return normalizePlan(localStorage.getItem("rankforge-current-plan-v1") || "starter");
+  }
+
   function renderPlan(session) {
-    const planKey = normalizePlan(localStorage.getItem("rankforge-current-plan-v1") || "starter");
+    const planKey = session ? planKeyForSession(session) : "starter";
     const plan = PLAN_DEFINITIONS[planKey] || PLAN_DEFINITIONS.starter;
     const usage = session && session.userId ? usageForUser(session.userId) : { searchesThisMonth: 0, leadsThisMonth: 0 };
 
@@ -154,7 +170,7 @@
     setText("accountUserId", session.userId);
     setText("accountSessionStatus", "Active session");
     setText("accountSessionMeta", "This user ID is used for dashboard data filtering.");
-    setText("settingsStatus", "Session active");
+    setText("settingsStatus", clean(session.email).toLowerCase() === ADMIN_EMAIL ? "Admin session active" : "Session active");
     renderPlan(session);
   }
 

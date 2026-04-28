@@ -42,7 +42,7 @@
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, session.userId);
       return session.userId;
     }
-    return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp";
+    return localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "";
   }
 
   function loadState() {

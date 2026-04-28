@@ -31,7 +31,7 @@
 
   function currentUserId() {
     var session = parseJson(localStorage.getItem("rankforge-auth-session-v1"), null);
-    var userId = session && session.userId ? session.userId : (localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "usr_mvp");
+    var userId = session && session.userId ? session.userId : (localStorage.getItem(CURRENT_USER_STORAGE_KEY) || "");
     localStorage.setItem(CURRENT_USER_STORAGE_KEY, userId);
     return userId;
   }
@@ -138,7 +138,7 @@
       pushLead({
         id: lead.lead_id || "remote_lead_" + index,
         listId: resolveSearchId(lead, audit, prospect, contact),
-        userId: lead.user_id || audit.user_id || prospect.user_id || contact.user_id || "usr_mvp",
+        userId: lead.user_id || audit.user_id || prospect.user_id || contact.user_id || "",
         company: lead.company_name || audit.company_name || prospect.company_name || "Unknown company",
         website: lead.website_url || audit.website_url || prospect.website_url || "",
         decisionMaker: lead.decision_maker_name || contact.contact_name || "",
@@ -170,7 +170,7 @@
       pushLead({
         id: "audit_" + (audit.audit_id || index),
         listId: resolveSearchId(null, audit, prospect, contact),
-        userId: audit.user_id || prospect.user_id || contact.user_id || "usr_mvp",
+        userId: audit.user_id || prospect.user_id || contact.user_id || "",
         company: audit.company_name || prospect.company_name || "Unknown company",
         website: audit.website_url || prospect.website_url || "",
         decisionMaker: contact.contact_name || "",
@@ -202,7 +202,7 @@
       else if (searchProspects.length || searchContacts.length) inferredStatus = "running";
       return {
         id: sid,
-        userId: s.user_id || "usr_mvp",
+        userId: s.user_id || "",
         name: s.search_name || (titleCase(s.niche) + " - " + s.city),
         niche: s.niche || "",
         businessType: s.business_type || "",

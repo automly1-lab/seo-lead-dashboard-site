@@ -301,7 +301,7 @@ function getSelectedLead() {
     return selected;
   }
 
-  return visibleLeads[0] || null;
+  return null;
 }
 
 function createLocalList(values) {
@@ -630,13 +630,13 @@ function buildRemoteData(data) {
       derivedStatus = "running";
     } else if (derivedStatus === "active") {
       derivedStatus = "queued";
-    }
-    return {
-      id: searchId,
-      userId: normalizeKey(search.user_id || "usr_mvp"),
-      name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
-      niche: search.niche || "",
-      businessType: search.business_type || "",
+      }
+      return {
+        id: searchId,
+        userId: normalizeKey(search.user_id),
+        name: search.search_name || `${titleCase(search.niche)} - ${search.city}`,
+        niche: search.niche || "",
+        businessType: search.business_type || "",
       city: search.city || "",
       country: search.country || "",
       description: `${titleCase(search.niche)} opportunities for ${search.city}.`,
@@ -655,14 +655,14 @@ function buildRemoteData(data) {
 
   const leads = finalLeads.map((lead, index) => {
     const audit = auditById[lead.audit_id] || {};
-    const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || {};
-    return {
-      id: lead.lead_id || `remote_lead_${index + 1}`,
-      listId: normalizeKey(lead.search_id || audit.search_id || ""),
-      userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id || "usr_mvp"),
-      company: lead.company_name || audit.company_name || "Unknown company",
-      website: lead.website_url || audit.website_url || "",
-      decisionMaker: lead.decision_maker_name || contact.contact_name || "",
+      const contact = contacts.find((item) => item.contact_id === lead.primary_contact_id) || contactByProspect[lead.prospect_id] || {};
+      return {
+        id: lead.lead_id || `remote_lead_${index + 1}`,
+        listId: normalizeKey(lead.search_id || audit.search_id || ""),
+        userId: normalizeKey(lead.user_id || audit.user_id || contact.user_id),
+        company: lead.company_name || audit.company_name || "Unknown company",
+        website: lead.website_url || audit.website_url || "",
+        decisionMaker: lead.decision_maker_name || contact.contact_name || "",
       role: lead.decision_maker_role || contact.contact_role || "",
       email: lead.decision_maker_email || contact.email || "",
       phone: lead.decision_maker_phone || contact.phone || "",
@@ -688,14 +688,14 @@ function buildRemoteData(data) {
     .filter((audit) => !auditHasFinalLead.has(audit.audit_id))
     .map((audit, index) => {
       const contact = contactByProspect[audit.prospect_id] || {};
-      const fallbackStatus = numberValue(audit.seo_need_score) >= numberValue(audit.min_lead_score || 70) ? "review_needed" : "rejected";
-      return {
-        id: `audit_fallback_${audit.audit_id || index + 1}`,
-        listId: normalizeKey(audit.search_id || ""),
-        userId: normalizeKey(audit.user_id || contact.user_id || "usr_mvp"),
-        company: audit.company_name || "Unknown company",
-        website: audit.website_url || audit.final_url || "",
-        decisionMaker: contact.contact_name || "",
+        const fallbackStatus = numberValue(audit.seo_need_score) >= numberValue(audit.min_lead_score || 70) ? "review_needed" : "rejected";
+        return {
+          id: `audit_fallback_${audit.audit_id || index + 1}`,
+          listId: normalizeKey(audit.search_id || ""),
+          userId: normalizeKey(audit.user_id || contact.user_id),
+          company: audit.company_name || "Unknown company",
+          website: audit.website_url || audit.final_url || "",
+          decisionMaker: contact.contact_name || "",
         role: contact.contact_role || "",
         email: contact.email || audit.homepage_primary_email || "",
         phone: contact.phone || audit.homepage_primary_phone || "",
@@ -1115,7 +1115,42 @@ function renderLeadDetailPage() {
   setText("workspaceUserBadge", getCurrentUserId());
   setText("workspaceDataSource", appState.syncMode === "sheets" ? "Live Sheets" : "Local workspace");
   setText("workspaceLastSync", appState.lastSyncAt ? `Last sync ${formatDate(appState.lastSyncAt)}` : "Waiting for first sync");
-  if (!selectedLead) return;
+  if (!selectedLead) {
+    setText("detailCompany", "No lead selected");
+    setText("detailStatus", "review_needed");
+    const websiteNode = document.getElementById("detailWebsite");
+    if (websiteNode) {
+      websiteNode.textContent = "-";
+      websiteNode.href = "#";
+    }
+    setText("detailLocation", selectedList ? `${selectedList.city}, ${selectedList.country}` : "-");
+    setText("detailPrimaryProblem", "Select a lead from Leads page");
+    setText("detailOffer", "-");
+    setText("detailReason", "Open a lead from the Leads page to view its scoring, contact path, and outreach context.");
+    setText("detailAngle", "No outreach angle available until a lead is selected.");
+    setText("detailValue", "Lead detail context will appear here after you select a lead.");
+    setText("detailPersonalization", "Choose a lead first.");
+    setText("detailSeoScore", "0");
+    setText("detailOverallScore", "0");
+    setText("detailCommercialFit", "0");
+    setText("detailContactConfidence", "0");
+    setText("detailOutreachReadiness", "Outreach: Needs review");
+    setText("detailPaidAds", "Paid ads: unknown");
+    setText("detailSecondaryProblem", "Secondary issue not set");
+    setText("detailDecisionMaker", "No named contact yet");
+    setText("detailDecisionRole", "Select a lead from Leads page");
+    setText("detailContactLine", "No direct contact captured");
+    setText("detailContactChannel", "Recommended channel not set");
+    setText("detailNextAction", "Select a lead from the Leads page to continue.");
+    setText("detailRiskNote", "No lead selected yet.");
+    setHtml("#detailSignalList", "<li>Select a lead from the Leads page.</li>");
+    setHtml("#detailPlaybookList", "<li>Choose a lead to load outreach guidance.</li>");
+    setText("exportTargetList", selectedList ? selectedList.name : "No selected list");
+    setText("exportTargetListMirror", selectedList ? selectedList.name : "No selected list");
+    setText("exportTargetMeta", selectedList ? `${getVisibleLeads().length} visible leads in this selected list.` : "0 visible leads ready for export.");
+    renderLeadDetailSidePicker(null);
+    return;
+  }
   setText("detailCompany", selectedLead.company || "Unknown company");
   setText("detailStatus", selectedLead.status || "review_needed");
   const websiteNode = document.getElementById("detailWebsite");

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RankForge Intelligence | Quality Review</title>
+  <link rel="stylesheet" href="../assets/dashboard.css">
+  <link rel="stylesheet" href="../assets/app-polish.css?v=quality-review-1">
+  <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
+  <link rel="stylesheet" href="../assets/quality-review.css?v=quality-review-1">
+</head>
+<body class="dashboard-body app-page-quality" data-auth="protected" data-page="quality">
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">RF</span>
+        <span class="brand-copy"><strong>RankForge</strong><small>by CrestlineOps</small></span>
+      </a>
+      <nav class="sidebar-nav">
+        <a href="../dashboard/">Dashboard</a>
+        <a href="../lists/">Saved Lists</a>
+        <a href="../leads/">Leads</a>
+        <a href="../lead-detail/">Lead Detail</a>
+        <a class="active" href="../quality/">Quality</a>
+        <a href="../settings/">Settings</a>
+      </nav>
+      <section class="sidebar-panel">
+        <p class="panel-eyebrow">Quality Loop</p>
+        <h2>Turn feedback into better leads.</h2>
+        <p>Use this page to see what users are marking as good, weak, wrong, duplicate, or bad contact.</p>
+      </section>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="topbar">
+        <div>
+          <p class="kicker">Quality Review</p>
+          <h1>Lead feedback intelligence</h1>
+          <p class="topbar-copy">Review feedback from your workspace so weak searches, bad contacts, wrong niches, and duplicate patterns are easier to spot.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="data-status" id="qualityStatus">Waiting for feedback sync</div>
+          <button class="button ghost" type="button" id="refreshQualityButton">Refresh Feedback</button>
+          <a class="button ghost" href="../dashboard/">Back to Dashboard</a>
+        </div>
+      </header>
+
+      <section class="workspace-strip quality-summary-strip">
+        <article class="workspace-card"><span class="workspace-label">Total Feedback</span><strong id="qualityTotalFeedback">0</strong><small>Feedback rows for this user</small></article>
+        <article class="workspace-card"><span class="workspace-label">Good Leads</span><strong id="qualityGoodLeadCount">0</strong><small>Positive signal examples</small></article>
+        <article class="workspace-card"><span class="workspace-label">Bad Contacts</span><strong id="qualityBadContactCount">0</strong><small>Contact quality issues</small></article>
+        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Top Issue</span><strong id="qualityTopIssue">No issue yet</strong><small id="qualityTopIssueMeta">Feedback will appear after sync.</small></article>
+      </section>
+
+      <section class="quality-grid">
+        <article class="panel panel-wide">
+          <div class="panel-header">
+            <div><p class="panel-eyebrow">Feedback Mix</p><h2>What users are telling you</h2></div>
+          </div>
+          <div class="quality-type-grid" id="qualityTypeGrid"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-header"><div><p class="panel-eyebrow">Operator Focus</p><h2>What to check next</h2></div></div>
+          <div class="quality-insight-card" id="qualityInsightCard">
+            <strong>No feedback loaded yet.</strong>
+            <p>Refresh feedback to see the most common issue in this workspace.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div><p class="panel-eyebrow">Recent Feedback</p><h2>Latest quality signals</h2></div>
+          <div class="quality-table-tools">
+            <label><span>Type</span><select id="qualityTypeFilter"><option value="all">All feedback</option></select></label>
+            <label><span>Search / company</span><input id="qualitySearchFilter" type="search" placeholder="Filter feedback"></label>
+          </div>
+        </div>
+        <div class="saved-list-table-wrap">
+          <table class="data-table quality-table" id="qualityFeedbackTable">
+            <thead><tr><th>Feedback</th><th>Company</th><th>Search ID</th><th>Note</th><th>Created</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+<script src="../assets/auth.js?v=user-isolation-1"></script>
+<script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
+<script src="../assets/app-polish.js?v=quality-review-1"></script>
+<script src="../assets/quality-review.js?v=quality-review-1"></script>
+</body>
+</html>

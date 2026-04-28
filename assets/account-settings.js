@@ -6,6 +6,33 @@
     "rankforge-auth-session-v1"
   ];
 
+  const PLAN_DEFINITIONS = {
+    starter: {
+      name: "Starter",
+      price: "$29/month",
+      leadLimit: "50 prioritized leads/month",
+      searchLimit: "1 active search batch · 3 searches/month",
+      status: "Active",
+      description: "For testing one focused niche or city with automated scoring and CSV export. Manual lead review is not included."
+    },
+    growth: {
+      name: "Growth",
+      price: "$79/month",
+      leadLimit: "250 prioritized leads/month",
+      searchLimit: "5 active search batches · 15 searches/month",
+      status: "Active",
+      description: "For agencies that want a steady monthly flow of prioritized local SEO opportunities. Manual lead review is not included."
+    },
+    agency_intelligence: {
+      name: "Agency Intelligence",
+      price: "Coming soon",
+      leadLimit: "750+ prioritized leads/month",
+      searchLimit: "More active search batches",
+      status: "Coming soon",
+      description: "Planned for deeper SEO analysis, competitor visibility signals, priority processing, and advanced agency workflows."
+    }
+  };
+
   function byId(id) {
     return document.getElementById(id);
   }
@@ -15,8 +42,28 @@
     if (node) node.textContent = value;
   }
 
+  function clean(value) {
+    return String(value == null ? "" : value).trim();
+  }
+
+  function safeParse(raw, fallback) {
+    try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+  }
+
+  function normalizePlan(value) {
+    const raw = clean(value).toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_");
+    if (["starter", "start", "basic", "starter_plan"].includes(raw)) return "starter";
+    if (["growth", "pro", "founding", "founding_plan"].includes(raw)) return "growth";
+    if (["agency", "agency_intelligence", "enterprise"].includes(raw)) return "agency_intelligence";
+    return "starter";
+  }
+
   function getStoredWebhook() {
     return localStorage.getItem("rankforge-search-submit-webhook-v1") || "Default webhook";
+  }
+
+  function getAppState() {
+    return safeParse(localStorage.getItem("rankforge-clean-app-state-v1"), {}) || {};
   }
 
   function createSupabaseClient() {
@@ -44,6 +91,49 @@
     };
   }
 
+  function monthStart() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  }
+
+  function inCurrentMonth(value) {
+    const time = new Date(value || "").getTime();
+    return Number.isFinite(time) && time >= monthStart();
+  }
+
+  function usageForUser(userId) {
+    const state = getAppState();
+    const lists = [];
+    const leads = [];
+    if (Array.isArray(state.localLists)) lists.push(...state.localLists);
+    if (state.remoteCache && Array.isArray(state.remoteCache.lists)) lists.push(...state.remoteCache.lists);
+    if (Array.isArray(state.localLeads)) leads.push(...state.localLeads);
+    if (state.remoteCache && Array.isArray(state.remoteCache.leads)) leads.push(...state.remoteCache.leads);
+
+    const userLists = lists.filter((item) => clean(item.userId || item.user_id) === userId && inCurrentMonth(item.lastRun || item.created_at || item.createdAt));
+    const userLeads = leads.filter((item) => clean(item.userId || item.user_id) === userId && inCurrentMonth(item.created_at || item.createdAt || item.updated_at || item.lastRun));
+    return {
+      searchesThisMonth: new Set(userLists.map((item) => clean(item.id || item.search_id)).filter(Boolean)).size,
+      leadsThisMonth: new Set(userLeads.map((item) => clean(item.id || item.lead_id)).filter(Boolean)).size
+    };
+  }
+
+  function renderPlan(session) {
+    const planKey = normalizePlan(localStorage.getItem("rankforge-current-plan-v1") || "starter");
+    const plan = PLAN_DEFINITIONS[planKey] || PLAN_DEFINITIONS.starter;
+    const usage = session && session.userId ? usageForUser(session.userId) : { searchesThisMonth: 0, leadsThisMonth: 0 };
+
+    setText("accountPlanName", plan.name);
+    setText("accountPlanPrice", plan.price);
+    setText("accountLeadLimit", plan.leadLimit);
+    setText("accountLeadUsage", usage.leadsThisMonth + " lead(s) visible this month. Usage visibility only; limits are not enforced yet.");
+    setText("accountSearchLimit", plan.searchLimit);
+    setText("accountSearchUsage", usage.searchesThisMonth + " search batch(es) visible this month.");
+    setText("accountPlanStatus", plan.status);
+    setText("accountPlanMeta", plan.description);
+    setText("accountPlanDescription", plan.description);
+  }
+
   async function renderAccount() {
     const session = await getSupabaseSession();
     const webhook = getStoredWebhook();
@@ -56,6 +146,7 @@
       setText("accountSessionStatus", "Signed out");
       setText("accountSessionMeta", "Redirecting to login may be required.");
       setText("settingsStatus", "No active session");
+      renderPlan(null);
       return;
     }
 
@@ -64,6 +155,7 @@
     setText("accountSessionStatus", "Active session");
     setText("accountSessionMeta", "This user ID is used for dashboard data filtering.");
     setText("settingsStatus", "Session active");
+    renderPlan(session);
   }
 
   async function logout() {

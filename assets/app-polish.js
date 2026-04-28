@@ -1,5 +1,6 @@
 (function () {
   const DISMISS_KEY = "rankforge-onboarding-dismissed-v1";
+  const ADMIN_EMAIL = "automly1@gmail.com";
 
   function isProtectedAppPage() {
     return document.body && document.body.dataset && document.body.dataset.auth === "protected";
@@ -7,8 +8,52 @@
 
   function getBasePrefix() {
     const page = document.body?.dataset?.page || "";
-    if (["dashboard", "lists", "leads", "lead-detail", "settings"].includes(page)) return "../";
+    if (["dashboard", "lists", "leads", "lead-detail", "settings", "quality"].includes(page)) return "../";
     return "";
+  }
+
+  function getSession() {
+    if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
+      return window.rankforgeAuth.getSession();
+    }
+    try {
+      return JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
+    } catch {
+      return null;
+    }
+  }
+
+  function currentEmail() {
+    const session = getSession();
+    return String((session && (session.email || session.userEmail)) || "").trim().toLowerCase();
+  }
+
+  function isAdmin() {
+    return currentEmail() === ADMIN_EMAIL;
+  }
+
+  function addQualityLinkForAdmin() {
+    if (!isProtectedAppPage() || !isAdmin()) return;
+    const nav = document.querySelector(".sidebar-nav");
+    if (!nav || nav.querySelector('a[href$="quality/"]')) return;
+
+    const settingsLink = nav.querySelector('a[href$="settings/"]');
+    const link = document.createElement("a");
+    link.href = `${getBasePrefix()}quality/`;
+    link.textContent = "Quality";
+    link.className = "rf-sidebar-quality-link";
+
+    if ((document.body?.dataset?.page || "") === "quality") {
+      link.classList.add("active");
+    }
+
+    if (settingsLink) nav.insertBefore(link, settingsLink);
+    else nav.appendChild(link);
+  }
+
+  function removeQualityLinkForNonAdmin() {
+    if (isAdmin()) return;
+    document.querySelectorAll('.sidebar-nav a[href$="quality/"]').forEach((link) => link.remove());
   }
 
   function addSettingsLink() {
@@ -91,6 +136,8 @@
 
   function init() {
     addSettingsLink();
+    addQualityLinkForAdmin();
+    removeQualityLinkForNonAdmin();
     addDashboardOnboarding();
     loadLeadQualityReasons();
     loadLeadDetailQuality();
@@ -101,4 +148,6 @@
   } else {
     init();
   }
+
+  window.setTimeout(init, 800);
 })();

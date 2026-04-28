@@ -129,6 +129,51 @@
 .rf-active-preset-clear { flex: 0 0 auto; min-height: 34px; border: 1px solid rgba(15, 23, 42, 0.12); border-radius: 999px; background: #fff; color: var(--ink, #0f172a); padding: 7px 11px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .rf-active-preset-clear:hover { border-color: rgba(21, 94, 239, 0.26); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07); }
 
+.rf-plan-usage-warning {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 5px;
+  padding: 13px 14px;
+  border: 1px solid rgba(21, 94, 239, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(21, 94, 239, 0.07), rgba(13, 148, 136, 0.05)), #fff;
+}
+
+.rf-plan-usage-label {
+  color: #155eef;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+}
+
+.rf-plan-usage-title {
+  color: var(--ink, #0f172a);
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.rf-plan-usage-copy {
+  color: var(--muted, #667085);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.rf-plan-usage-warning.is-warning {
+  border-color: rgba(217, 119, 6, 0.30);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.10), rgba(255,255,255,.95));
+}
+
+.rf-plan-usage-warning.is-over {
+  border-color: rgba(220, 38, 38, 0.26);
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.08), rgba(255,255,255,.95));
+}
+
+.rf-plan-usage-warning.is-admin {
+  border-color: rgba(13, 148, 136, 0.26);
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.10), rgba(21, 94, 239, 0.06)), #fff;
+}
+
 .rf-search-quality-options { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(140px, 0.8fr) minmax(180px, 1fr) minmax(190px, 1fr); gap: 12px; padding: 13px; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 18px; background: rgba(248, 250, 252, 0.86); }
 .create-search-card .rf-search-quality-options label { display: grid; gap: 7px; }
 .create-search-card .rf-search-quality-options span { color: var(--muted, #667085); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }

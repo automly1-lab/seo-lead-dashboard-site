@@ -35,7 +35,7 @@
         <div>
           <p class="kicker">Account Settings</p>
           <h1>Workspace and account</h1>
-          <p class="topbar-copy">Confirm your RankForge account, current user ID, active plan state, billing status, and data isolation status.</p>
+          <p class="topbar-copy">Confirm your RankForge account, current user ID, workspace access, and data isolation status.</p>
         </div>
         <div class="topbar-actions">
           <div class="data-status" id="settingsStatus">Protected workspace</div>
@@ -50,10 +50,10 @@
       </section>
 
       <section class="workspace-strip">
-        <article class="workspace-card"><span class="workspace-label">Current Active Plan</span><strong id="accountPlanName">Loading...</strong><small id="accountPlanPrice">Only confirmed paid/admin plans appear active here.</small></article>
-        <article class="workspace-card"><span class="workspace-label">Monthly Lead Credits</span><strong id="accountLeadLimit">-</strong><small id="accountLeadUsage">Pending selections do not activate usage limits.</small></article>
+        <article class="workspace-card"><span class="workspace-label">Workspace Access</span><strong id="accountPlanName">Loading...</strong><small id="accountPlanPrice">Free access is shown until a paid plan is confirmed.</small></article>
+        <article class="workspace-card"><span class="workspace-label">Monthly Lead Credits</span><strong id="accountLeadLimit">-</strong><small id="accountLeadUsage">Paid lead credits activate after checkout confirmation.</small></article>
         <article class="workspace-card"><span class="workspace-label">Search Batches</span><strong id="accountSearchLimit">-</strong><small id="accountSearchUsage">Search usage for this month.</small></article>
-        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Active Plan Status</span><strong id="accountPlanStatus">Checking</strong><small id="accountPlanMeta">Paid plan access requires checkout confirmation.</small></article>
+        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Access Status</span><strong id="accountPlanStatus">Checking</strong><small id="accountPlanMeta">Paid plan access requires checkout confirmation.</small></article>
       </section>
 
       <section class="content-grid settings-grid">
@@ -78,7 +78,7 @@
             <div class="settings-info-card">
               <span class="workspace-label">Plan Model</span>
               <strong id="accountPlanModel">Starter / Growth / Agency Intelligence</strong>
-              <p id="accountPlanDescription">Paid plans become active only after checkout confirmation. Selecting a plan does not activate access.</p>
+              <p id="accountPlanDescription">Selecting a plan does not activate paid access. Paid plans activate only after checkout confirmation.</p>
             </div>
             <div class="settings-info-card">
               <span class="workspace-label">Webhook</span>
@@ -86,27 +86,6 @@
               <p id="accountWebhookValue">Webhook URL is stored locally for now and can remain configurable while n8n changes.</p>
             </div>
           </div>
-        </article>
-
-        <article class="panel panel-compact">
-          <div class="panel-header"><div><p class="panel-eyebrow">Billing Activation</p><h2>Checkout and plan state</h2></div></div>
-          <div class="settings-billing-stack">
-            <div class="settings-billing-card">
-              <span class="workspace-label">Plan Selected for Checkout</span>
-              <strong id="billingSelectedPlan">Loading...</strong>
-              <small id="billingSelectedPlanMeta">This is not active until checkout is confirmed.</small>
-            </div>
-            <div class="settings-billing-card">
-              <span class="workspace-label">Billing Status</span>
-              <strong id="billingStatusValue">Loading...</strong>
-              <small id="billingStatusMessage">Waiting for billing status.</small>
-            </div>
-          </div>
-          <div class="panel-actions top-space settings-billing-actions">
-            <a class="button primary" href="#" id="billingCheckoutButton" hidden>Continue to Checkout</a>
-            <a class="button ghost" href="../pricing/" id="billingPricingButton">View Pricing</a>
-          </div>
-          <p class="form-status" id="billingActionStatus">Do not treat a plan as active until payment is confirmed by a trusted backend source.</p>
         </article>
 
         <article class="panel panel-compact">
@@ -125,7 +104,7 @@
   <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
   <script src="../assets/auth.js?v=user-isolation-4"></script>
   <script src="../assets/billing-config.js?v=billing-config-2"></script>
-  <script src="../assets/account-settings.js?v=plan-usage-3"></script>
+  <script src="../assets/account-settings.js?v=free-access-1"></script>
   <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
   <script src="../assets/app-polish.js?v=admin-portal-1"></script>
   <script src="../assets/auto-sync.js?v=auto-sync-1"></script>

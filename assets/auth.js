@@ -12,6 +12,10 @@
 
   const AUTH_SESSION_KEY = "rankforge-auth-session-v1";
   const CURRENT_USER_KEY = "rankforge-current-user-id-v1";
+  const SELECTED_PLAN_KEY = "rankforge-selected-plan-v1";
+  const BILLING_STATUS_KEY = "rankforge-billing-status-v1";
+  const CHECKOUT_INTENT_KEY = "rankforge-post-auth-intent-v1";
+  const CHECKOUT_PLAN_KEY = "rankforge-post-auth-plan-v1";
   const SUPABASE_URL = window.RANKFORGE_SUPABASE_URL || "";
   const SUPABASE_ANON_KEY = window.RANKFORGE_SUPABASE_ANON_KEY || "";
   const DASHBOARD_PATH = "../dashboard/";
@@ -39,6 +43,65 @@
       if (tone === "success") node.classList.add("is-success");
       if (tone === "error") node.classList.add("is-error");
     });
+  }
+
+  function billingConfig() {
+    return window.RANKFORGE_BILLING || {};
+  }
+
+  function normalizePlan(value) {
+    const raw = String(value || "").trim().toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_");
+    if (raw === "growth" || raw === "pro") return "growth";
+    if (raw === "agency" || raw === "agency_intelligence") return "agency_intelligence";
+    return "starter";
+  }
+
+  function checkoutLinkForPlan(planKey) {
+    const config = billingConfig();
+    if (planKey === "starter") return String(config.starterPaymentLink || "").trim();
+    if (planKey === "growth") return String(config.growthPaymentLink || "").trim();
+    return "";
+  }
+
+  function preserveIntentLinks() {
+    const search = window.location.search || "";
+    if (!search) return;
+    document.querySelectorAll(".auth-switch a").forEach((link) => {
+      try {
+        const url = new URL(link.getAttribute("href"), window.location.href);
+        const current = new URLSearchParams(search);
+        current.forEach((value, key) => url.searchParams.set(key, value));
+        link.setAttribute("href", url.pathname + url.search);
+      } catch {}
+    });
+  }
+
+  function clearPostAuthIntent() {
+    localStorage.removeItem(CHECKOUT_INTENT_KEY);
+    localStorage.removeItem(CHECKOUT_PLAN_KEY);
+  }
+
+  function resolvePostAuthDestination() {
+    const params = new URLSearchParams(window.location.search || "");
+    const intent = String(params.get("intent") || localStorage.getItem(CHECKOUT_INTENT_KEY) || "").trim().toLowerCase();
+    const plan = normalizePlan(params.get("plan") || localStorage.getItem(CHECKOUT_PLAN_KEY) || localStorage.getItem(SELECTED_PLAN_KEY) || "starter");
+
+    if (!intent) {
+      clearPostAuthIntent();
+      return DASHBOARD_PATH;
+    }
+
+    localStorage.setItem(SELECTED_PLAN_KEY, plan);
+    localStorage.setItem(BILLING_STATUS_KEY, plan === "agency_intelligence" ? "waitlist" : "pending_payment");
+
+    if (intent === "checkout" && plan !== "agency_intelligence") {
+      const paymentLink = checkoutLinkForPlan(plan);
+      clearPostAuthIntent();
+      return paymentLink || "../settings/";
+    }
+
+    clearPostAuthIntent();
+    return "../settings/";
   }
 
   function getClient() {
@@ -162,8 +225,8 @@
 
     const session = normalizeSession(data.session);
     saveSession(session);
-    setStatus("Signed in. Opening dashboard...", "success");
-    window.location.href = DASHBOARD_PATH;
+    setStatus("Signed in. Redirecting...", "success");
+    window.location.href = resolvePostAuthDestination();
     return false;
   }
 
@@ -205,8 +268,8 @@
     const session = normalizeSession(data.session);
     if (session) {
       saveSession(session);
-      setStatus("Account created. Opening dashboard...", "success");
-      window.location.href = DASHBOARD_PATH;
+      setStatus("Account created. Redirecting...", "success");
+      window.location.href = resolvePostAuthDestination();
     } else {
       setStatus("Account created. Check your email to confirm your account.", "success");
     }
@@ -225,6 +288,7 @@
   }
 
   function bindForms() {
+    preserveIntentLinks();
     const loginForm =
       byId("loginForm") ||
       document.querySelector('form[data-auth-form="login"]') ||

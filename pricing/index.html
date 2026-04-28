@@ -38,7 +38,7 @@
           <li>CSV export</li>
           <li>Feedback loop</li>
         </ul>
-        <a class="button secondary full" href="../signup/?plan=starter">Start Starter</a>
+        <a class="button secondary full" href="../signup/?plan=starter" data-plan-key="starter">Start Starter</a>
       </article>
       <article class="pricing-card featured">
         <span class="badge">Recommended</span>
@@ -55,7 +55,7 @@
           <li>CSV export</li>
           <li>Higher monthly usage</li>
         </ul>
-        <a class="button primary full" href="../signup/?plan=growth">Start Growth</a>
+        <a class="button primary full" href="../signup/?plan=growth" data-plan-key="growth">Start Growth</a>
       </article>
       <article class="pricing-card">
         <span class="badge">Coming Soon</span>
@@ -72,7 +72,7 @@
           <li>Advanced export fields</li>
           <li>Team and CRM features later</li>
         </ul>
-        <a class="button secondary full" href="../signup/?plan=agency_intelligence">Join Waitlist</a>
+        <a class="button secondary full" href="../signup/?plan=agency_intelligence" data-plan-key="agency_intelligence">Join Waitlist</a>
       </article>
     </section>
 
@@ -112,10 +112,15 @@
     </section>
   </main>
   <footer class="footer"><div class="container footer-inner"><span>© 2026 CrestlineOps. RankForge SEO Lead Intelligence.</span><div class="footer-links"><a href="../">Home</a><a href="../how-it-works/">How it works</a><a href="../login/">Log in</a></div></div></footer>
-  <div class="footer-legal-links">
+<div class="footer-legal-links">
   <a href="../privacy/">Privacy</a>
   <a href="../terms/">Terms</a>
   <a href="../refund-policy/">Refund Policy</a>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+<script src="../assets/billing-config.js?v=billing-config-2"></script>
+<script src="../assets/auth.js?v=user-isolation-3"></script>
+<script src="../assets/marketing-session.js?v=marketing-session-2"></script>
 </body>
 </html>

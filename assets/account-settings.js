@@ -150,6 +150,13 @@
     return normalizePlan(localStorage.getItem(SELECTED_PLAN_KEY) || localStorage.getItem("rankforge-current-plan-v1") || "starter");
   }
 
+  function getActivePlanKey(session) {
+    const email = clean(session && session.email).toLowerCase();
+    if (email === ADMIN_EMAIL) return "admin_unlimited";
+    const stored = clean(localStorage.getItem("rankforge-current-plan-v1"));
+    return stored ? normalizePlan(stored) : "";
+  }
+
   function getBillingStatus(session, selectedPlanKey) {
     const email = clean(session && session.email).toLowerCase();
     if (email === ADMIN_EMAIL || selectedPlanKey === "admin_unlimited") return "admin";
@@ -232,9 +239,25 @@
   }
 
   function renderPlan(session) {
-    const planKey = session ? planKeyForSession(session) : "starter";
-    const plan = PLAN_DEFINITIONS[planKey] || PLAN_DEFINITIONS.starter;
+    const billingStatus = getBillingStatus(session, getSelectedPlanKey(session));
+    const activePlanKey = session ? getActivePlanKey(session) : "";
+    const isAdmin = clean(session && session.email).toLowerCase() === ADMIN_EMAIL;
+    const planKey = isAdmin ? "admin_unlimited" : ((billingStatus === "active" && activePlanKey) ? activePlanKey : "");
+    const plan = planKey ? (PLAN_DEFINITIONS[planKey] || PLAN_DEFINITIONS.starter) : null;
     const usage = session && session.userId ? usageForUser(session.userId) : { searchesThisMonth: 0, leadsThisMonth: 0 };
+
+    if (!plan) {
+      setText("accountPlanName", "No active paid plan");
+      setText("accountPlanPrice", "Selected plan remains pending until payment is confirmed.");
+      setText("accountLeadLimit", "Not active yet");
+      setText("accountLeadUsage", usage.leadsThisMonth + " lead(s) visible this month. Billing is not active yet.");
+      setText("accountSearchLimit", "Not active yet");
+      setText("accountSearchUsage", usage.searchesThisMonth + " search batch(es) visible this month.");
+      setText("accountPlanStatus", billingStatus === "waitlist" ? "Waitlist" : "Pending payment");
+      setText("accountPlanMeta", "A plan should only appear as current after payment confirmation from a trusted backend.");
+      setText("accountPlanDescription", "Your plan selection is shown in Billing Activation below. Paid access should not look active before checkout confirmation.");
+      return;
+    }
 
     setText("accountPlanName", plan.name);
     setText("accountPlanPrice", plan.price);

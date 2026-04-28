@@ -89,6 +89,27 @@
         </article>
 
         <article class="panel panel-compact">
+          <div class="panel-header"><div><p class="panel-eyebrow">Billing Activation</p><h2>Checkout and plan state</h2></div></div>
+          <div class="settings-billing-stack">
+            <div class="settings-billing-card">
+              <span class="workspace-label">Selected Plan</span>
+              <strong id="billingSelectedPlan">Loading...</strong>
+              <small id="billingSelectedPlanMeta">Plan selection will appear here.</small>
+            </div>
+            <div class="settings-billing-card">
+              <span class="workspace-label">Billing Status</span>
+              <strong id="billingStatusValue">Loading...</strong>
+              <small id="billingStatusMessage">Waiting for billing status.</small>
+            </div>
+          </div>
+          <div class="panel-actions top-space settings-billing-actions">
+            <a class="button primary" href="#" id="billingCheckoutButton" hidden>Continue to Checkout</a>
+            <a class="button ghost" href="../pricing/" id="billingPricingButton">View Pricing</a>
+          </div>
+          <p class="form-status" id="billingActionStatus">Paid plan access should only become active after payment confirmation.</p>
+        </article>
+
+        <article class="panel panel-compact">
           <div class="panel-header"><div><p class="panel-eyebrow">Session Control</p><h2>Sign out</h2></div></div>
           <p class="panel-copy">Signing out clears local RankForge workspace cache from this browser and returns you to the login page.</p>
           <div class="panel-actions top-space">
@@ -103,6 +124,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
   <script src="../assets/auth.js?v=user-isolation-1"></script>
+  <script src="../assets/billing-config.js?v=billing-config-1"></script>
   <script src="../assets/account-settings.js?v=plan-usage-1"></script>
   <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
   <script src="../assets/app-polish.js?v=admin-portal-1"></script>

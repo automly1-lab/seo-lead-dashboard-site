@@ -36,6 +36,37 @@
   line-height: 1.6;
 }
 
+.settings-billing-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-billing-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(248, 250, 252, 0.92);
+}
+
+.settings-billing-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 18px;
+  font-family: "Manrope", "Inter", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.settings-billing-card small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.settings-billing-actions {
+  align-items: stretch;
+}
+
 @media (max-width: 900px) {
   .settings-grid,
   .settings-card-grid {

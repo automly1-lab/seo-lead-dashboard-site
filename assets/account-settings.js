@@ -6,6 +6,8 @@
     "rankforge-current-user-id-v1",
     "rankforge-auth-session-v1"
   ];
+  const SELECTED_PLAN_KEY = "rankforge-selected-plan-v1";
+  const BILLING_STATUS_KEY = "rankforge-billing-status-v1";
 
   const PLAN_DEFINITIONS = {
     starter: {
@@ -72,6 +74,14 @@
     return localStorage.getItem("rankforge-search-submit-webhook-v1") || "Default webhook";
   }
 
+  function getBillingConfig() {
+    return window.RANKFORGE_BILLING || {
+      starterPaymentLink: "",
+      growthPaymentLink: "",
+      supportEmail: "support@crestlineops.com"
+    };
+  }
+
   function getAppState() {
     return safeParse(localStorage.getItem("rankforge-clean-app-state-v1"), {}) || {};
   }
@@ -131,7 +141,94 @@
   function planKeyForSession(session) {
     const email = clean(session && session.email).toLowerCase();
     if (email === ADMIN_EMAIL) return "admin_unlimited";
-    return normalizePlan(localStorage.getItem("rankforge-current-plan-v1") || "starter");
+    return normalizePlan(localStorage.getItem("rankforge-current-plan-v1") || localStorage.getItem(SELECTED_PLAN_KEY) || "starter");
+  }
+
+  function getSelectedPlanKey(session) {
+    const email = clean(session && session.email).toLowerCase();
+    if (email === ADMIN_EMAIL) return "admin_unlimited";
+    return normalizePlan(localStorage.getItem(SELECTED_PLAN_KEY) || localStorage.getItem("rankforge-current-plan-v1") || "starter");
+  }
+
+  function getBillingStatus(session, selectedPlanKey) {
+    const email = clean(session && session.email).toLowerCase();
+    if (email === ADMIN_EMAIL || selectedPlanKey === "admin_unlimited") return "admin";
+    return clean(localStorage.getItem(BILLING_STATUS_KEY) || "pending_payment").toLowerCase();
+  }
+
+  function paymentLinkForPlan(planKey) {
+    const config = getBillingConfig();
+    if (planKey === "starter") return clean(config.starterPaymentLink);
+    if (planKey === "growth") return clean(config.growthPaymentLink);
+    return "";
+  }
+
+  function renderBillingSection(session) {
+    const selectedPlanKey = getSelectedPlanKey(session);
+    const selectedPlan = PLAN_DEFINITIONS[selectedPlanKey] || PLAN_DEFINITIONS.starter;
+    const billingStatus = getBillingStatus(session, selectedPlanKey);
+    const checkoutLink = paymentLinkForPlan(selectedPlanKey);
+    const checkoutButton = byId("billingCheckoutButton");
+    const pricingButton = byId("billingPricingButton");
+
+    setText("billingSelectedPlan", selectedPlan.name);
+    setText("billingSelectedPlanMeta", `${selectedPlan.price} · ${selectedPlan.leadLimit}`);
+    setText("billingStatusValue", billingStatus.replace(/_/g, " "));
+
+    if (checkoutButton) {
+      checkoutButton.hidden = true;
+      checkoutButton.removeAttribute("href");
+    }
+
+    if (billingStatus === "admin") {
+      setText("accountPlanStatus", "Admin");
+      setText("accountPlanMeta", "Internal admin account with unlimited internal access.");
+      setText("billingStatusMessage", "Internal admin account. Billing is not required for workspace access.");
+      setText("billingActionStatus", "Admin Unlimited bypasses checkout and billing restrictions.");
+      if (pricingButton) pricingButton.textContent = "View Pricing";
+      return;
+    }
+
+    if (selectedPlanKey === "agency_intelligence" || billingStatus === "waitlist") {
+      setText("accountPlanStatus", "Waitlist");
+      setText("accountPlanMeta", "Agency Intelligence remains a coming-soon / waitlist plan until launch.");
+      setText("billingStatusMessage", "Agency Intelligence is not active yet. This selection should remain waitlist-only until launch.");
+      setText("billingActionStatus", "This plan should not activate through checkout yet.");
+      if (pricingButton) pricingButton.textContent = "View Pricing";
+      return;
+    }
+
+    if (billingStatus === "active") {
+      setText("accountPlanStatus", "Active");
+      setText("accountPlanMeta", "Plan access should reflect confirmed billing state.");
+      setText("billingStatusMessage", "Your plan is active. Plan access should come from confirmed billing, not query parameters.");
+      setText("billingActionStatus", "Stripe activation is expected to be confirmed by a trusted backend update.");
+      if (pricingButton) pricingButton.textContent = "View Pricing";
+      return;
+    }
+
+    if (billingStatus === "past_due" || billingStatus === "canceled") {
+      setText("accountPlanStatus", billingStatus === "past_due" ? "Past due" : "Canceled");
+      setText("accountPlanMeta", "Billing needs attention before this plan should be treated as active.");
+      setText("billingStatusMessage", "Billing needs attention before this plan should be treated as active.");
+      if (checkoutLink && checkoutButton) {
+        checkoutButton.href = checkoutLink;
+        checkoutButton.hidden = false;
+      }
+      setText("billingActionStatus", checkoutLink ? "Use checkout to reactivate or refresh billing once Stripe links are configured." : "Checkout is not connected yet. Add Stripe Payment Links in assets/billing-config.js.");
+      if (pricingButton) pricingButton.textContent = "View Pricing";
+      return;
+    }
+
+    setText("accountPlanStatus", "Pending payment");
+    setText("accountPlanMeta", "Complete checkout to activate this selected plan.");
+    setText("billingStatusMessage", "Your selected plan is pending payment. Complete checkout to activate this plan.");
+    if (checkoutLink && checkoutButton) {
+      checkoutButton.href = checkoutLink;
+      checkoutButton.hidden = false;
+    }
+    setText("billingActionStatus", checkoutLink ? "Plan access should only become active after payment confirmation from a trusted backend source." : "Checkout is not connected yet. Add real Stripe Payment Links in assets/billing-config.js.");
+    if (pricingButton) pricingButton.textContent = "View Pricing";
   }
 
   function renderPlan(session) {
@@ -159,12 +256,13 @@
     if (!session || !session.userId) {
       setText("accountEmail", "Not signed in");
       setText("accountUserId", "No active session");
-      setText("accountSessionStatus", "Signed out");
-      setText("accountSessionMeta", "Redirecting to login may be required.");
-      setText("settingsStatus", "No active session");
-      renderPlan(null);
-      return;
-    }
+    setText("accountSessionStatus", "Signed out");
+    setText("accountSessionMeta", "Redirecting to login may be required.");
+    setText("settingsStatus", "No active session");
+    renderPlan(null);
+    renderBillingSection(null);
+    return;
+  }
 
     setText("accountEmail", session.email || "Signed-in user");
     setText("accountUserId", session.userId);
@@ -172,6 +270,7 @@
     setText("accountSessionMeta", "This user ID is used for dashboard data filtering.");
     setText("settingsStatus", clean(session.email).toLowerCase() === ADMIN_EMAIL ? "Admin session active" : "Session active");
     renderPlan(session);
+    renderBillingSection(session);
   }
 
   async function logout() {

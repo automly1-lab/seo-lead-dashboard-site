@@ -21,20 +21,10 @@
   const DASHBOARD_PATH = "../dashboard/";
   const LOGIN_PATH = "../login/";
 
-  function byId(id) {
-    return document.getElementById(id);
-  }
-
-  function safeJson(raw, fallback) {
-    try {
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
+  function byId(id) { return document.getElementById(id); }
+  function safeJson(raw, fallback) { try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } }
   function setStatus(message, tone) {
-    const ids = ["authStatus", "loginStatus", "signupStatus", "formStatus"];
+    const ids = ["authStatus", "loginStatus", "signupStatus", "formStatus", "authFormStatus"];
     ids.forEach((id) => {
       const node = byId(id);
       if (!node) return;
@@ -45,17 +35,13 @@
     });
   }
 
-  function billingConfig() {
-    return window.RANKFORGE_BILLING || {};
-  }
-
+  function billingConfig() { return window.RANKFORGE_BILLING || {}; }
   function normalizePlan(value) {
     const raw = String(value || "").trim().toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_");
     if (raw === "growth" || raw === "pro") return "growth";
     if (raw === "agency" || raw === "agency_intelligence") return "agency_intelligence";
     return "starter";
   }
-
   function checkoutLinkForPlan(planKey) {
     const config = billingConfig();
     if (planKey === "starter") return String(config.starterPaymentLink || "").trim();
@@ -75,12 +61,10 @@
       } catch {}
     });
   }
-
   function clearPostAuthIntent() {
     localStorage.removeItem(CHECKOUT_INTENT_KEY);
     localStorage.removeItem(CHECKOUT_PLAN_KEY);
   }
-
   function resolvePostAuthDestination() {
     const params = new URLSearchParams(window.location.search || "");
     const intent = String(params.get("intent") || localStorage.getItem(CHECKOUT_INTENT_KEY) || "").trim().toLowerCase();
@@ -115,11 +99,7 @@
     }
     if (!window.rankforgeSupabaseClient) {
       window.rankforgeSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true
-        }
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
       });
     }
     return window.rankforgeSupabaseClient;
@@ -136,10 +116,10 @@
       expiresAt: supabaseSession.expires_at || null
     };
   }
-
   function saveSession(session) {
     if (!session) {
       localStorage.removeItem(AUTH_SESSION_KEY);
+      localStorage.removeItem(CURRENT_USER_KEY);
       return;
     }
     localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
@@ -148,9 +128,7 @@
 
   async function refreshSession() {
     const client = getClient();
-    if (!client) {
-      return safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
-    }
+    if (!client) return safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
 
     const { data, error } = await client.auth.getSession();
     if (error) {
@@ -159,70 +137,33 @@
     }
 
     const session = normalizeSession(data && data.session);
-    saveSession(session);
-    return session;
+    if (session) saveSession(session);
+    return session || safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
   }
 
   async function requireAuthIfNeeded() {
     const isProtected = document.body && document.body.dataset.auth === "protected";
     if (!isProtected) return;
-
     const session = await refreshSession();
-    if (!session || !session.userId) {
-      window.location.replace(LOGIN_PATH);
-    }
+    if (!session || !session.userId) window.location.replace(LOGIN_PATH);
   }
 
   function readAuthFields() {
-    const email =
-      byId("emailInput")?.value ||
-      byId("loginEmail")?.value ||
-      byId("signupEmail")?.value ||
-      document.querySelector('input[type="email"]')?.value ||
-      "";
-
-    const password =
-      byId("passwordInput")?.value ||
-      byId("loginPassword")?.value ||
-      byId("signupPassword")?.value ||
-      document.querySelector('input[type="password"]')?.value ||
-      "";
-
-    const name =
-      byId("nameInput")?.value ||
-      byId("signupName")?.value ||
-      byId("fullNameInput")?.value ||
-      "";
-
-    return {
-      email: String(email).trim(),
-      password: String(password),
-      name: String(name).trim()
-    };
+    const email = byId("emailInput")?.value || byId("loginEmail")?.value || byId("signupEmail")?.value || document.querySelector('input[type="email"]')?.value || "";
+    const password = byId("passwordInput")?.value || byId("loginPassword")?.value || byId("signupPassword")?.value || document.querySelector('input[type="password"]')?.value || "";
+    const name = byId("nameInput")?.value || byId("signupName")?.value || byId("fullNameInput")?.value || document.querySelector('input[name="full_name"]')?.value || "";
+    return { email: String(email).trim(), password: String(password), name: String(name).trim() };
   }
 
   async function login(event) {
     if (event && event.preventDefault) event.preventDefault();
     const client = getClient();
-    if (!client) {
-      setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error");
-      return false;
-    }
-
+    if (!client) { setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error"); return false; }
     const { email, password } = readAuthFields();
-    if (!email || !password) {
-      setStatus("Enter your email and password.", "error");
-      return false;
-    }
-
+    if (!email || !password) { setStatus("Enter your email and password.", "error"); return false; }
     setStatus("Signing in...", "");
     const { data, error } = await client.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setStatus(error.message || "Sign in failed.", "error");
-      return false;
-    }
-
+    if (error) { setStatus(error.message || "Sign in failed.", "error"); return false; }
     const session = normalizeSession(data.session);
     saveSession(session);
     setStatus("Signed in. Redirecting...", "success");
@@ -233,38 +174,13 @@
   async function signup(event) {
     if (event && event.preventDefault) event.preventDefault();
     const client = getClient();
-    if (!client) {
-      setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error");
-      return false;
-    }
-
+    if (!client) { setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error"); return false; }
     const { email, password, name } = readAuthFields();
-    if (!email || !password) {
-      setStatus("Enter your email and password.", "error");
-      return false;
-    }
-    if (password.length < 6) {
-      setStatus("Password must be at least 6 characters.", "error");
-      return false;
-    }
-
+    if (!email || !password) { setStatus("Enter your email and password.", "error"); return false; }
+    if (password.length < 6) { setStatus("Password must be at least 6 characters.", "error"); return false; }
     setStatus("Creating account...", "");
-    const { data, error } = await client.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name || ""
-        },
-        emailRedirectTo: window.location.origin + "/dashboard/"
-      }
-    });
-
-    if (error) {
-      setStatus(error.message || "Signup failed.", "error");
-      return false;
-    }
-
+    const { data, error } = await client.auth.signUp({ email, password, options: { data: { full_name: name || "" }, emailRedirectTo: window.location.origin + "/dashboard/" } });
+    if (error) { setStatus(error.message || "Signup failed.", "error"); return false; }
     const session = normalizeSession(data.session);
     if (session) {
       saveSession(session);
@@ -279,60 +195,36 @@
   async function logout(event) {
     if (event && event.preventDefault) event.preventDefault();
     const client = getClient();
-    if (client) {
-      await client.auth.signOut();
-    }
-    localStorage.removeItem(AUTH_SESSION_KEY);
-    localStorage.removeItem(CURRENT_USER_KEY);
-    window.location.href = LOGIN_PATH;
+    if (client) await client.auth.signOut();
+    saveSession(null);
+    const loginUrl = new URL("login/", window.location.origin + "/").toString();
+    window.location.href = loginUrl;
   }
 
   function bindForms() {
     preserveIntentLinks();
-    const loginForm =
-      byId("loginForm") ||
-      document.querySelector('form[data-auth-form="login"]') ||
-      (document.body?.classList.contains("app-page-login") ? document.querySelector("form") : null);
-
-    const signupForm =
-      byId("signupForm") ||
-      document.querySelector('form[data-auth-form="signup"]') ||
-      (document.body?.classList.contains("app-page-signup") ? document.querySelector("form") : null);
-
+    const loginForm = byId("loginForm") || document.querySelector('form[data-auth-form="login"]') || (document.body?.classList.contains("app-page-login") ? document.querySelector("form") : null);
+    const signupForm = byId("signupForm") || document.querySelector('form[data-auth-form="signup"]') || (document.body?.classList.contains("app-page-signup") ? document.querySelector("form") : null);
     if (loginForm) loginForm.onsubmit = login;
     if (signupForm) signupForm.onsubmit = signup;
-
-    document.querySelectorAll("[data-logout], #logoutButton").forEach((node) => {
-      node.addEventListener("click", logout);
-    });
+    document.querySelectorAll("[data-logout], #logoutButton").forEach((node) => node.addEventListener("click", logout));
   }
 
-  window.rankforgeAuth = {
-    getSession: function () {
-      return safeJson(localStorage.getItem(AUTH_SESSION_KEY), null);
-    },
-    refreshSession,
-    login,
-    signup,
-    logout,
-    getSupabaseClient: getClient
-  };
+  window.rankforgeAuth = { getSession: () => safeJson(localStorage.getItem(AUTH_SESSION_KEY), null), refreshSession, login, signup, logout, getSupabaseClient: getClient };
 
   async function boot() {
     bindForms();
     await requireAuthIfNeeded();
-
     const client = getClient();
     if (client) {
-      client.auth.onAuthStateChange((_event, supabaseSession) => {
-        saveSession(normalizeSession(supabaseSession));
+      client.auth.onAuthStateChange((event, supabaseSession) => {
+        const normalized = normalizeSession(supabaseSession);
+        if (normalized) saveSession(normalized);
+        else if (event === "SIGNED_OUT") saveSession(null);
       });
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
-    boot();
-  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
 })();

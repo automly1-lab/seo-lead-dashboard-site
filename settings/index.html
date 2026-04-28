@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence | Account Settings</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/app-polish.css?v=onboarding-settings-1">
+  <link rel="stylesheet" href="../assets/app-polish.css?v=admin-portal-1">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
   <link rel="stylesheet" href="../assets/account-settings.css?v=account-settings-1">
 </head>
@@ -35,7 +35,7 @@
         <div>
           <p class="kicker">Account Settings</p>
           <h1>Workspace and account</h1>
-          <p class="topbar-copy">Confirm your RankForge account, current user ID, data isolation status, and sign out safely.</p>
+          <p class="topbar-copy">Confirm your RankForge account, current user ID, plan visibility, usage, and data isolation status.</p>
         </div>
         <div class="topbar-actions">
           <div class="data-status" id="settingsStatus">Protected workspace</div>
@@ -47,6 +47,13 @@
         <article class="workspace-card"><span class="workspace-label">Signed-in Email</span><strong id="accountEmail">Loading...</strong><small>Supabase Auth account email</small></article>
         <article class="workspace-card"><span class="workspace-label">Workspace User ID</span><strong class="settings-user-id" id="accountUserId">Loading...</strong><small>Used to isolate searches, leads, and exports</small></article>
         <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Session Status</span><strong id="accountSessionStatus">Checking</strong><small id="accountSessionMeta">Waiting for session validation.</small></article>
+      </section>
+
+      <section class="workspace-strip">
+        <article class="workspace-card"><span class="workspace-label">Current Plan</span><strong id="accountPlanName">Loading...</strong><small id="accountPlanPrice">Plan pricing will appear here.</small></article>
+        <article class="workspace-card"><span class="workspace-label">Monthly Lead Credits</span><strong id="accountLeadLimit">-</strong><small id="accountLeadUsage">Usage visibility only; limits are not enforced yet.</small></article>
+        <article class="workspace-card"><span class="workspace-label">Search Batches</span><strong id="accountSearchLimit">-</strong><small id="accountSearchUsage">Search usage for this month.</small></article>
+        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Plan Status</span><strong id="accountPlanStatus">Active</strong><small id="accountPlanMeta">Automated scoring. Manual lead review is not included.</small></article>
       </section>
 
       <section class="content-grid settings-grid">
@@ -69,9 +76,9 @@
               <p>Dashboard data is filtered by your Supabase user ID. Other users should not see your saved lists or leads.</p>
             </div>
             <div class="settings-info-card">
-              <span class="workspace-label">Current Plan</span>
-              <strong>Launch Plan</strong>
-              <p>Plan limits are not enforced yet. Stripe and monthly usage tracking can be added later.</p>
+              <span class="workspace-label">Plan Model</span>
+              <strong id="accountPlanModel">Starter / Growth / Agency Intelligence</strong>
+              <p id="accountPlanDescription">RankForge uses monthly lead credits for prioritized SEO lead opportunities.</p>
             </div>
             <div class="settings-info-card">
               <span class="workspace-label">Webhook</span>
@@ -96,9 +103,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
   <script src="../assets/auth.js?v=user-isolation-1"></script>
-  <script src="../assets/account-settings.js?v=account-settings-1"></script>
+  <script src="../assets/account-settings.js?v=plan-usage-1"></script>
   <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
-  <script src="../assets/app-polish.js?v=onboarding-settings-1"></script>
+  <script src="../assets/app-polish.js?v=admin-portal-1"></script>
   <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
 </body>
 </html>

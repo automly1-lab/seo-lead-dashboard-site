@@ -7,6 +7,13 @@
   var OVERRIDE_KEY = "rankforge-admin-user-overrides-v1";
   var DATA = { users: [], searches: [], final_leads: [], lead_feedback: [] };
 
+  var KNOWN_USER_EMAILS = {
+    "95a6a7cf-6fef-45af-8b63-6b6a2cae7cd3": "automly1@gmail.com",
+    "105ac365-6bde-47d9-a669-c0b23bea92e0": "automly2@gmail.com"
+  };
+
+  var HIDDEN_USER_IDS = { "usr_demo_owner": true, "usr_mvp": true, "usr_dashboard": true };
+
   var PLAN_RULES = {
     free: { label: "Free", searchLimit: 1, leadLimit: 10, maxPerBatch: 10 },
     starter: { label: "Starter", searchLimit: 5, leadLimit: 50, maxPerBatch: 25 },
@@ -32,8 +39,9 @@
     return "free";
   }
   function userId(row) { return clean(row.user_id || row.userId || row.id || row.email || row.user_email); }
-  function userEmail(row) { return clean(row.email || row.user_email || row.userEmail); }
-  function statusValue(row) { return clean(row.billing_status || row.status || row.subscription_status || ""); }
+  function userEmail(row) { return clean(row.email || row.user_email || row.userEmail || row.account_email || row.signed_in_email); }
+  function knownEmail(id) { return KNOWN_USER_EMAILS[clean(id)] || ""; }
+  function billingStatusFromUserRow(row) { return clean(row.billing_status || row.subscription_status || row.plan_status || row.account_status || ""); }
   function planValue(row) { return clean(row.plan || row.current_plan || row.subscription_plan || row.package || row.tier || ""); }
   function numberValue(value) { var n = Number(value || 0); return Number.isFinite(n) ? n : 0; }
 
@@ -65,15 +73,30 @@
 
   function getKnownUsers() {
     var map = {};
-    [DATA.users, DATA.searches, DATA.final_leads, DATA.lead_feedback].forEach(function (list) {
+
+    (DATA.users || []).forEach(function (row) {
+      var id = userId(row); if (!id || HIDDEN_USER_IDS[id]) return;
+      map[id] = {
+        user_id: id,
+        email: userEmail(row) || knownEmail(id),
+        sourcePlan: planValue(row),
+        billing_status: billingStatusFromUserRow(row),
+        raw: row
+      };
+    });
+
+    [DATA.searches, DATA.final_leads, DATA.lead_feedback].forEach(function (list) {
       (list || []).forEach(function (row) {
-        var id = userId(row); if (!id) return;
-        if (!map[id]) map[id] = { user_id: id, email: userEmail(row), sourcePlan: planValue(row), billing_status: statusValue(row), raw: row };
-        if (!map[id].email && userEmail(row)) map[id].email = userEmail(row);
-        if (!map[id].sourcePlan && planValue(row)) map[id].sourcePlan = planValue(row);
-        if (!map[id].billing_status && statusValue(row)) map[id].billing_status = statusValue(row);
+        var id = userId(row); if (!id || HIDDEN_USER_IDS[id]) return;
+        if (!map[id]) map[id] = { user_id: id, email: userEmail(row) || knownEmail(id), sourcePlan: "", billing_status: "", raw: row };
+        if (!map[id].email && (userEmail(row) || knownEmail(id))) map[id].email = userEmail(row) || knownEmail(id);
       });
     });
+
+    Object.keys(KNOWN_USER_EMAILS).forEach(function (id) {
+      if (!map[id]) map[id] = { user_id: id, email: KNOWN_USER_EMAILS[id], sourcePlan: "", billing_status: "", raw: {} };
+    });
+
     return Object.keys(map).map(function (key) { return map[key]; });
   }
 
@@ -94,20 +117,23 @@
     var overrides = loadOverrides();
     var id = user.user_id;
     var override = overrides[id] || {};
-    var email = clean(user.email || override.email);
-    var planKey = normalizePlan(override.plan || user.sourcePlan || (email.toLowerCase() === ADMIN_EMAIL ? "admin_unlimited" : "free"));
+    var email = clean(user.email || override.email || knownEmail(id));
+    var defaultPlan = email.toLowerCase() === ADMIN_EMAIL ? "admin_unlimited" : "free";
+    if (email.toLowerCase() === "automly2@gmail.com") defaultPlan = "growth";
+    var planKey = normalizePlan(override.plan || user.sourcePlan || defaultPlan);
     var rule = PLAN_RULES[planKey] || PLAN_RULES.free;
     var extraSearch = numberValue(override.extra_search_credits);
     var extraLead = numberValue(override.extra_qualified_lead_credits);
     var usage = usageForUser(id);
     var searchLimit = rule.searchLimit >= 9999 ? 9999 : Math.max(0, rule.searchLimit + extraSearch);
     var leadLimit = rule.leadLimit >= 999999 ? 999999 : Math.max(0, rule.leadLimit + extraLead);
+    var defaultStatus = planKey === "free" ? "free" : "active";
     return {
       user_id: id,
       email: email,
       plan: planKey,
       plan_label: rule.label,
-      billing_status: clean(override.billing_status || user.billing_status || (planKey === "free" ? "free" : "active")),
+      billing_status: clean(override.billing_status || user.billing_status || defaultStatus),
       searchLimit: searchLimit,
       leadLimit: leadLimit,
       maxPerBatch: rule.maxPerBatch,
@@ -155,7 +181,7 @@
     if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="quality-note-muted">No users found yet.</td></tr>'; return; }
     tbody.innerHTML = users.map(function (u) {
       return '<tr data-user-id="' + escapeHtml(u.user_id) + '">' +
-        '<td><strong>' + escapeHtml(u.email || "No email") + '</strong><br><small>' + escapeHtml(u.user_id) + '</small></td>' +
+        '<td><strong>' + escapeHtml(u.email || "No email recorded") + '</strong><br><small>' + escapeHtml(u.user_id) + '</small></td>' +
         '<td><select class="admin-plan-select"><option value="free"' + (u.plan === "free" ? " selected" : "") + '>Free</option><option value="starter"' + (u.plan === "starter" ? " selected" : "") + '>Starter</option><option value="growth"' + (u.plan === "growth" ? " selected" : "") + '>Growth</option><option value="agency_intelligence"' + (u.plan === "agency_intelligence" ? " selected" : "") + '>Agency Intelligence</option><option value="admin_unlimited"' + (u.plan === "admin_unlimited" ? " selected" : "") + '>Admin Unlimited</option></select><br><small>Max/batch: ' + escapeHtml(u.maxPerBatch) + '</small></td>' +
         '<td><select class="admin-status-select"><option value="free"' + (u.billing_status === "free" ? " selected" : "") + '>free</option><option value="active"' + (u.billing_status === "active" ? " selected" : "") + '>active</option><option value="pending_payment"' + (u.billing_status === "pending_payment" ? " selected" : "") + '>pending</option><option value="past_due"' + (u.billing_status === "past_due" ? " selected" : "") + '>past_due</option><option value="canceled"' + (u.billing_status === "canceled" ? " selected" : "") + '>canceled</option></select></td>' +
         '<td><strong>' + escapeHtml(u.usedSearches) + ' / ' + escapeHtml(u.searchLimit >= 9999 ? "∞" : u.searchLimit) + '</strong><br><small>Remaining: ' + escapeHtml(u.remainingSearches) + '</small></td>' +
@@ -174,6 +200,7 @@
     var overrides = loadOverrides();
     overrides[id] = {
       user_id: id,
+      email: clean(tr.querySelector("td strong") ? tr.querySelector("td strong").textContent : ""),
       plan: tr.querySelector(".admin-plan-select").value,
       billing_status: tr.querySelector(".admin-status-select").value,
       extra_search_credits: Number(tr.querySelector(".admin-extra-search").value || 0),

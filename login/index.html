@@ -6,37 +6,45 @@
   <title>RankForge Intelligence | Login</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
+  <link rel="stylesheet" href="../assets/auth-polish.css?v=auth-polish-1">
 </head>
 <body class="dashboard-body auth-page-shell" data-auth-page="true">
   <main class="auth-layout">
     <section class="auth-hero">
-      <span class="panel-eyebrow">RankForge Intelligence</span>
-      <h1>SEO lead intelligence for agencies.</h1>
-      <p>Each account only sees its own saved lists and leads. This auth layer is intentionally simple now and can be replaced with Supabase later.</p>
+      <a class="auth-brand-link" href="../"><span>RF</span><strong>RankForge<small>by CrestlineOps</small></strong></a>
+      <span class="panel-eyebrow">Welcome back</span>
+      <h1>Return to your SEO lead workspace.</h1>
+      <p>Log in to review saved searches, inspect prioritized leads, export outreach-ready CSVs, and keep every workspace scoped to your Supabase user ID.</p>
+      <div class="auth-proof-row">
+        <span>User-scoped data</span>
+        <span>Contact path scoring</span>
+        <span>CSV export ready</span>
+      </div>
       <div class="auth-note-grid">
-        <article class="auth-note-card"><strong>User-scoped data</strong><small>User A never sees user B's lists or leads.</small></article>
-        <article class="auth-note-card"><strong>n8n-friendly</strong><small>The webhook URL can change later without breaking the app structure.</small></article>
+        <article class="auth-note-card"><strong>Protected workspace</strong><small>Your saved lists, lead details, feedback, and exports stay tied to your account.</small></article>
+        <article class="auth-note-card"><strong>Built for focused outreach</strong><small>Review SEO need, commercial fit, and contact confidence before exporting.</small></article>
       </div>
     </section>
     <section class="auth-card">
       <div class="auth-card-head">
-        <span class="workspace-label">Welcome back</span>
-        <h2>Login</h2>
-        <p>Demo account: <strong>demo@rankforge.app</strong> / <strong>rankforge123</strong></p>
+        <span class="workspace-label">Account login</span>
+        <h2>Log in</h2>
+        <p>Access your RankForge workspace. If you selected a plan, checkout will continue after login.</p>
       </div>
       <form id="loginForm" class="auth-form">
-        <label><span>Email</span><input type="email" name="email" placeholder="founder@agency.com" required></label>
-        <label><span>Password</span><input type="password" name="password" placeholder="Minimum 8 characters" required></label>
-        <p id="authFormStatus" class="auth-form-status">Login opens the workspace immediately.</p>
-        <button class="button primary button-block" type="submit">Login</button>
+        <label><span>Email</span><input type="email" name="email" placeholder="founder@agency.com" autocomplete="email" required></label>
+        <label><span>Password</span><input type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required></label>
+        <p id="authFormStatus" class="auth-form-status">Log in to continue to your workspace.</p>
+        <button class="button primary button-block" type="submit">Log in</button>
       </form>
-      <p class="auth-switch">Need an account? <a href="../signup/">Sign up</a></p>
+      <p class="auth-switch">Need an account? <a href="../signup/">Create one</a></p>
+      <p class="auth-secondary-link"><a href="../pricing/">View plans before logging in</a></p>
     </section>
   </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
 <script src="../assets/billing-config.js?v=billing-config-2"></script>
-<script src="../assets/auth.js?v=user-isolation-3"></script>
-  <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
+<script src="../assets/auth.js?v=user-isolation-4"></script>
+<script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
 </body>
 </html>

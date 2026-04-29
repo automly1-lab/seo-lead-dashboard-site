@@ -1,5 +1,6 @@
 (function () {
   const ADMIN_EMAIL = "automly1@gmail.com";
+  const GROWTH_TEST_EMAIL = "automly2@gmail.com";
   const APP_STORAGE_KEYS = [
     "rankforge-clean-app-state-v1",
     "rankforge-dashboard-state-v3",
@@ -104,6 +105,11 @@
   function getActivePlanKey(session) {
     const email = clean(session && session.email).toLowerCase();
     if (email === ADMIN_EMAIL) return "admin_unlimited";
+    if (email === GROWTH_TEST_EMAIL) {
+      localStorage.setItem("rankforge-current-plan-v1", "growth");
+      localStorage.setItem(BILLING_STATUS_KEY, "active");
+      return "growth";
+    }
     const billingStatus = clean(localStorage.getItem(BILLING_STATUS_KEY)).toLowerCase();
     const stored = clean(localStorage.getItem("rankforge-current-plan-v1"));
     if (billingStatus === "active" && stored) return normalizePlan(stored);
@@ -122,7 +128,7 @@
     setText("accountSearchLimit", plan.searchLimit);
     setText("accountSearchUsage", usage.searchesThisMonth + " search batch(es) visible this month.");
     setText("accountPlanStatus", plan.status);
-    setText("accountPlanMeta", plan.description);
+    setText("accountPlanMeta", plan.description + (planKey === "growth" && clean(session?.email).toLowerCase() === GROWTH_TEST_EMAIL ? " Test override active for automly2@gmail.com." : ""));
     setText("accountPlanDescription", plan.description);
   }
 
@@ -146,7 +152,7 @@
     setText("accountUserId", session.userId);
     setText("accountSessionStatus", "Active session");
     setText("accountSessionMeta", "This user ID is used for dashboard data filtering.");
-    setText("settingsStatus", clean(session.email).toLowerCase() === ADMIN_EMAIL ? "Admin session active" : "Session active");
+    setText("settingsStatus", clean(session.email).toLowerCase() === ADMIN_EMAIL ? "Admin session active" : (clean(session.email).toLowerCase() === GROWTH_TEST_EMAIL ? "Growth test session active" : "Session active"));
     renderPlan(session);
   }
 

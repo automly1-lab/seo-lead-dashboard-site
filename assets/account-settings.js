@@ -9,6 +9,14 @@
   const BILLING_STATUS_KEY = "rankforge-billing-status-v1";
 
   const PLAN_DEFINITIONS = {
+    free: {
+      name: "Free",
+      price: "$0 · no paid plan active",
+      leadLimit: "Up to 10 lead previews",
+      searchLimit: "1 free search batch total",
+      status: "Free",
+      description: "Free workspace access lets you try RankForge with one search before choosing Starter or Growth. Paid access activates only after checkout confirmation."
+    },
     starter: {
       name: "Starter",
       price: "$29/month",
@@ -50,10 +58,10 @@
   function normalizePlan(value) {
     const raw = clean(value).toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_");
     if (["admin", "admin_unlimited", "unlimited"].includes(raw)) return "admin_unlimited";
-    if (["starter", "start", "basic", "starter_plan"].includes(raw)) return "starter";
     if (["growth", "pro", "founding", "founding_plan"].includes(raw)) return "growth";
+    if (["starter", "start", "basic", "starter_plan"].includes(raw)) return "starter";
     if (["agency", "agency_intelligence", "enterprise"].includes(raw)) return "agency_intelligence";
-    return "starter";
+    return "free";
   }
 
   function getStoredWebhook() { return localStorage.getItem("rankforge-search-submit-webhook-v1") || "Default webhook"; }
@@ -104,26 +112,13 @@
 
   function renderPlan(session) {
     const planKey = session ? getActivePlanKey(session) : "free";
-    const plan = PLAN_DEFINITIONS[planKey] || null;
+    const plan = PLAN_DEFINITIONS[planKey] || PLAN_DEFINITIONS.free;
     const usage = session && session.userId ? usageForUser(session.userId) : { searchesThisMonth: 0, leadsThisMonth: 0 };
-
-    if (!plan) {
-      setText("accountPlanName", "Free");
-      setText("accountPlanPrice", "No paid plan active");
-      setText("accountLeadLimit", "Free access");
-      setText("accountLeadUsage", usage.leadsThisMonth + " lead(s) visible this month. Paid lead credits activate after checkout confirmation.");
-      setText("accountSearchLimit", "Free access");
-      setText("accountSearchUsage", usage.searchesThisMonth + " search batch(es) visible this month.");
-      setText("accountPlanStatus", "Free");
-      setText("accountPlanMeta", "Choose a paid plan from Pricing when you are ready to activate Starter or Growth.");
-      setText("accountPlanDescription", "Current workspace access is free unless a paid plan is confirmed by checkout. Selecting a plan does not activate paid access.");
-      return;
-    }
 
     setText("accountPlanName", plan.name);
     setText("accountPlanPrice", plan.price);
     setText("accountLeadLimit", plan.leadLimit);
-    setText("accountLeadUsage", usage.leadsThisMonth + " lead(s) visible this month. Usage visibility only; limits are not enforced yet.");
+    setText("accountLeadUsage", usage.leadsThisMonth + " lead(s) visible this month.");
     setText("accountSearchLimit", plan.searchLimit);
     setText("accountSearchUsage", usage.searchesThisMonth + " search batch(es) visible this month.");
     setText("accountPlanStatus", plan.status);

@@ -17,6 +17,25 @@
     return "starter";
   }
 
+  function appRootUrl() {
+    const brand = document.querySelector(".brand");
+    if (brand && brand.href) return new URL(brand.href, window.location.href).toString();
+    return new URL("./", window.location.href).toString();
+  }
+
+  function urlFromRoot(path) {
+    return new URL(path, appRootUrl()).toString();
+  }
+
+  function loadMobileBrandPolish() {
+    if (document.querySelector('link[data-rf-mobile-brand-polish="true"]')) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = urlFromRoot("assets/mobile-brand-polish.css?v=mobile-brand-1");
+    link.dataset.rfMobileBrandPolish = "true";
+    document.head.appendChild(link);
+  }
+
   function getSession() {
     if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
       return window.rankforgeAuth.getSession();
@@ -40,16 +59,6 @@
     if (planKey === "starter") return clean(config.starterPaymentLink);
     if (planKey === "growth") return clean(config.growthPaymentLink);
     return "";
-  }
-
-  function appRootUrl() {
-    const brand = document.querySelector(".brand");
-    if (brand && brand.href) return new URL(brand.href, window.location.href).toString();
-    return new URL("./", window.location.href).toString();
-  }
-
-  function urlFromRoot(path) {
-    return new URL(path, appRootUrl()).toString();
   }
 
   function setCheckoutIntent(planKey) {
@@ -131,6 +140,7 @@
   }
 
   async function boot() {
+    loadMobileBrandPolish();
     const session = await refreshSession();
     updateNav(session);
     bindPricingLinks(session);

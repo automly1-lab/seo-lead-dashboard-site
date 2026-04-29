@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Launch Checklist | RankForge</title>
+  <link rel="stylesheet" href="../assets/marketing.css?v=polish-1">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a class="brand" href="../"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>by CrestlineOps</small></span></a>
+      <nav class="nav-links"><a href="../how-it-works/">How it works</a><a href="../pricing/">Pricing</a><a href="../dashboard/">Dashboard</a></nav>
+      <div class="nav-actions"><a class="button secondary" href="../login/">Log in</a><a class="button primary" href="../signup/">Start free</a></div>
+    </div>
+  </header>
+  <main>
+    <section class="pricing-hero">
+      <div class="container">
+        <p class="kicker">Internal launch checklist</p>
+        <h1>What RankForge needs before public launch.</h1>
+        <p>This page is a practical checklist for preparing the MVP for early paid users.</p>
+      </div>
+    </section>
+    <section class="section tight">
+      <div class="container">
+        <div class="card-grid">
+          <article class="card"><h3>1. Stability</h3><p>Remove old demo user fallbacks, confirm real Supabase user isolation, and verify lead detail opens the selected lead.</p></article>
+          <article class="card"><h3>2. Billing</h3><p>Create Stripe products, add Payment Links, and use a trusted webhook before marking any plan active.</p></article>
+          <article class="card"><h3>3. Users tab</h3><p>Track plan, billing status, Stripe customer ID, subscription ID, limits, and updated timestamps.</p></article>
+          <article class="card"><h3>4. n8n limits</h3><p>Enforce Free, Starter, and Growth limits in the workflow, not only in the frontend.</p></article>
+          <article class="card"><h3>5. Credentials</h3><p>Move private keys out of frontend and avoid hardcoded API keys in public files.</p></article>
+          <article class="card"><h3>6. End-to-end test</h3><p>Test signup, login, search creation, sync, leads, lead detail, feedback, export, admin quality, and logout.</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="container footer-inner"><span>© 2026 CrestlineOps. RankForge SEO Lead Intelligence.</span><div class="footer-links"><a href="../">Home</a><a href="../pricing/">Pricing</a><a href="../login/">Log in</a></div></div></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/billing-config.js?v=billing-config-2"></script>
+  <script src="../assets/auth.js?v=user-isolation-3"></script>
+  <script src="../assets/marketing-session.js?v=marketing-session-3"></script>
+</body>
+</html>

@@ -6,42 +6,50 @@
   <title>RankForge Intelligence | Sign Up</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
+  <link rel="stylesheet" href="../assets/auth-polish.css?v=auth-polish-1">
 </head>
 <body class="dashboard-body auth-page-shell" data-auth-page="true">
   <main class="auth-layout">
     <section class="auth-hero">
+      <a class="auth-brand-link" href="../"><span>RF</span><strong>RankForge<small>by CrestlineOps</small></strong></a>
       <span class="panel-eyebrow">Create your workspace</span>
-      <h1>Build a user-scoped SEO prospecting workspace.</h1>
-      <p>This signup flow is intentionally lightweight for the MVP. Your selected plan is saved as pending until checkout or manual approval is connected.</p>
+      <h1>Start finding local businesses worth pitching SEO to.</h1>
+      <p>Create a user-scoped RankForge workspace for focused niche + city searches, lead scoring, contact path review, feedback, and CSV export.</p>
+      <div class="auth-proof-row">
+        <span>Prioritized leads</span>
+        <span>SEO need scoring</span>
+        <span>No unlimited scraping</span>
+      </div>
       <div class="auth-note-grid">
-        <article class="auth-note-card"><strong>Plan-aware</strong><small>Starter, Growth, and Agency Intelligence selections are captured before billing is connected.</small></article>
-        <article class="auth-note-card"><strong>Operator-first</strong><small>After signup, the user lands directly in the SaaS workspace.</small></article>
+        <article class="auth-note-card"><strong>Plan-aware signup</strong><small>Your selected plan is saved for checkout, but paid access only activates after payment confirmation.</small></article>
+        <article class="auth-note-card"><strong>Operator-first workflow</strong><small>After signup, open the workspace, run a focused search, review leads, then export the best opportunities.</small></article>
       </div>
     </section>
     <section class="auth-card">
       <div class="auth-card-head">
         <span class="workspace-label">New account</span>
-        <h2>Sign up</h2>
-        <p>A workspace user ID will be generated automatically and used to scope searches and leads.</p>
+        <h2>Create account</h2>
+        <p>Your Supabase user ID will own your searches, leads, feedback, and exports.</p>
       </div>
       <form id="signupForm" class="auth-form">
-        <label><span>Full name</span><input type="text" name="full_name" placeholder="Omur Y." required></label>
-        <label><span>Agency name</span><input type="text" name="agency_name" placeholder="RankForge Studio" required></label>
-        <label><span>Email</span><input type="email" name="email" placeholder="founder@agency.com" required></label>
+        <label><span>Full name</span><input type="text" name="full_name" placeholder="Your name" autocomplete="name" required></label>
+        <label><span>Agency name</span><input type="text" name="agency_name" placeholder="Your agency or consultancy" autocomplete="organization" required></label>
+        <label><span>Email</span><input type="email" name="email" placeholder="founder@agency.com" autocomplete="email" required></label>
         <div class="grid-two">
-          <label><span>Password</span><input type="password" name="password" placeholder="Minimum 8 characters" required></label>
-          <label><span>Confirm</span><input type="password" name="confirm_password" placeholder="Repeat password" required></label>
+          <label><span>Password</span><input type="password" name="password" placeholder="Minimum 8 characters" autocomplete="new-password" required></label>
+          <label><span>Confirm</span><input type="password" name="confirm_password" placeholder="Repeat password" autocomplete="new-password" required></label>
         </div>
-        <p id="authFormStatus" class="auth-form-status">After signup, the workspace opens automatically.</p>
+        <p id="authFormStatus" class="auth-form-status">Create your workspace. Paid plan access activates only after checkout confirmation.</p>
         <button class="button primary button-block" type="submit">Create account</button>
       </form>
-      <p class="auth-switch">Already have an account? <a href="../login/">Login</a></p>
+      <p class="auth-switch">Already have an account? <a href="../login/">Log in</a></p>
+      <p class="auth-terms-note">By creating an account, you agree to use RankForge responsibly and review lead data before outreach. See <a href="../terms/">Terms</a> and <a href="../privacy/">Privacy</a>.</p>
     </section>
   </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
 <script src="../assets/billing-config.js?v=billing-config-2"></script>
-<script src="../assets/auth.js?v=user-isolation-3"></script>
+<script src="../assets/auth.js?v=user-isolation-4"></script>
 <script src="../assets/signup-plan.js?v=selected-plan-1"></script>
 <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
 </body>

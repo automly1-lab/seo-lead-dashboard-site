@@ -25,15 +25,15 @@
     loadStylesheetOnce(`${getBasePrefix()}assets/mobile-brand-polish.css?v=mobile-brand-1`, "rf-mobile-brand-polish");
   }
 
+  function loadMvpCleanupStyles() {
+    loadStylesheetOnce(`${getBasePrefix()}assets/mvp-cleanup.css?v=mvp-cleanup-1`, "rf-mvp-cleanup");
+  }
+
   function getSession() {
     if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
       return window.rankforgeAuth.getSession();
     }
-    try {
-      return JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null");
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(localStorage.getItem("rankforge-auth-session-v1") || "null"); } catch { return null; }
   }
 
   function currentEmail() {
@@ -41,25 +41,18 @@
     return String((session && (session.email || session.userEmail)) || "").trim().toLowerCase();
   }
 
-  function isAdmin() {
-    return currentEmail() === ADMIN_EMAIL;
-  }
+  function isAdmin() { return currentEmail() === ADMIN_EMAIL; }
 
   function addQualityLinkForAdmin() {
     if (!isProtectedAppPage() || !isAdmin()) return;
     const nav = document.querySelector(".sidebar-nav");
     if (!nav || nav.querySelector('a[href$="quality/"]')) return;
-
     const settingsLink = nav.querySelector('a[href$="settings/"]');
     const link = document.createElement("a");
     link.href = `${getBasePrefix()}quality/`;
     link.textContent = "Quality";
     link.className = "rf-sidebar-quality-link";
-
-    if ((document.body?.dataset?.page || "") === "quality") {
-      link.classList.add("active");
-    }
-
+    if ((document.body?.dataset?.page || "") === "quality") link.classList.add("active");
     if (settingsLink) nav.insertBefore(link, settingsLink);
     else nav.appendChild(link);
   }
@@ -73,16 +66,11 @@
     if (!isProtectedAppPage()) return;
     const nav = document.querySelector(".sidebar-nav");
     if (!nav || nav.querySelector('a[href$="settings/"]')) return;
-
     const link = document.createElement("a");
     link.href = `${getBasePrefix()}settings/`;
     link.textContent = "Settings";
     link.className = "rf-sidebar-settings-link";
-
-    if ((document.body?.dataset?.page || "") === "settings") {
-      link.classList.add("active");
-    }
-
+    if ((document.body?.dataset?.page || "") === "settings") link.classList.add("active");
     nav.appendChild(link);
   }
 
@@ -107,15 +95,17 @@
     loadScriptOnce(`${getBasePrefix()}assets/lead-detail-quality.js?v=lead-detail-quality-1`, "rf-lead-detail-quality");
   }
 
+  function loadMvpCleanupScript() {
+    loadScriptOnce(`${getBasePrefix()}assets/mvp-cleanup.js?v=mvp-cleanup-1`, "rf-mvp-cleanup-js");
+  }
+
   function addDashboardOnboarding() {
     if ((document.body?.dataset?.page || "") !== "dashboard") return;
     if (localStorage.getItem(DISMISS_KEY) === "true") return;
     if (document.querySelector(".rf-onboarding-panel")) return;
-
     const workspaceStrip = document.querySelector(".workspace-strip");
     const main = document.querySelector(".dashboard-main");
     if (!workspaceStrip || !main) return;
-
     const panel = document.createElement("section");
     panel.className = "rf-onboarding-panel";
     panel.innerHTML = `
@@ -133,35 +123,25 @@
         <article class="rf-onboarding-step"><span>3</span><strong>Create search</strong><small>The request is sent to the search workflow and saved under your workspace.</small></article>
         <article class="rf-onboarding-step"><span>4</span><strong>Review leads</strong><small>Check contact path, SEO need, commercial fit, and lead priority.</small></article>
         <article class="rf-onboarding-step"><span>5</span><strong>Export</strong><small>Download a clean CSV for outreach once the list is ready.</small></article>
-      </div>
-    `;
-
+      </div>`;
     main.insertBefore(panel, workspaceStrip);
-
     const dismiss = panel.querySelector(".rf-onboarding-dismiss");
-    if (dismiss) {
-      dismiss.addEventListener("click", () => {
-        localStorage.setItem(DISMISS_KEY, "true");
-        panel.remove();
-      });
-    }
+    if (dismiss) dismiss.addEventListener("click", () => { localStorage.setItem(DISMISS_KEY, "true"); panel.remove(); });
   }
 
   function init() {
     loadMobileBrandPolish();
+    loadMvpCleanupStyles();
     addSettingsLink();
     addQualityLinkForAdmin();
     removeQualityLinkForNonAdmin();
     addDashboardOnboarding();
     loadLeadQualityReasons();
     loadLeadDetailQuality();
+    loadMvpCleanupScript();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
   window.setTimeout(init, 800);
 })();

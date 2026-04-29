@@ -12,32 +12,32 @@
     free: {
       name: "Free",
       price: "$0 · no paid plan active",
-      leadLimit: "Up to 10 lead previews",
-      searchLimit: "1 free search batch total",
+      leadLimit: "Up to 10 qualified lead previews",
+      searchLimit: "1 search batch total",
       status: "Free",
-      description: "Free workspace access lets you try RankForge with one search before choosing Starter or Growth. Paid access activates only after checkout confirmation."
+      description: "Free workspace access lets you test one focused search before choosing Starter or Growth. Paid access activates only after checkout confirmation."
     },
     starter: {
       name: "Starter",
       price: "$29/month",
-      leadLimit: "50 prioritized leads/month",
-      searchLimit: "3 active search batches · 3 searches/month",
+      leadLimit: "Up to 50 qualified lead opportunities/month",
+      searchLimit: "5 search batches/month · max 25 leads per batch",
       status: "Active",
-      description: "For testing a few focused niches or cities with automated scoring and CSV export. Manual lead review is not included."
+      description: "For freelancers and small agencies testing focused niches and cities. Includes search batch credits and qualified lead opportunity credits."
     },
     growth: {
       name: "Growth",
       price: "$79/month",
-      leadLimit: "250 prioritized leads/month",
-      searchLimit: "5 active search batches · 15 searches/month",
+      leadLimit: "Up to 250 qualified lead opportunities/month",
+      searchLimit: "15 search batches/month · max 50 leads per batch",
       status: "Active",
-      description: "For agencies that want a steady monthly flow of prioritized local SEO opportunities. Manual lead review is not included."
+      description: "For agencies that want a steady monthly flow of prioritized local SEO opportunities across multiple markets."
     },
     agency_intelligence: {
       name: "Agency Intelligence",
       price: "Coming soon",
-      leadLimit: "750+ prioritized leads/month",
-      searchLimit: "More active search batches",
+      leadLimit: "750+ qualified lead opportunities/month",
+      searchLimit: "More search batches",
       status: "Coming soon",
       description: "Planned for deeper SEO analysis, competitor visibility signals, priority processing, and advanced agency workflows."
     },

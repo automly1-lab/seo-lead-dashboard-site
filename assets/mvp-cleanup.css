@@ -1,0 +1,133 @@
+/* RankForge MVP cleanup layer */
+
+/* Keep app navigation consistent across pages */
+.sidebar {
+  background: linear-gradient(180deg, #07111f 0%, #0b1728 100%) !important;
+}
+
+.sidebar .brand,
+.sidebar-nav a,
+.sidebar-site-link {
+  color: rgba(237, 242, 251, 0.82) !important;
+}
+
+.sidebar-nav a.active,
+.sidebar-nav a:hover,
+.sidebar-site-link:hover {
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+/* Hide technical/admin-ish topbar widgets from normal app UI */
+.app-brand-context,
+.app-back-home-link,
+.topbar-actions .data-status,
+.topbar-actions button[onclick*="sync"],
+.topbar-actions button[onclick*="rankforgeApp.sync"] {
+  display: none !important;
+}
+
+/* Hide noisy workspace data cards outside Settings and Quality */
+body:not(.app-page-settings):not(.app-page-quality) .workspace-strip {
+  display: none !important;
+}
+
+/* Leads page: prevent feedback widget from flashing inside the Outreach column/table */
+.app-page-leads #leadsTable .lead-feedback,
+.app-page-leads #leadsTable .rf-lead-feedback,
+.app-page-leads #leadsTable [class*="feedback"],
+.app-page-leads #leadsTable button[class*="feedback"],
+.app-page-leads #leadsTable form[class*="feedback"] {
+  display: none !important;
+}
+
+.app-page-leads #leadsTable td:last-child .feedback,
+.app-page-leads #leadsTable td:last-child [data-feedback],
+.app-page-leads #leadsTable td:last-child textarea,
+.app-page-leads #leadsTable td:last-child select {
+  display: none !important;
+}
+
+/* Search loading state */
+.rf-search-loading-card {
+  display: none;
+  margin: 0 0 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(21,94,239,.18);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(21,94,239,.08), rgba(13,148,136,.06)), #fff;
+  box-shadow: 0 16px 34px rgba(15,23,42,.06);
+}
+
+.rf-search-loading-card.is-visible {
+  display: grid;
+  gap: 6px;
+}
+
+.rf-search-loading-card strong {
+  color: #0f172a;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.rf-search-loading-card p {
+  margin: 0;
+  color: #667085;
+  line-height: 1.55;
+}
+
+.rf-search-loading-card .rf-loading-dots::after {
+  content: "";
+  animation: rfDots 1.2s infinite;
+}
+
+@keyframes rfDots {
+  0% { content: ""; }
+  33% { content: "."; }
+  66% { content: ".."; }
+  100% { content: "..."; }
+}
+
+/* Landing page sample data should read as illustrative, not real customer data */
+.sample-lead-card::before,
+.product-preview::before {
+  content: "Sample data";
+  display: inline-flex;
+  width: max-content;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(21,94,239,.09);
+  color: #155eef;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+/* Marketing/legal menu polish */
+.navbar {
+  background: rgba(255,255,255,.86);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.nav-links a {
+  color: #344054;
+  font-weight: 800;
+}
+
+.nav-links a:hover {
+  color: #155eef;
+}
+
+@media (max-width: 760px) {
+  .nav-links {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .nav-actions {
+    width: 100%;
+  }
+}

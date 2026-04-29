@@ -12,6 +12,19 @@
     return "";
   }
 
+  function loadStylesheetOnce(href, markerName) {
+    if (document.querySelector(`link[data-${markerName}="true"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.dataset[markerName.replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = "true";
+    document.head.appendChild(link);
+  }
+
+  function loadMobileBrandPolish() {
+    loadStylesheetOnce(`${getBasePrefix()}assets/mobile-brand-polish.css?v=mobile-brand-1`, "rf-mobile-brand-polish");
+  }
+
   function getSession() {
     if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
       return window.rankforgeAuth.getSession();
@@ -135,6 +148,7 @@
   }
 
   function init() {
+    loadMobileBrandPolish();
     addSettingsLink();
     addQualityLinkForAdmin();
     removeQualityLinkForNonAdmin();

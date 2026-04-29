@@ -4,26 +4,24 @@
   'use strict';
 
   function ready(fn) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn);
-    } else {
-      fn();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
+  function isNestedAppPage() {
+    var current = window.location.pathname || '/';
+    return /\/(dashboard|lists|leads|lead-detail|settings|quality|login|signup)\//.test(current);
   }
 
   function normalizePath(path) {
-    var current = window.location.pathname || '/';
-    if (current.includes('/dashboard/') || current.includes('/lists/') || current.includes('/leads/') || current.includes('/lead-detail/') || current.includes('/login/') || current.includes('/signup/')) {
-      return '../' + path.replace(/^\//, '');
-    }
-    return path;
+    return isNestedAppPage() ? '../' + path.replace(/^\//, '') : path;
   }
 
   function updateSidebarBrand() {
     var brand = document.querySelector('.sidebar .brand');
     if (!brand) return;
 
-    brand.setAttribute('href', normalizePath('index.html'));
+    brand.setAttribute('href', normalizePath(''));
     brand.setAttribute('aria-label', 'Back to CrestlineOps homepage');
 
     var strong = brand.querySelector('.brand-copy strong');
@@ -36,30 +34,14 @@
     if (sidebarNav && !document.querySelector('.sidebar-site-link')) {
       var home = document.createElement('a');
       home.className = 'sidebar-site-link';
-      home.href = normalizePath('index.html');
-      home.textContent = '← CrestlineOps site';
+      home.href = normalizePath('');
+      home.textContent = 'CrestlineOps site';
       sidebarNav.parentNode.insertBefore(home, sidebarNav.nextSibling);
     }
   }
 
-  function addTopbarContext() {
-    var actions = document.querySelector('.topbar-actions');
-    if (!actions) return;
-
-    if (!document.querySelector('.app-brand-context')) {
-      var context = document.createElement('div');
-      context.className = 'app-brand-context';
-      context.innerHTML = 'App: <strong>RankForge</strong>'; 
-      actions.insertBefore(context, actions.firstChild);
-    }
-
-    if (!document.querySelector('.app-back-home-link')) {
-      var link = document.createElement('a');
-      link.className = 'app-back-home-link';
-      link.href = normalizePath('index.html');
-      link.textContent = '← Back to CrestlineOps';
-      actions.insertBefore(link, actions.firstChild);
-    }
+  function removeTopbarContextClutter() {
+    document.querySelectorAll('.app-brand-context, .app-back-home-link').forEach(function (node) { node.remove(); });
   }
 
   function updateAuthCopy() {
@@ -90,9 +72,9 @@
 
   ready(function () {
     updateSidebarBrand();
-    addTopbarContext();
+    removeTopbarContextClutter();
     updateAuthCopy();
     updateTitle();
-    window.rankforgeBrandConsistency = { active: true, version: 'brand-consistency-1' };
+    window.rankforgeBrandConsistency = { active: true, version: 'brand-consistency-2' };
   });
 })();

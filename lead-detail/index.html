@@ -6,6 +6,7 @@
   <title>RankForge Intelligence | Lead Detail</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/app-shell.css?v=app-shell-1">
+  <link rel="stylesheet" href="../assets/lead-detail-simplify.css?v=lead-detail-simplify-1">
   <link rel="stylesheet" href="../assets/selected-lead-detail-fix.css?v=selected-lead-fix-1">
   <link rel="stylesheet" href="../assets/navigation-switcher.css?v=contact-stack-fix-4">
   <link rel="stylesheet" href="../assets/app-polish.css?v=onboarding-settings-1">
@@ -21,7 +22,7 @@
     </aside>
     <main class="dashboard-main">
       <header class="topbar">
-        <div><p class="kicker">Lead Detail</p><h1>One lead, fully explained</h1><p class="topbar-copy">Review the company, contact path, verified SEO evidence, commercial fit, and next action in one focused workspace.</p></div>
+        <div><p class="kicker">Lead Detail</p><h1>Lead decision view</h1><p class="topbar-copy">A simpler view for deciding whether this company is worth outreach, needs review, or should be skipped.</p></div>
         <div class="topbar-actions"><a class="button ghost" href="../leads/">Back to Leads</a></div>
       </header>
       <section class="workspace-strip">
@@ -32,30 +33,29 @@
       <section class="detail-grid detail-grid-single">
         <article class="panel">
           <div class="detail-hero-panel">
-            <div class="detail-hero-copy"><p class="panel-eyebrow">Selected Lead Detail</p><h2 id="detailCompany">No lead selected</h2><p class="detail-hero-note">Use this page to decide if the account deserves outreach now, needs manual review, or should be rejected.</p></div>
+            <div class="detail-hero-copy"><p class="panel-eyebrow">Selected Lead</p><h2 id="detailCompany">No lead selected</h2><p class="detail-hero-note">Check contact, score, and verified SEO evidence before using this company for outreach.</p></div>
             <div class="detail-hero-meta"><span class="pill pill-soft" id="detailStatus">Needs Review</span><a class="button ghost small" href="../leads/">Back to Leads</a></div>
           </div>
-          <section class="detail-decision-strip" aria-label="Lead decision summary"><div><span class="workspace-label">Decision Focus</span><strong>Is this reachable and worth outreach?</strong></div><div><span class="workspace-label">Contact Standard</span><strong>Email or phone required</strong></div><div><span class="workspace-label">Operator Rule</span><strong>Use verified evidence before pitching</strong></div></section>
           <section class="detail-section detail-section-framed">
-            <div class="detail-section-head"><div><p class="panel-eyebrow">Lead Snapshot</p><h3>Lead quality snapshot</h3></div></div>
-            <dl class="detail-matrix detail-matrix-premium"><div><dt>Website</dt><dd><a id="detailWebsite" href="#" target="_blank" rel="noreferrer">-</a></dd></div><div><dt>Location</dt><dd id="detailLocation">-</dd></div><div><dt>Primary Problem</dt><dd id="detailPrimaryProblem">-</dd></div><div><dt>Recommended Offer</dt><dd id="detailOffer">-</dd></div></dl>
+            <div class="detail-section-head"><div><p class="panel-eyebrow">Snapshot</p><h3>Important details</h3></div></div>
+            <dl class="detail-matrix detail-matrix-premium"><div><dt>Website</dt><dd><a id="detailWebsite" href="#" target="_blank" rel="noreferrer">-</a></dd></div><div><dt>Location</dt><dd id="detailLocation">-</dd></div><div><dt>Main SEO angle</dt><dd id="detailPrimaryProblem">-</dd></div><div><dt>Recommended offer</dt><dd id="detailOffer">-</dd></div></dl>
             <div class="detail-chip-row detail-chip-row-spaced"><span class="detail-chip" id="detailOutreachReadiness">Needs review</span><span class="detail-chip" id="detailPaidAds">Paid ads: unknown</span><span class="detail-chip" id="detailSecondaryProblem">Secondary issue not set</span></div>
           </section>
           <section class="detail-section">
-            <div class="detail-section-head"><div><p class="panel-eyebrow">Scoring System</p><h3>Why this lead ranks where it does</h3></div></div>
-            <div class="detail-score-grid detail-score-grid-premium"><article class="detail-score-card detail-score-card-primary"><span>SEO Need</span><strong id="detailSeoScore">0</strong><small>How strong the organic SEO gap appears to be.</small></article><article class="detail-score-card"><span>Overall Score</span><strong id="detailOverallScore">0</strong><small>The combined intelligence score used in the workspace.</small></article><article class="detail-score-card"><span>Commercial Fit</span><strong id="detailCommercialFit">0</strong><small>How attractive the account looks for agency services.</small></article><article class="detail-score-card"><span>Contact Confidence</span><strong id="detailContactConfidence">0</strong><small>How reliable the reachable contact path appears to be.</small></article></div>
+            <div class="detail-section-head"><div><p class="panel-eyebrow">Scores</p><h3>Lead score breakdown</h3></div></div>
+            <div class="detail-score-grid detail-score-grid-premium"><article class="detail-score-card detail-score-card-primary"><span>SEO Need</span><strong id="detailSeoScore">0</strong><small>Potential SEO gap.</small></article><article class="detail-score-card"><span>Overall</span><strong id="detailOverallScore">0</strong><small>Prioritization score.</small></article><article class="detail-score-card"><span>Commercial Fit</span><strong id="detailCommercialFit">0</strong><small>Likely agency value.</small></article><article class="detail-score-card"><span>Contact Confidence</span><strong id="detailContactConfidence">0</strong><small>Reachability quality.</small></article></div>
           </section>
           <section class="detail-section">
-            <div class="detail-section-head"><div><p class="panel-eyebrow">Lead Narrative</p><h3>Why this business deserves attention</h3></div></div>
-            <div class="detail-copy-grid detail-copy-grid-premium"><div class="detail-story-card"><h3>Why this lead matters</h3><p id="detailReason">No qualification reason yet.</p></div><div class="detail-story-card"><h3>Outreach angle</h3><p id="detailAngle">No outreach angle yet.</p></div><div class="detail-story-card"><h3>Client value hypothesis</h3><p id="detailValue">No value hypothesis yet.</p></div><div class="detail-story-card"><h3>First-line personalization</h3><p id="detailPersonalization">No personalization yet.</p></div></div>
+            <div class="detail-section-head"><div><p class="panel-eyebrow">Why It Matters</p><h3>Short explanation</h3></div></div>
+            <div class="detail-copy-grid detail-copy-grid-premium"><div class="detail-story-card"><h3>Reason to review this lead</h3><p id="detailReason">No qualification reason yet.</p></div><div class="detail-story-card"><h3>Outreach angle</h3><p id="detailAngle">No outreach angle yet.</p></div><div class="detail-story-card"><h3>Client value hypothesis</h3><p id="detailValue">No value hypothesis yet.</p></div><div class="detail-story-card"><h3>First-line personalization</h3><p id="detailPersonalization">No personalization yet.</p></div></div>
           </section>
           <section class="detail-section">
-            <div class="detail-section-head"><div><p class="panel-eyebrow">Contact Readiness</p><h3>Reachability and contact path</h3></div></div>
-            <div class="detail-contact-grid detail-contact-grid-premium"><div class="detail-contact-card"><h3>Decision Maker Snapshot</h3><p id="detailDecisionMaker">No named contact yet</p><small id="detailDecisionRole">Needs contact enrichment</small></div><div class="detail-contact-card"><h3>Best Contact Path</h3><p id="detailContactLine">No direct contact captured</p><small id="detailContactChannel">Recommended channel not set</small></div></div>
+            <div class="detail-section-head"><div><p class="panel-eyebrow">Contact</p><h3>Best available contact path</h3></div></div>
+            <div class="detail-contact-grid detail-contact-grid-premium"><div class="detail-contact-card"><h3>Contact snapshot</h3><p id="detailDecisionMaker">No named contact yet</p><small id="detailDecisionRole">Needs contact enrichment</small></div><div class="detail-contact-card"><h3>Reachability</h3><p id="detailContactLine">No direct contact captured</p><small id="detailContactChannel">Recommended channel not set</small></div></div>
           </section>
           <section class="detail-section">
-            <div class="detail-section-head"><div><p class="panel-eyebrow">Operator Actions</p><h3>Operator decision and next step</h3></div></div>
-            <div class="detail-action-grid detail-action-grid-premium"><div class="detail-action-card"><h3>Next Best Action</h3><p id="detailNextAction">Review the selected lead.</p></div><div class="detail-action-card"><h3>Lead Risk</h3><p id="detailRiskNote">No major risk recorded yet.</p></div></div>
+            <div class="detail-section-head"><div><p class="panel-eyebrow">Next Step</p><h3>Operator action</h3></div></div>
+            <div class="detail-action-grid detail-action-grid-premium"><div class="detail-action-card"><h3>Next best action</h3><p id="detailNextAction">Review the selected lead.</p></div><div class="detail-action-card"><h3>Lead risk</h3><p id="detailRiskNote">No major risk recorded yet.</p></div></div>
             <div class="detail-bottom-grid detail-bottom-grid-premium"><div class="detail-list-card"><h3>Signal Checklist</h3><ul class="detail-bullet-list" id="detailSignalList"><li>Review SEO weakness signals.</li></ul></div><div class="detail-list-card"><h3>Outreach Playbook</h3><ul class="detail-bullet-list" id="detailPlaybookList"><li>Choose a lead to generate recommendations.</li></ul></div></div>
           </section>
         </article>
@@ -73,6 +73,7 @@
 <script src="../assets/lead-feedback.js?v=lead-feedback-1"></script>
 <script src="../assets/navigation-switcher.js?v=contact-stack-fix-4"></script>
 <script src="../assets/selected-lead-detail-fix.js?v=selected-lead-fix-1"></script>
+<script src="../assets/lead-detail-simplify.js?v=lead-detail-simplify-1"></script>
 <script src="../assets/seo-evidence-panel.js?v=seo-evidence-1"></script>
 </body>
 </html>

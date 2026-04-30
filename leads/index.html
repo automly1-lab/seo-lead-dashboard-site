@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Intelligence | Leads</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
+  <link rel="stylesheet" href="../assets/app-shell.css?v=app-shell-1">
   <link rel="stylesheet" href="../assets/selected-lead-detail-fix.css?v=selected-lead-fix-1">
   <link rel="stylesheet" href="../assets/navigation-switcher.css?v=contact-stack-fix-4">
   <link rel="stylesheet" href="../assets/app-polish.css?v=onboarding-settings-1">
@@ -16,14 +17,13 @@
 <body class="dashboard-body app-page-leads" data-auth="protected" data-page="leads">
   <div class="dashboard-shell">
     <aside class="sidebar">
-      <a class="brand" href="../index.html"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
-      <nav class="sidebar-nav"><a href="../dashboard/">Dashboard</a><a href="../lists/">Saved Lists</a><a class="active" href="../leads/">Leads</a><a href="../lead-detail/">Lead Detail</a></nav>
-      <section class="sidebar-panel"><p class="panel-eyebrow">Why This Page</p><h2>Review the actual work queue.</h2><p>Filtering, score review, and export live here so the main dashboard stays clean.</p></section>
+      <a class="brand" href="../"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
+      <nav class="sidebar-nav"><a href="../dashboard/">Dashboard</a><a href="../lists/">Saved Lists</a><a class="active" href="../leads/">Leads</a><a href="../lead-detail/">Lead Detail</a><a href="../settings/">Settings</a></nav>
     </aside>
     <main class="dashboard-main">
       <header class="topbar">
-        <div><p class="kicker">Lead Workspace</p><h1>Review and export leads</h1><p class="topbar-copy">Filter the current batch, compare quality quickly, and move only the strongest opportunities into outreach.</p></div>
-        <div class="topbar-actions"><div class="data-status" id="dataStatus">Local workspace</div><button class="button ghost" type="button" onclick="window.rankforgeApp.sync()">Sync Sheets</button><a class="button primary" href="../lead-detail/">Open Lead Detail</a></div>
+        <div><p class="kicker">Lead Workspace</p><h1>Review and export leads</h1><p class="topbar-copy">Filter qualified and review-ready opportunities. Rejected records are hidden from the user workspace.</p></div>
+        <div class="topbar-actions"><a class="button primary" href="../lead-detail/">Open Lead Detail</a></div>
       </header>
       <section class="workspace-strip">
         <article class="workspace-card"><span class="workspace-label">Current Workspace User</span><strong id="workspaceUserBadge">Loading user…</strong><small>User-scoped lists and leads only</small></article>
@@ -34,29 +34,21 @@
         <div class="panel-header">
           <div><p class="panel-eyebrow">Lead Intelligence Table</p><h2>Leads in the selected list</h2></div>
           <div class="filters">
-            <label><span>Status</span><select id="qualificationFilter" onchange="window.rankforgeApp.refresh()"><option value="all">All</option><option value="qualified">Qualified</option><option value="review_needed">Review Needed</option><option value="rejected">Rejected</option></select></label>
+            <label><span>Status</span><select id="qualificationFilter" onchange="window.rankforgeApp.refresh()"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review_needed">Needs Review</option></select></label>
             <label><span>Min Score</span><input id="scoreFilter" type="range" min="0" max="100" value="0" oninput="document.getElementById('scoreFilterValue').textContent=this.value;window.rankforgeApp.refresh()"></label>
             <label class="toggle-label"><input id="contactReadyFilter" type="checkbox" onchange="window.rankforgeApp.refresh()"><span>Only contact-ready</span></label>
             <label class="toggle-label"><input id="paidAdsFilter" type="checkbox" onchange="window.rankforgeApp.refresh()"><span>Paid ads signal</span></label>
           </div>
         </div>
-        <div class="lead-summary-bar">
-          <div><span class="workspace-label">Visible Leads</span><strong id="visibleLeadCount">0 leads</strong></div>
-          <div><span class="workspace-label">List Snapshot</span><strong id="activeLeadSummary">No active list selected yet.</strong></div>
-        </div>
+        <div class="lead-summary-bar"><div><span class="workspace-label">Visible Leads</span><strong id="visibleLeadCount">0 leads</strong></div><div><span class="workspace-label">List Snapshot</span><strong id="activeLeadSummary">No active list selected yet.</strong></div></div>
         <div class="score-display"><span>Minimum visible score:</span><strong id="scoreFilterValue">0</strong></div>
-        <div class="saved-list-table-wrap">
-          <table class="data-table leads-table" id="leadsTable">
-            <thead><tr><th>Company</th><th>Decision Maker</th><th>Contact</th><th>SEO Score</th><th>Overall</th><th>Status</th><th>Outreach</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="saved-list-table-wrap"><table class="data-table leads-table" id="leadsTable"><thead><tr><th>Company</th><th>Decision Maker</th><th>Contact</th><th>SEO Score</th><th>Overall</th><th>Status</th><th>Outreach</th></tr></thead><tbody></tbody></table></div>
       </section>
       <section class="detail-grid">
         <article class="panel panel-compact">
-          <div class="panel-header"><div><p class="panel-eyebrow">Current Export Scope</p><h2 id="exportTargetList">No selected list</h2></div></div>
-          <div class="export-summary-card export-summary-card-inline"><span class="workspace-label">Current Export Scope</span><strong id="exportTargetListMirror">No selected list</strong><small id="exportTargetMeta">0 visible leads ready for export.</small></div>
-          <button class="button primary button-block" type="button" onclick="window.rankforgeApp.exportCsv()">Export Selected List CSV</button>
+          <div class="panel-header"><div><p class="panel-eyebrow">Export</p><h2 id="exportTargetList">No selected list</h2></div></div>
+          <div class="export-summary-card export-summary-card-inline"><span class="workspace-label">Export Scope</span><strong id="exportTargetListMirror">No selected list</strong><small id="exportTargetMeta">0 visible leads ready for export.</small></div>
+          <button class="button primary button-block" type="button" onclick="window.rankforgeApp.exportCsv()">Export CSV</button>
           <p class="form-status" id="exportStatus">CSV export uses the leads currently visible in this workspace view.</p>
         </article>
         <article class="panel panel-compact">
@@ -72,10 +64,11 @@
 <script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
 <script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
 <script src="../assets/export-professional.js?v=professional-export-2"></script>
-<script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
-<script src="../assets/app-polish.js?v=lead-quality-loader-1"></script>
+<script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
+<script src="../assets/app-polish.js?v=app-shell-1"></script>
 <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
 <script src="../assets/lead-feedback.js?v=lead-feedback-1"></script>
 <script src="../assets/selected-lead-detail-fix.js?v=selected-lead-fix-1"></script>
+<script src="../assets/hide-rejected-leads.js?v=hide-rejected-1"></script>
 </body>
 </html>

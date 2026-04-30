@@ -1,4 +1,4 @@
-/* RankForge selected lead URL/storage sync fix v2 */
+/* RankForge selected lead stable detail fix v3 */
 (function(){
   'use strict';
   var STATE_KEY='rankforge-clean-app-state-v1';
@@ -7,34 +7,22 @@
   var PAGE=(document.body&&document.body.dataset&&document.body.dataset.page)||'';
   function clean(v){return String(v==null?'':v).trim();}
   function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(e){return fallback;}}
-  function saveSelection(listId,leadId){
-    var state=parse(localStorage.getItem(STATE_KEY),{})||{};
-    if(listId){state.selectedListId=listId;localStorage.setItem(LIST_KEY,listId);sessionStorage.setItem(LIST_KEY,listId);}
-    if(leadId){state.selectedLeadId=leadId;localStorage.setItem(LEAD_KEY,leadId);sessionStorage.setItem(LEAD_KEY,leadId);}
-    localStorage.setItem(STATE_KEY,JSON.stringify(state));
-  }
-  function urlIds(){
-    try{var p=new URLSearchParams(location.search||'');return{leadId:clean(p.get('lead_id')||p.get('id')),listId:clean(p.get('list_id')||p.get('search_id'))};}catch(e){return{leadId:'',listId:''};}
-  }
-  function installListCapture(){
-    if(PAGE!=='leads'&&PAGE!=='dashboard')return;
-    document.addEventListener('click',function(event){
-      var row=event.target.closest('[data-lead-id]');
-      var link=event.target.closest('a[href*="lead-detail"]');
-      var state=parse(localStorage.getItem(STATE_KEY),{})||{};
-      var leadId=row?clean(row.getAttribute('data-lead-id')||row.dataset.leadId):'';
-      var listId=row?clean(row.getAttribute('data-list-id')||row.dataset.listId||state.selectedListId):'';
-      if(link){
-        try{var u=new URL(link.href,location.href);leadId=clean(u.searchParams.get('lead_id')||u.searchParams.get('id')||leadId);listId=clean(u.searchParams.get('list_id')||u.searchParams.get('search_id')||listId||state.selectedListId);if(leadId){u.searchParams.set('lead_id',leadId);if(listId)u.searchParams.set('list_id',listId);link.href=u.toString();}}catch(e){}
-      }
-      if(leadId)saveSelection(listId,leadId);
-    },true);
-  }
-  function applyUrlSelection(){
-    if(PAGE!=='lead-detail')return;
-    var ids=urlIds();
-    if(ids.leadId||ids.listId)saveSelection(ids.listId,ids.leadId);
-  }
-  function init(){installListCapture();applyUrlSelection();}
+  function num(v){var n=Number(v||0);return Number.isFinite(n)?Math.round(n):0;}
+  function tc(v){return clean(v).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
+  function state(){var s=parse(localStorage.getItem(STATE_KEY),{})||{};if(!s.remoteCache)s.remoteCache={lists:[],leads:[]};if(!Array.isArray(s.remoteCache.leads))s.remoteCache.leads=[];if(!Array.isArray(s.remoteCache.lists))s.remoteCache.lists=[];if(!Array.isArray(s.localLeads))s.localLeads=[];if(!Array.isArray(s.localLists))s.localLists=[];return s;}
+  function saveSelection(listId,leadId){var s=state();if(listId){s.selectedListId=listId;localStorage.setItem(LIST_KEY,listId);sessionStorage.setItem(LIST_KEY,listId);}if(leadId){s.selectedLeadId=leadId;localStorage.setItem(LEAD_KEY,leadId);sessionStorage.setItem(LEAD_KEY,leadId);}localStorage.setItem(STATE_KEY,JSON.stringify(s));}
+  function urlIds(){try{var p=new URLSearchParams(location.search||'');return{leadId:clean(p.get('lead_id')||p.get('id')),listId:clean(p.get('list_id')||p.get('search_id'))};}catch(e){return{leadId:'',listId:''};}}
+  function leadId(x){return clean(x&&(x.id||x.lead_id||x.final_lead_id));}
+  function listId(x){return clean(x&&(x.listId||x.search_id||x.list_id));}
+  function userId(x){return clean(x&&(x.userId||x.user_id));}
+  function field(x,keys){for(var i=0;i<keys.length;i++){var v=clean(x&&x[keys[i]]);if(v)return v;}return '';}
+  function setText(id,v){var el=document.getElementById(id);if(el)el.textContent=v==null||v===''?'-':String(v);}
+  function setHtml(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;}
+  function allLeads(s){var uid=clean(s.currentUserId||localStorage.getItem('rankforge-current-user-id-v1'));var seen={},out=[];[].concat(s.remoteCache.leads||[],s.localLeads||[]).forEach(function(x){var id=leadId(x);if(!id||seen[id])return;if(uid&&userId(x)&&userId(x)!==uid)return;seen[id]=1;out.push(x);});return out;}
+  function lists(s){var uid=clean(s.currentUserId||localStorage.getItem('rankforge-current-user-id-v1'));var seen={},out=[];[].concat(s.remoteCache.lists||[],s.localLists||[]).forEach(function(x){var id=clean(x.id||x.search_id);if(!id||seen[id])return;if(uid&&userId(x)&&userId(x)!==uid)return;seen[id]=1;out.push(x);});return out;}
+  function selectedLead(s){var ids=urlIds();var id=ids.leadId||clean(sessionStorage.getItem(LEAD_KEY)||localStorage.getItem(LEAD_KEY)||s.selectedLeadId);var lead=allLeads(s).find(function(x){return leadId(x)===id;});if(!lead&&id){lead=allLeads(s).find(function(x){return clean(x.lead_id)===id||clean(x.id)===id;});}return lead||null;}
+  function selectedList(s,lead){var ids=urlIds();var lid=ids.listId||listId(lead)||clean(sessionStorage.getItem(LIST_KEY)||localStorage.getItem(LIST_KEY)||s.selectedListId);return lists(s).find(function(x){return clean(x.id||x.search_id)===lid;})||null;}
+  function apply(lead,list){if(!lead)return;var website=field(lead,['website','website_url','clean_website_url']);var email=field(lead,['email','decision_maker_email']);var phone=field(lead,['phone','decision_maker_phone']);setText('detailCompany',field(lead,['company','company_name','business_name'])||'Unknown company');setText('detailStatus',field(lead,['status','qualification_status'])||'review_needed');var w=document.getElementById('detailWebsite');if(w){w.textContent=website?website.replace(/^https?:\/\//,''):'-';w.href=website||'#';}setText('detailLocation',list?[list.city,list.country].filter(Boolean).join(', '):field(lead,['city','location'])||'-');setText('detailPrimaryProblem',field(lead,['primaryProblem','primary_problem'])||'Review SEO evidence below');setText('detailOffer',field(lead,['recommendedOffer','recommended_offer'])||'SEO audit');setText('detailSeoScore',num(field(lead,['seoScore','seo_need_score'])));setText('detailOverallScore',num(field(lead,['overallScore','overall_lead_score'])));setText('detailCommercialFit',num(field(lead,['commercialFit','commercial_fit_score'])));setText('detailContactConfidence',num(field(lead,['contactConfidence','contact_confidence_score'])));setText('detailOutreachReadiness','Outreach: '+tc(field(lead,['outreachReadiness','outreach_readiness'])||'needs_review'));setText('detailPaidAds','Paid ads: '+((lead.paidAdsDetected||String(lead.paid_ads_detected||'').toLowerCase()==='true')?'detected':'not detected'));setText('detailSecondaryProblem',field(lead,['secondaryProblem','secondary_problem'])||'Secondary issue not set');setText('detailReason',field(lead,['whyItMatters','qualification_reason'])||'Review the verified SEO evidence before outreach.');setText('detailAngle',field(lead,['outreachAngle','outreach_angle'])||'Use a verified SEO issue as the outreach angle.');setText('detailValue',field(lead,['valueHypothesis','client_value_hypothesis'])||'');setText('detailPersonalization',field(lead,['firstLine','first_line_personalization'])||'');setText('detailDecisionMaker',field(lead,['decisionMaker','decision_maker_name'])||(email||phone?'Business contact available':'No named contact yet'));setText('detailDecisionRole',field(lead,['role','decision_maker_role'])||'No named decision maker found yet');var cn=document.getElementById('detailContactLine');if(cn)cn.innerHTML='<span class="detail-contact-line"><strong>Email</strong><span>'+(email||'Not found')+'</span></span><span class="detail-contact-line"><strong>Phone</strong><span>'+(phone||'Not found')+'</span></span>';setText('detailContactChannel',field(lead,['recommendedChannel','recommended_channel'])?'Recommended channel: '+tc(field(lead,['recommendedChannel','recommended_channel'])):(email?'Recommended channel: Email':(phone?'Recommended channel: Phone':'Recommended channel not set')));setText('detailNextAction',email||phone?'Review evidence, then prepare outreach.':'Prioritize manual contact enrichment first.');setText('detailRiskNote','Use only verified evidence. Do not claim SEO problems that are not shown in the evidence panel.');setHtml('#detailSignalList','<li>'+ (field(lead,['primaryProblem','primary_problem'])||'Review SEO evidence signals.') +'</li><li>'+ (field(lead,['secondaryProblem','secondary_problem'])||'Review secondary issues.') +'</li>');}
+  function init(){if(PAGE==='leads'||PAGE==='dashboard'){document.addEventListener('click',function(e){var row=e.target.closest('[data-lead-id]');var link=e.target.closest('a[href*="lead-detail"]');var s=state(),lead='',list='';if(row){lead=clean(row.getAttribute('data-lead-id')||row.dataset.leadId);list=clean(row.getAttribute('data-list-id')||row.dataset.listId||s.selectedListId);}if(link){try{var u=new URL(link.href,location.href);lead=clean(u.searchParams.get('lead_id')||u.searchParams.get('id')||lead);list=clean(u.searchParams.get('list_id')||u.searchParams.get('search_id')||list||s.selectedListId);if(lead){u.searchParams.set('lead_id',lead);if(list)u.searchParams.set('list_id',list);link.href=u.toString();}}catch(x){}}if(lead)saveSelection(list,lead);},true);}if(PAGE==='lead-detail'){var tries=0;var run=function(){tries++;var s=state(),ids=urlIds();if(ids.leadId||ids.listId)saveSelection(ids.listId,ids.leadId);var lead=selectedLead(s);if(lead){var list=selectedList(s,lead);saveSelection(list?clean(list.id||list.search_id):listId(lead),leadId(lead));apply(lead,list);}if(tries<10)setTimeout(run,500);};run();}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

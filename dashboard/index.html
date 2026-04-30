@@ -31,8 +31,22 @@
     .create-search-card button[type="submit"] { min-height: 50px; border-radius: 16px; font-weight: 850; }
     .hero-grid { display: none !important; }
     .metrics-grid { margin-top: 0; }
-    @media (max-width: 1180px) { .create-search-top { grid-template-columns: 1fr; } }
-    @media (max-width: 760px) { .create-search-top { padding: 18px; border-radius: 24px; } .create-search-card .quick-create-form { grid-template-columns: 1fr; } }
+    .rf-quality-overview { display: grid; grid-template-columns: 1.15fr .85fr; gap: 18px; margin: 0; }
+    .rf-quality-card { padding: 22px; border: 1px solid rgba(15, 23, 42, 0.09); border-radius: 26px; background: #fff; box-shadow: 0 16px 40px rgba(15, 23, 42, 0.055); }
+    .rf-quality-card h2 { margin: 0 0 8px; font-size: 24px; letter-spacing: -0.045em; color: #0f172a; }
+    .rf-quality-card p { margin: 0; color: #667085; line-height: 1.58; }
+    .rf-funnel { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+    .rf-funnel-step { padding: 14px; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 16px; background: #f8fafc; }
+    .rf-funnel-step span { display: block; color: #667085; font-size: 10.5px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+    .rf-funnel-step strong { display: block; margin-top: 6px; color: #0f172a; font-size: 25px; letter-spacing: -0.05em; }
+    .rf-coverage-grid { display: grid; gap: 10px; margin-top: 16px; }
+    .rf-coverage-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 13px; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 15px; background: #fff; }
+    .rf-coverage-row span { color: #344054; font-weight: 800; }
+    .rf-coverage-row strong { color: #155eef; }
+    .rf-warning-list { display: grid; gap: 8px; margin-top: 14px; }
+    .rf-warning { padding: 11px 12px; border-radius: 14px; background: #fff7ed; color: #78350f; border: 1px solid #fed7aa; font-size: 13px; line-height: 1.45; }
+    @media (max-width: 1180px) { .create-search-top { grid-template-columns: 1fr; } .rf-quality-overview { grid-template-columns: 1fr; } .rf-funnel { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 760px) { .create-search-top { padding: 18px; border-radius: 24px; } .create-search-card .quick-create-form { grid-template-columns: 1fr; } .rf-funnel { grid-template-columns: 1fr; } }
   </style>
 
 </head>
@@ -63,5 +77,43 @@
 <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
 <script src="../assets/search-presets-clean.js?v=search-progress-panel-1"></script>
 <script src="../assets/no-qualified-leads-message.js?v=no-qualified-1"></script>
+<script>
+(function(){
+  if (((document.body || {}).dataset || {}).page !== 'dashboard') return;
+  function numberFromText(value){ var n = Number(String(value || '').replace(/[^0-9.-]/g,'')); return Number.isFinite(n) ? Math.max(0, Math.round(n)) : 0; }
+  function text(id){ var el = document.getElementById(id); return el ? el.textContent : ''; }
+  function percent(a,b){ return b ? Math.round((a / b) * 100) + '%' : '0%'; }
+  function renderQualityWorkspace(){
+    var metrics = document.querySelector('.metrics-grid');
+    if (!metrics) return;
+    var existing = document.getElementById('rfQualityOverview');
+    var saved = numberFromText(text('metricSavedLists'));
+    var qualified = numberFromText(text('metricQualified'));
+    var review = numberFromText(text('metricReviewNeeded'));
+    var visible = numberFromText(text('visibleLeadCount'));
+    var discovered = Math.max(visible, qualified + review);
+    var audited = Math.max(qualified + review, 0);
+    var html = '<article class="rf-quality-card"><p class="panel-eyebrow">Lead Quality Funnel</p><h2>Search to evidence to qualified leads</h2><p>Track whether RankForge is producing evidence-backed opportunities, not just raw business lists.</p><div class="rf-funnel"><div class="rf-funnel-step"><span>Searches</span><strong>'+saved+'</strong></div><div class="rf-funnel-step"><span>Found</span><strong>'+discovered+'</strong></div><div class="rf-funnel-step"><span>Pre-filtered</span><strong>'+discovered+'</strong></div><div class="rf-funnel-step"><span>Audited</span><strong>'+audited+'</strong></div><div class="rf-funnel-step"><span>Qualified</span><strong>'+qualified+'</strong></div><div class="rf-funnel-step"><span>Exported</span><strong>0</strong></div></div></article><article class="rf-quality-card"><p class="panel-eyebrow">Evidence Coverage</p><h2>Quality health</h2><p>This is the operating view for lead quality. Use it to spot weak batches before exporting.</p><div class="rf-coverage-grid"><div class="rf-coverage-row"><span>Qualified rate</span><strong>'+percent(qualified, discovered)+'</strong></div><div class="rf-coverage-row"><span>Review-needed pool</span><strong>'+review+'</strong></div><div class="rf-coverage-row"><span>Visible opportunities</span><strong>'+discovered+'</strong></div></div><div class="rf-warning-list" id="rfQualityWarnings"></div></article>';
+    if (!existing) {
+      var wrap = document.createElement('section');
+      wrap.id = 'rfQualityOverview';
+      wrap.className = 'rf-quality-overview';
+      wrap.innerHTML = html;
+      metrics.insertAdjacentElement('afterend', wrap);
+    } else {
+      existing.innerHTML = html;
+    }
+    var warnings = [];
+    if (discovered === 0) warnings.push('No visible leads yet. Create a search batch to benchmark lead quality.');
+    if (discovered > 0 && qualified === 0) warnings.push('No qualified leads yet. Check discovery depth, crawl coverage, and evidence quality.');
+    if (review > qualified * 3 && review > 5) warnings.push('Many leads need review. Improve crawl quality or contact discovery before export.');
+    var box = document.getElementById('rfQualityWarnings');
+    if (box) box.innerHTML = warnings.map(function(item){ return '<div class="rf-warning">'+item+'</div>'; }).join('');
+  }
+  var count = 0;
+  var timer = setInterval(function(){ count += 1; renderQualityWorkspace(); if (count > 12) clearInterval(timer); }, 700);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderQualityWorkspace); else renderQualityWorkspace();
+})();
+</script>
 </body>
 </html>

@@ -16,19 +16,56 @@
     if(document.getElementById('rfAgencyAngleStyles'))return;
     var style=document.createElement('style');
     style.id='rfAgencyAngleStyles';
-    style.textContent='.rf-agency-angle-card{display:grid;gap:14px;margin:0 0 18px;padding:18px;border:1px solid rgba(21,94,239,.18);border-radius:20px;background:linear-gradient(135deg,rgba(21,94,239,.075),rgba(20,184,166,.055)),#fff}.rf-agency-angle-card .panel-eyebrow{margin:0}.rf-agency-angle-card h3{margin:0;font-size:20px;letter-spacing:-.035em}.rf-agency-angle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rf-agency-angle-box{padding:13px;border:1px solid rgba(15,23,42,.08);border-radius:16px;background:rgba(255,255,255,.76)}.rf-agency-angle-box span{display:block;color:#667085;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.rf-agency-angle-box p{margin:6px 0 0;color:#344054;line-height:1.55}.rf-safe-line{padding:13px 14px;border-radius:16px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.18);color:#064e3b;line-height:1.55}@media(max-width:900px){.rf-agency-angle-grid{grid-template-columns:1fr}}';
+    style.textContent='.rf-agency-angle-card{display:grid;gap:14px;margin:0 0 18px;padding:18px;border:1px solid rgba(21,94,239,.18);border-radius:20px;background:linear-gradient(135deg,rgba(21,94,239,.075),rgba(20,184,166,.055)),#fff}.rf-agency-angle-card .panel-eyebrow{margin:0}.rf-agency-angle-card h3{margin:0;font-size:20px;letter-spacing:-.035em}.rf-agency-angle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rf-agency-angle-box{padding:13px;border:1px solid rgba(15,23,42,.08);border-radius:16px;background:rgba(255,255,255,.76)}.rf-agency-angle-box span{display:block;color:#667085;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.rf-agency-angle-box p{margin:6px 0 0;color:#344054;line-height:1.55}.rf-safe-line{padding:13px 14px;border-radius:16px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.18);color:#064e3b;line-height:1.55}.rf-evidence-toggle{border:1px solid rgba(21,94,239,.20);background:#fff;color:#155eef;border-radius:999px;padding:9px 13px;font-weight:900;cursor:pointer;justify-self:start}.rf-evidence-toggle:hover{background:rgba(21,94,239,.06)}.rf-issue.is-extra-hidden{display:none}.rf-evidence-summary-note{margin:0;color:#667085;font-size:13px;line-height:1.5}@media(max-width:900px){.rf-agency-angle-grid{grid-template-columns:1fr}}';
     document.head.appendChild(style);
   }
-  function topSeoIssues(){
+  function allSeoIssueCards(){
     var panel=document.getElementById('rfSeoEvidencePanel');
     if(!panel)return [];
-    return Array.from(panel.querySelectorAll('.rf-issue')).map(function(card){
+    return Array.from(panel.querySelectorAll('.rf-issue')).filter(function(card){
+      var type=clean((card.querySelector('.rf-meta span:nth-child(2)')||{}).textContent).toLowerCase();
+      var label=clean((card.querySelector('strong')||{}).textContent);
+      return label&&!/contact_path|contact page|contact cta/i.test(type+' '+label);
+    });
+  }
+  function topSeoIssues(){
+    return allSeoIssueCards().map(function(card){
       var type=clean((card.querySelector('.rf-meta span:nth-child(2)')||{}).textContent).toLowerCase();
       var label=clean((card.querySelector('strong')||{}).textContent);
       var evidence=clean((card.querySelector('p')||{}).textContent);
-      if(!label||/contact_path|contact page|contact cta/i.test(type+' '+label))return null;
       return {type:type,label:label,evidence:evidence};
-    }).filter(Boolean).slice(0,6);
+    }).slice(0,6);
+  }
+  function collapseEvidenceIssues(){
+    var panel=document.getElementById('rfSeoEvidencePanel');
+    if(!panel)return;
+    var list=panel.querySelector('.rf-list');
+    if(!list)return;
+    var cards=allSeoIssueCards();
+    if(cards.length<=5)return;
+    var expanded=panel.dataset.evidenceExpanded==='true';
+    cards.forEach(function(card,index){
+      if(index>=5&&!expanded)card.classList.add('is-extra-hidden');
+      else card.classList.remove('is-extra-hidden');
+    });
+    var note=document.getElementById('rfEvidenceSummaryNote');
+    if(!note){
+      note=document.createElement('p');
+      note.id='rfEvidenceSummaryNote';
+      note.className='rf-evidence-summary-note';
+      list.insertAdjacentElement('afterend',note);
+    }
+    note.textContent=expanded?'Showing all '+cards.length+' captured SEO evidence items.':'Showing top 5 of '+cards.length+' captured SEO evidence items.';
+    var btn=document.getElementById('rfEvidenceToggle');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='rfEvidenceToggle';
+      btn.type='button';
+      btn.className='rf-evidence-toggle';
+      btn.addEventListener('click',function(){panel.dataset.evidenceExpanded=panel.dataset.evidenceExpanded==='true'?'false':'true';collapseEvidenceIssues();});
+      note.insertAdjacentElement('afterend',btn);
+    }
+    btn.textContent=expanded?'Show top 5 only':'View all '+cards.length+' evidence items';
   }
   function classifyAngle(issues){
     var text=issues.map(function(i){return i.type+' '+i.label;}).join(' ').toLowerCase();
@@ -58,13 +95,15 @@
     installAngleStyles();
     var panel=document.getElementById('rfSeoEvidencePanel');
     if(!panel)return;
+    collapseEvidenceIssues();
     var card=document.getElementById('rfAgencySalesAngle');
     if(!card){
       card=document.createElement('section');
       card.id='rfAgencySalesAngle';
       card.className='rf-agency-angle-card';
       card.innerHTML='<div><p class="panel-eyebrow">Agency Sales Angle</p><h3 id="rfAgencyAngleTitle">Recommended outreach angle</h3></div><div class="rf-agency-angle-grid"><div class="rf-agency-angle-box"><span>Why this lead may be interesting</span><p id="rfAgencyWhy">Waiting for verified SEO evidence.</p></div><div class="rf-agency-angle-box"><span>Best agency offer</span><p id="rfAgencyOffer">Local SEO audit</p></div></div><div class="rf-safe-line" id="rfAgencySafeLine">Use cautious wording and reference only verified crawl signals.</div>';
-      panel.querySelector('.rf-seo-v4-card,.rf-seo-v3-card,.rf-seo-evidence-card')?.insertAdjacentElement('afterbegin',card);
+      var host=panel.querySelector('.rf-seo-v4-card,.rf-seo-v3-card,.rf-seo-evidence-card');
+      if(host)host.insertAdjacentElement('afterbegin',card);
     }
     var issues=topSeoIssues();
     var title=document.getElementById('rfAgencyAngleTitle');

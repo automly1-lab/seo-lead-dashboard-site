@@ -2,9 +2,15 @@
   'use strict';
   var PAGE=document.body&&document.body.dataset?document.body.dataset.page:'';
   if(PAGE!=='lead-detail')return;
+  var ACTIONS_KEY='rankforge-lead-actions-v1';
   function clean(v){return String(v==null?'':v).trim();}
   function human(v){var t=clean(v).toLowerCase();var m={qualified:'Qualified Lead',review_needed:'Needs Review',needs_review:'Needs Review',rejected:'Not a Fit',ready:'Ready',not_ready:'Not Ready'};return m[t]||clean(v).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
   function text(id){return clean(document.getElementById(id)&&document.getElementById(id).textContent);}
+  function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
+  function selectedLeadId(){try{var p=new URLSearchParams(location.search||'');if(clean(p.get('lead_id')))return clean(p.get('lead_id'));if(clean(p.get('id')))return clean(p.get('id'));}catch(e){}return clean(sessionStorage.getItem('rankforge-selected-lead-id-v1')||localStorage.getItem('rankforge-selected-lead-id-v1')||'');}
+  function actionStore(){return parse(localStorage.getItem(ACTIONS_KEY),{})||{};}
+  function saveAction(data){var id=selectedLeadId()||text('detailCompany')||'unknown';var store=actionStore();store[id]=Object.assign({},store[id]||{},data,{updated_at:new Date().toISOString()});localStorage.setItem(ACTIONS_KEY,JSON.stringify(store));return store[id];}
+  function getAction(){var id=selectedLeadId()||text('detailCompany')||'unknown';return actionStore()[id]||{};}
   function ensure(){
     if(document.querySelector('.rf-simplified-decision-card'))return;
     var hero=document.querySelector('.detail-hero-panel');if(!hero)return;
@@ -16,128 +22,19 @@
     if(document.getElementById('rfAgencyAngleStyles'))return;
     var style=document.createElement('style');
     style.id='rfAgencyAngleStyles';
-    style.textContent='.rf-agency-angle-card{display:grid;gap:14px;margin:0 0 18px;padding:18px;border:1px solid rgba(21,94,239,.18);border-radius:20px;background:linear-gradient(135deg,rgba(21,94,239,.075),rgba(20,184,166,.055)),#fff}.rf-agency-angle-card .panel-eyebrow{margin:0}.rf-agency-angle-card h3{margin:0;font-size:20px;letter-spacing:-.035em}.rf-agency-angle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rf-agency-angle-box{padding:13px;border:1px solid rgba(15,23,42,.08);border-radius:16px;background:rgba(255,255,255,.76)}.rf-agency-angle-box span{display:block;color:#667085;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.rf-agency-angle-box p{margin:6px 0 0;color:#344054;line-height:1.55}.rf-safe-line{padding:13px 14px;border-radius:16px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.18);color:#064e3b;line-height:1.55}.rf-evidence-toggle{border:1px solid rgba(21,94,239,.20);background:#fff;color:#155eef;border-radius:999px;padding:9px 13px;font-weight:900;cursor:pointer;justify-self:start}.rf-evidence-toggle:hover{background:rgba(21,94,239,.06)}.rf-issue.is-extra-hidden{display:none}.rf-evidence-summary-note{margin:0;color:#667085;font-size:13px;line-height:1.5}@media(max-width:900px){.rf-agency-angle-grid{grid-template-columns:1fr}}';
+    style.textContent='.rf-agency-angle-card,.rf-lead-actions-card{display:grid;gap:14px;margin:0 0 18px;padding:18px;border:1px solid rgba(21,94,239,.18);border-radius:20px;background:linear-gradient(135deg,rgba(21,94,239,.075),rgba(20,184,166,.055)),#fff}.rf-agency-angle-card .panel-eyebrow,.rf-lead-actions-card .panel-eyebrow{margin:0}.rf-agency-angle-card h3,.rf-lead-actions-card h3{margin:0;font-size:20px;letter-spacing:-.035em}.rf-agency-angle-grid,.rf-lead-actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.rf-agency-angle-box,.rf-action-box{padding:13px;border:1px solid rgba(15,23,42,.08);border-radius:16px;background:rgba(255,255,255,.76)}.rf-agency-angle-box span,.rf-action-box label,.rf-action-box span{display:block;color:#667085;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.rf-agency-angle-box p{margin:6px 0 0;color:#344054;line-height:1.55}.rf-safe-line{padding:13px 14px;border-radius:16px;background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.18);color:#064e3b;line-height:1.55}.rf-evidence-toggle,.rf-action-btn{border:1px solid rgba(21,94,239,.20);background:#fff;color:#155eef;border-radius:999px;padding:9px 13px;font-weight:900;cursor:pointer;justify-self:start}.rf-action-btn.primary{background:#155eef;color:#fff}.rf-action-btn.danger{color:#b42318;border-color:rgba(180,35,24,.25)}.rf-evidence-toggle:hover,.rf-action-btn:hover{background:rgba(21,94,239,.06)}.rf-issue.is-extra-hidden{display:none}.rf-evidence-summary-note{margin:0;color:#667085;font-size:13px;line-height:1.5}.rf-action-box select,.rf-action-box input,.rf-action-box textarea{width:100%;margin-top:7px;border:1px solid rgba(15,23,42,.12);border-radius:12px;padding:10px;font:inherit}.rf-action-box textarea{min-height:92px;resize:vertical}.rf-action-row{display:flex;gap:9px;flex-wrap:wrap}.rf-action-status{color:#047857;font-weight:800;font-size:13px}@media(max-width:900px){.rf-agency-angle-grid,.rf-lead-actions-grid{grid-template-columns:1fr}}';
     document.head.appendChild(style);
   }
-  function allSeoIssueCards(){
-    var panel=document.getElementById('rfSeoEvidencePanel');
-    if(!panel)return [];
-    return Array.from(panel.querySelectorAll('.rf-issue')).filter(function(card){
-      var type=clean((card.querySelector('.rf-meta span:nth-child(2)')||{}).textContent).toLowerCase();
-      var label=clean((card.querySelector('strong')||{}).textContent);
-      return label&&!/contact_path|contact page|contact cta/i.test(type+' '+label);
-    });
-  }
-  function topSeoIssues(){
-    return allSeoIssueCards().map(function(card){
-      var type=clean((card.querySelector('.rf-meta span:nth-child(2)')||{}).textContent).toLowerCase();
-      var label=clean((card.querySelector('strong')||{}).textContent);
-      var evidence=clean((card.querySelector('p')||{}).textContent);
-      return {type:type,label:label,evidence:evidence};
-    }).slice(0,6);
-  }
-  function collapseEvidenceIssues(){
-    var panel=document.getElementById('rfSeoEvidencePanel');
-    if(!panel)return;
-    var list=panel.querySelector('.rf-list');
-    if(!list)return;
-    var cards=allSeoIssueCards();
-    if(cards.length<=5)return;
-    var expanded=panel.dataset.evidenceExpanded==='true';
-    cards.forEach(function(card,index){
-      if(index>=5&&!expanded)card.classList.add('is-extra-hidden');
-      else card.classList.remove('is-extra-hidden');
-    });
-    var note=document.getElementById('rfEvidenceSummaryNote');
-    if(!note){
-      note=document.createElement('p');
-      note.id='rfEvidenceSummaryNote';
-      note.className='rf-evidence-summary-note';
-      list.insertAdjacentElement('afterend',note);
-    }
-    note.textContent=expanded?'Showing all '+cards.length+' captured SEO evidence items.':'Showing top 5 of '+cards.length+' captured SEO evidence items.';
-    var btn=document.getElementById('rfEvidenceToggle');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.id='rfEvidenceToggle';
-      btn.type='button';
-      btn.className='rf-evidence-toggle';
-      btn.addEventListener('click',function(){panel.dataset.evidenceExpanded=panel.dataset.evidenceExpanded==='true'?'false':'true';collapseEvidenceIssues();});
-      note.insertAdjacentElement('afterend',btn);
-    }
-    btn.textContent=expanded?'Show top 5 only':'View all '+cards.length+' evidence items';
-  }
-  function classifyAngle(issues){
-    var text=issues.map(function(i){return i.type+' '+i.label;}).join(' ').toLowerCase();
-    if(/target_city|title_missing_city|h1_missing_city|location_pages|service-area/.test(text))return 'Local SEO city/service targeting cleanup';
-    if(/service_pages|target_service|title_missing_service|h1_missing_service/.test(text))return 'Service-page expansion and search-intent alignment';
-    if(/schema|local_business/.test(text))return 'Local trust and structured-data cleanup';
-    if(/https|noindex|mobile/.test(text))return 'Technical SEO cleanup';
-    if(/thin|content|blog|stale/.test(text))return 'Content depth and topical relevance review';
-    return 'Local SEO opportunity review';
-  }
-  function agencyWhy(issues){
-    var labels=issues.map(function(i){return i.label;}).join(' | ').toLowerCase();
-    if(/city|location|service-area/.test(labels))return 'The site may not clearly reinforce the target city or service area in the crawl signals, which gives an agency a practical local SEO angle to review.';
-    if(/service/.test(labels))return 'The crawl suggests room to improve service-intent targeting, especially around pages or headings that match high-intent local searches.';
-    if(/https|technical|noindex|mobile/.test(labels))return 'The evidence includes technical signals that are easy for an agency to verify and explain during outreach.';
-    return 'The crawl captured enough signals to support a cautious review conversation, but claims should stay tied to the visible evidence.';
-  }
-  function safeLine(issues){
-    var location=text('detailLocation').split(',')[0]||'your target area';
-    var issueText=issues.map(function(i){return i.type+' '+i.label;}).join(' ').toLowerCase();
-    if(/service_pages|location_pages|target_city|title_missing_city|h1_missing_city/.test(issueText))return 'Noticed your site may have room to strengthen '+location+'-focused local SEO signals, especially around city/service targeting and dedicated service or location pages.';
-    if(/target_service|title_missing_service|h1_missing_service/.test(issueText))return 'Noticed your site may have room to make its core services clearer in key on-page signals like headings, title tags, and service-focused pages.';
-    if(/schema|local_business/.test(issueText))return 'Noticed your site may have room to strengthen local trust signals, including structured business information that search engines can read more easily.';
-    return 'Noticed a few SEO signals worth reviewing from the available crawl, and thought there may be room to improve local search visibility.';
-  }
-  function ensureAgencyAngle(){
-    installAngleStyles();
-    var panel=document.getElementById('rfSeoEvidencePanel');
-    if(!panel)return;
-    collapseEvidenceIssues();
-    var card=document.getElementById('rfAgencySalesAngle');
-    if(!card){
-      card=document.createElement('section');
-      card.id='rfAgencySalesAngle';
-      card.className='rf-agency-angle-card';
-      card.innerHTML='<div><p class="panel-eyebrow">Agency Sales Angle</p><h3 id="rfAgencyAngleTitle">Recommended outreach angle</h3></div><div class="rf-agency-angle-grid"><div class="rf-agency-angle-box"><span>Why this lead may be interesting</span><p id="rfAgencyWhy">Waiting for verified SEO evidence.</p></div><div class="rf-agency-angle-box"><span>Best agency offer</span><p id="rfAgencyOffer">Local SEO audit</p></div></div><div class="rf-safe-line" id="rfAgencySafeLine">Use cautious wording and reference only verified crawl signals.</div>';
-      var host=panel.querySelector('.rf-seo-v4-card,.rf-seo-v3-card,.rf-seo-evidence-card');
-      if(host)host.insertAdjacentElement('afterbegin',card);
-    }
-    var issues=topSeoIssues();
-    var title=document.getElementById('rfAgencyAngleTitle');
-    var why=document.getElementById('rfAgencyWhy');
-    var offer=document.getElementById('rfAgencyOffer');
-    var line=document.getElementById('rfAgencySafeLine');
-    if(!issues.length){
-      title.textContent='Manual SEO review recommended';
-      why.textContent='The panel does not show enough strong SEO evidence yet. Keep this lead as review-needed.';
-      offer.textContent='Manual website review';
-      line.textContent='Safe outreach line: “I noticed a few items worth reviewing, but would want to confirm them manually before making recommendations.”';
-      return;
-    }
-    var angle=classifyAngle(issues);
-    title.textContent=angle;
-    why.textContent=agencyWhy(issues);
-    offer.textContent=/technical/i.test(angle)?'Technical SEO cleanup audit':(/service-page|service/i.test(angle)?'Service-page and local SEO audit':'Local SEO opportunity audit');
-    line.textContent='Safe outreach line: “'+safeLine(issues)+'”';
-  }
-  function update(){
-    ensure();
-    var status=human(text('detailStatus'))||'Needs Review';
-    var contact=text('detailContactLine');
-    var reason=text('detailReason');
-    var decision=document.getElementById('rfSimpleDecision');var copy=document.getElementById('rfSimpleDecisionCopy');var step=document.getElementById('rfSimpleNextStep');var stepCopy=document.getElementById('rfSimpleNextStepCopy');
-    if(decision){
-      if(/Qualified/i.test(status)){decision.textContent='Qualified Lead';copy.textContent='Good enough to consider for outreach, as long as the message references a verified SEO issue.';}
-      else if(/Not a Fit|Rejected/i.test(status)){decision.textContent='Not recommended';copy.textContent='This lead should not be used for normal outreach under the current quality rules.';}
-      else{decision.textContent='Needs Review';copy.textContent='Potential opportunity, but check the website evidence and contact path before outreach.';}
-      step.textContent=contact&&!/No direct contact/i.test(contact)?'Verify contact and prepare outreach':'Confirm contact path first';
-      stepCopy.textContent=reason&&reason!=='No qualification reason yet.'?reason:'Use the SEO evidence section below. If evidence is weak, keep this lead in review.';
-    }
-    ensureAgencyAngle();
-  }
+  function allSeoIssueCards(){var panel=document.getElementById('rfSeoEvidencePanel');if(!panel)return [];return Array.from(panel.querySelectorAll('.rf-issue')).filter(function(card){var type=clean((card.querySelector('.rf-meta span:nth-child(2)')||{}).textContent).toLowerCase();var label=clean((card.querySelector('strong')||{}).textContent);return label&&!/contact_path|contact page|contact cta/i.test(type+' '+label);});}
+  function topSeoIssues(){return allSeoIssueCards().map(function(card){var type=clean((card.querySelector('.rf-meta span:nth-child(2)')||{}).textContent).toLowerCase();var label=clean((card.querySelector('strong')||{}).textContent);var evidence=clean((card.querySelector('p')||{}).textContent);return {type:type,label:label,evidence:evidence};}).slice(0,6);}
+  function collapseEvidenceIssues(){var panel=document.getElementById('rfSeoEvidencePanel');if(!panel)return;var list=panel.querySelector('.rf-list');if(!list)return;var cards=allSeoIssueCards();if(cards.length<=5)return;var expanded=panel.dataset.evidenceExpanded==='true';cards.forEach(function(card,index){if(index>=5&&!expanded)card.classList.add('is-extra-hidden');else card.classList.remove('is-extra-hidden');});var note=document.getElementById('rfEvidenceSummaryNote');if(!note){note=document.createElement('p');note.id='rfEvidenceSummaryNote';note.className='rf-evidence-summary-note';list.insertAdjacentElement('afterend',note);}note.textContent=expanded?'Showing all '+cards.length+' captured SEO evidence items.':'Showing top 5 of '+cards.length+' captured SEO evidence items.';var btn=document.getElementById('rfEvidenceToggle');if(!btn){btn=document.createElement('button');btn.id='rfEvidenceToggle';btn.type='button';btn.className='rf-evidence-toggle';btn.addEventListener('click',function(){panel.dataset.evidenceExpanded=panel.dataset.evidenceExpanded==='true'?'false':'true';collapseEvidenceIssues();});note.insertAdjacentElement('afterend',btn);}btn.textContent=expanded?'Show top 5 only':'View all '+cards.length+' evidence items';}
+  function classifyAngle(issues){var t=issues.map(function(i){return i.type+' '+i.label;}).join(' ').toLowerCase();if(/target_city|title_missing_city|h1_missing_city|location_pages|service-area/.test(t))return 'Local SEO city/service targeting cleanup';if(/service_pages|target_service|title_missing_service|h1_missing_service/.test(t))return 'Service-page expansion and search-intent alignment';if(/schema|local_business/.test(t))return 'Local trust and structured-data cleanup';if(/https|noindex|mobile/.test(t))return 'Technical SEO cleanup';if(/thin|content|blog|stale/.test(t))return 'Content depth and topical relevance review';return 'Local SEO opportunity review';}
+  function agencyWhy(issues){var labels=issues.map(function(i){return i.label;}).join(' | ').toLowerCase();if(/city|location|service-area/.test(labels))return 'The site may not clearly reinforce the target city or service area in the crawl signals, which gives an agency a practical local SEO angle to review.';if(/service/.test(labels))return 'The crawl suggests room to improve service-intent targeting, especially around pages or headings that match high-intent local searches.';if(/https|technical|noindex|mobile/.test(labels))return 'The evidence includes technical signals that are easy for an agency to verify and explain during outreach.';return 'The crawl captured enough signals to support a cautious review conversation, but claims should stay tied to the visible evidence.';}
+  function safeLine(issues){var location=text('detailLocation').split(',')[0]||'your target area';var t=issues.map(function(i){return i.type+' '+i.label;}).join(' ').toLowerCase();if(/service_pages|location_pages|target_city|title_missing_city|h1_missing_city/.test(t))return 'Noticed your site may have room to strengthen '+location+'-focused local SEO signals, especially around city/service targeting and dedicated service or location pages.';if(/target_service|title_missing_service|h1_missing_service/.test(t))return 'Noticed your site may have room to make its core services clearer in key on-page signals like headings, title tags, and service-focused pages.';if(/schema|local_business/.test(t))return 'Noticed your site may have room to strengthen local trust signals, including structured business information that search engines can read more easily.';return 'Noticed a few SEO signals worth reviewing from the available crawl, and thought there may be room to improve local search visibility.';}
+  function copyText(value){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(value);var ta=document.createElement('textarea');ta.value=value;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();return Promise.resolve();}
+  function ensureLeadActions(){installAngleStyles();if(document.getElementById('rfLeadActionsPanel'))return;var hero=document.querySelector('.rf-simplified-decision-card')||document.querySelector('.detail-hero-panel');if(!hero)return;var data=getAction();var box=document.createElement('section');box.id='rfLeadActionsPanel';box.className='rf-lead-actions-card';box.innerHTML='<div><p class="panel-eyebrow">Lead Workflow</p><h3>Agency action tracker</h3></div><div class="rf-lead-actions-grid"><div class="rf-action-box"><label for="rfLeadWorkflowStatus">Lead status</label><select id="rfLeadWorkflowStatus"><option>New</option><option>To Review</option><option>Ready to Contact</option><option>Contacted</option><option>Follow-up Needed</option><option>Converted</option><option>Not Interested</option><option>Bad Fit</option></select></div><div class="rf-action-box"><label for="rfNextFollowUp">Next follow-up date</label><input id="rfNextFollowUp" type="date"></div></div><div class="rf-action-box"><label for="rfLeadNotes">Internal notes</label><textarea id="rfLeadNotes" placeholder="Called, no answer. Owner asked to email next week. Good fit for local SEO campaign."></textarea></div><div class="rf-action-row"><button class="rf-action-btn primary" id="rfSaveLeadAction" type="button">Save notes</button><button class="rf-action-btn" data-status="Contacted" type="button">Mark contacted</button><button class="rf-action-btn" data-status="Follow-up Needed" type="button">Need follow-up</button><button class="rf-action-btn danger" data-status="Bad Fit" type="button">Bad fit</button><button class="rf-action-btn" id="rfCopyOutreachLine" type="button">Copy outreach line</button><span class="rf-action-status" id="rfLeadActionSaved"></span></div>';hero.insertAdjacentElement('afterend',box);var sel=box.querySelector('#rfLeadWorkflowStatus'),date=box.querySelector('#rfNextFollowUp'),notes=box.querySelector('#rfLeadNotes');sel.value=data.status||'New';date.value=data.next_follow_up_at||'';notes.value=data.notes||'';box.querySelector('#rfSaveLeadAction').addEventListener('click',function(){saveAction({status:sel.value,next_follow_up_at:date.value,notes:notes.value});box.querySelector('#rfLeadActionSaved').textContent='Saved';setTimeout(function(){box.querySelector('#rfLeadActionSaved').textContent='';},2200);});box.querySelectorAll('[data-status]').forEach(function(btn){btn.addEventListener('click',function(){sel.value=btn.getAttribute('data-status');saveAction({status:sel.value,next_follow_up_at:date.value,notes:notes.value});box.querySelector('#rfLeadActionSaved').textContent='Marked '+sel.value;});});box.querySelector('#rfCopyOutreachLine').addEventListener('click',function(){var line=clean(document.getElementById('rfAgencySafeLine')&&document.getElementById('rfAgencySafeLine').textContent).replace(/^Safe outreach line:\s*/,'');copyText(line||'Review this lead and reference only verified SEO evidence.').then(function(){box.querySelector('#rfLeadActionSaved').textContent='Outreach line copied';});});}
+  function ensureAgencyAngle(){installAngleStyles();var panel=document.getElementById('rfSeoEvidencePanel');if(!panel)return;collapseEvidenceIssues();var card=document.getElementById('rfAgencySalesAngle');if(!card){card=document.createElement('section');card.id='rfAgencySalesAngle';card.className='rf-agency-angle-card';card.innerHTML='<div><p class="panel-eyebrow">Agency Sales Angle</p><h3 id="rfAgencyAngleTitle">Recommended outreach angle</h3></div><div class="rf-agency-angle-grid"><div class="rf-agency-angle-box"><span>Why this lead may be interesting</span><p id="rfAgencyWhy">Waiting for verified SEO evidence.</p></div><div class="rf-agency-angle-box"><span>Best agency offer</span><p id="rfAgencyOffer">Local SEO audit</p></div></div><div class="rf-safe-line" id="rfAgencySafeLine">Use cautious wording and reference only verified crawl signals.</div>';var host=panel.querySelector('.rf-seo-v4-card,.rf-seo-v3-card,.rf-seo-evidence-card');if(host)host.insertAdjacentElement('afterbegin',card);}var issues=topSeoIssues();var title=document.getElementById('rfAgencyAngleTitle'),why=document.getElementById('rfAgencyWhy'),offer=document.getElementById('rfAgencyOffer'),line=document.getElementById('rfAgencySafeLine');if(!issues.length){title.textContent='Manual SEO review recommended';why.textContent='The panel does not show enough strong SEO evidence yet. Keep this lead as review-needed.';offer.textContent='Manual website review';line.textContent='Safe outreach line: “I noticed a few items worth reviewing, but would want to confirm them manually before making recommendations.”';return;}var angle=classifyAngle(issues);title.textContent=angle;why.textContent=agencyWhy(issues);offer.textContent=/technical/i.test(angle)?'Technical SEO cleanup audit':(/service-page|service/i.test(angle)?'Service-page and local SEO audit':'Local SEO opportunity audit');line.textContent='Safe outreach line: “'+safeLine(issues)+'”';}
+  function update(){ensure();ensureLeadActions();var status=human(text('detailStatus'))||'Needs Review';var contact=text('detailContactLine');var reason=text('detailReason');var decision=document.getElementById('rfSimpleDecision'),copy=document.getElementById('rfSimpleDecisionCopy'),step=document.getElementById('rfSimpleNextStep'),stepCopy=document.getElementById('rfSimpleNextStepCopy');if(decision){if(/Qualified/i.test(status)){decision.textContent='Qualified Lead';copy.textContent='Good enough to consider for outreach, as long as the message references a verified SEO issue.';}else if(/Not a Fit|Rejected/i.test(status)){decision.textContent='Not recommended';copy.textContent='This lead should not be used for normal outreach under the current quality rules.';}else{decision.textContent='Needs Review';copy.textContent='Potential opportunity, but check the website evidence and contact path before outreach.';}step.textContent=contact&&!/No direct contact/i.test(contact)?'Verify contact and prepare outreach':'Confirm contact path first';stepCopy.textContent=reason&&reason!=='No qualification reason yet.'?reason:'Use the SEO evidence section below. If evidence is weak, keep this lead in review.';}ensureAgencyAngle();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',update);else update();
   setInterval(update,1600);
 })();

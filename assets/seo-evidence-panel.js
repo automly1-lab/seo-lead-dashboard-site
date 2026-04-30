@@ -13,12 +13,29 @@
   function clean(v){return String(v==null?'':v).trim();}
   function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(e){return fallback;}}
   function esc(v){return clean(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
-  function boolish(v){var t=clean(v).toLowerCase();return ['true','yes','1','verified','high','medium'].indexOf(t)>=0;}
+  function boolish(v){var t=clean(v).toLowerCase();return ['true','yes','1','verified','high'].indexOf(t)>=0;}
   function num(v){var n=Number(v||0);return Number.isFinite(n)?Math.round(n):0;}
   function getState(){return safeParse(localStorage.getItem(STATE_KEY),{})||{};}
   function currentUserId(){var state=getState();return clean(state.currentUserId||localStorage.getItem(USER_KEY)||'');}
   function selectedLeadId(){try{var p=new URLSearchParams(location.search||'');if(clean(p.get('lead_id')))return clean(p.get('lead_id'));}catch(e){}try{if(clean(sessionStorage.getItem(SELECTED_LEAD_KEY)))return clean(sessionStorage.getItem(SELECTED_LEAD_KEY));}catch(e){}try{if(clean(localStorage.getItem(SELECTED_LEAD_KEY)))return clean(localStorage.getItem(SELECTED_LEAD_KEY));}catch(e){}return clean(getState().selectedLeadId||'');}
   function selectedCompany(){return clean(document.getElementById('detailCompany')&&document.getElementById('detailCompany').textContent);}
+
+  function softenClaim(text){
+    var t=clean(text);
+    if(!t)return '';
+    t=t.replace(/\bstrongly indicates\b/ig,'may indicate')
+      .replace(/\bproves\b/ig,'may suggest')
+      .replace(/\bclearly shows\b/ig,'appears to show')
+      .replace(/\bshows no accessible SEO signals\b/ig,'did not return accessible SEO signals in the available crawl')
+      .replace(/\bThere are no\b/ig,'The available crawl did not confirm')
+      .replace(/\bno visible\b/ig,'no confirmed visible')
+      .replace(/\bmust\b/ig,'may need to')
+      .replace(/\bbad SEO\b/ig,'potential SEO weakness');
+    if(!/available crawl|available signals|appears|may|not confirmed|could not confirm/i.test(t)){
+      t='From the available crawl, '+t.charAt(0).toLowerCase()+t.slice(1);
+    }
+    return t;
+  }
 
   function parseGvizTable(parsed){
     var cols=((parsed.table&&parsed.table.cols)||[]).map(function(col){return col.label||col.id;});
@@ -87,15 +104,17 @@
     if(serviceFound)signals.push({label:'Target service signal',value:boolish(serviceFound)?'Found in available crawl':'Not confirmed in available crawl',kind:boolish(serviceFound)?'verified':'warning'});
     if(ctaFound)signals.push({label:'Contact CTA signal',value:boolish(ctaFound)?'CTA/contact path found':'CTA not confirmed',kind:boolish(ctaFound)?'verified':'warning'});
 
-    var enoughEvidence=verified||explicitClaims.length>0||signals.length>=2;
+    var signalCount=signals.length;
+    var warningCount=signals.filter(function(s){return s.kind==='warning';}).length;
+    var enoughEvidence=verified&&signalCount>=2;
+    var partialEvidence=!verified&&signalCount>=2;
     var safeClaims=[];
-    if(explicitClaims.length&&enoughEvidence){safeClaims=explicitClaims.slice(0,5);}
-    else if(signals.length>=2){
-      signals.forEach(function(s){if(s.kind==='warning')safeClaims.push(s.label+': '+s.value);});
-      safeClaims=safeClaims.slice(0,5);
-    }
 
-    return {summary:summary,confidence:confidence,verified:verified,enoughEvidence:enoughEvidence,claims:safeClaims,signals:signals,manualReason:manualReason,source:source};
+    if(verified&&explicitClaims.length){safeClaims=explicitClaims.map(softenClaim).slice(0,5);}
+    else if(verified&&warningCount){signals.forEach(function(s){if(s.kind==='warning')safeClaims.push(s.label+': '+s.value);});safeClaims=safeClaims.slice(0,5);}
+    else if(partialEvidence){signals.forEach(function(s){if(s.kind==='warning')safeClaims.push('Needs review — '+s.label+': '+s.value);});safeClaims=safeClaims.slice(0,4);}
+
+    return {summary:summary,confidence:confidence,verified:verified,enoughEvidence:enoughEvidence,partialEvidence:partialEvidence,claims:safeClaims,signals:signals,manualReason:manualReason,source:source};
   }
 
   function ensureStyles(){
@@ -122,22 +141,23 @@
     var anchor=document.getElementById('rfLeadDetailQualityPanel')||document.querySelector('.detail-section:nth-of-type(3)')||document.querySelector('.detail-grid-single article.panel');
     if(!anchor)return null;
     var section=document.createElement('section');section.id='rfSeoEvidencePanel';section.className='detail-section rf-seo-evidence-panel';
-    section.innerHTML='<div class="rf-seo-evidence-card"><div class="rf-seo-evidence-head"><div><p class="panel-eyebrow">Verified SEO Evidence</p><h3>Why this looks like an SEO opportunity</h3></div><span class="rf-evidence-badge is-low">Checking evidence</span></div><p class="rf-seo-evidence-summary">Loading available SEO evidence…</p><ul class="rf-claim-list"></ul><div class="rf-evidence-grid"></div><p class="rf-evidence-warning" hidden></p></div>';
+    section.innerHTML='<div class="rf-seo-evidence-card"><div class="rf-seo-evidence-head"><div><p class="panel-eyebrow">Verified SEO Evidence</p><h3>SEO opportunity evidence</h3></div><span class="rf-evidence-badge is-low">Checking evidence</span></div><p class="rf-seo-evidence-summary">Loading available SEO evidence…</p><ul class="rf-claim-list"></ul><div class="rf-evidence-grid"></div><p class="rf-evidence-warning" hidden></p></div>';
     anchor.insertAdjacentElement('afterend',section);return section;
   }
 
   function renderEvidence(evidence){
     ensureStyles();var panel=ensurePanel();if(!panel)return;
     var badge=panel.querySelector('.rf-evidence-badge');var summary=panel.querySelector('.rf-seo-evidence-summary');var list=panel.querySelector('.rf-claim-list');var grid=panel.querySelector('.rf-evidence-grid');var warning=panel.querySelector('.rf-evidence-warning');
-    var conf=clean(evidence.confidence).toLowerCase();var cls=conf.indexOf('high')>=0?'is-high':conf.indexOf('medium')>=0?'is-medium':'is-low';badge.className='rf-evidence-badge '+cls;badge.textContent=(evidence.verified?'Verified evidence':'Evidence review')+' · '+(evidence.confidence||'unknown confidence');
-    if(evidence.enoughEvidence){summary.textContent=evidence.summary||'These notes are based only on signals found in the available website crawl. Use them as outreach context, not as an absolute SEO diagnosis.';}
+    var conf=clean(evidence.confidence).toLowerCase();var cls=(evidence.verified&&conf.indexOf('high')>=0)?'is-high':(evidence.verified||conf.indexOf('medium')>=0)?'is-medium':'is-low';badge.className='rf-evidence-badge '+cls;badge.textContent=(evidence.verified?'Verified evidence':evidence.partialEvidence?'Partial evidence':'Manual review')+' · '+(evidence.confidence||'unknown confidence');
+    if(evidence.verified&&evidence.enoughEvidence){summary.textContent=softenClaim(evidence.summary)||'These notes are based on verified signals captured from the available website crawl. Use them as outreach context, not as an absolute SEO diagnosis.';}
+    else if(evidence.partialEvidence){summary.textContent='Some SEO-related signals were captured, but they are not fully verified. Treat this as a review candidate and use cautious language before outreach.';}
     else{summary.textContent='Not enough verified SEO evidence was available from the crawl to make a strong SEO claim. Review the website manually before using this lead in outreach.';}
     list.innerHTML=evidence.claims.length?evidence.claims.map(function(c){return '<li>'+esc(c)+'</li>';}).join(''):'<li>No specific SEO issue is shown unless the workflow captured supporting evidence.</li>';
     grid.innerHTML=evidence.signals.slice(0,8).map(function(s){return '<div class="rf-evidence-item"><span>'+esc(s.label)+'</span><strong>'+esc(s.value)+'</strong></div>';}).join('');
     var warn='';
-    if(!evidence.enoughEvidence)warn='No evidence → no claim. This lead should stay in review until SEO signals are confirmed.';
+    if(!evidence.enoughEvidence)warn='No verified evidence → no strong claim. Keep this lead in review unless the website is manually checked.';
     else if(!evidence.verified)warn='Some evidence exists, but claims are not fully verified yet. Keep outreach language cautious: “appears”, “from available signals”, or “worth reviewing”.';
-    if(evidence.manualReason)warn+=(warn?' ':'')+evidence.manualReason;
+    if(evidence.manualReason)warn+=(warn?' ':'')+softenClaim(evidence.manualReason);
     warning.hidden=!warn;warning.textContent=warn;
   }
 
@@ -146,7 +166,7 @@
     var rows=await Promise.all([fetchRows('final_leads'),fetchRows('seo_audits')]);
     var finalLeads=rows[0]||[];var audits=rows[1]||[];
     var lead=findSelected(finalLeads);
-    if(!lead){renderEvidence({confidence:'low',verified:false,enoughEvidence:false,claims:[],signals:[],summary:'',manualReason:'Selected lead evidence could not be found in final_leads.'});return;}
+    if(!lead){renderEvidence({confidence:'low',verified:false,enoughEvidence:false,partialEvidence:false,claims:[],signals:[],summary:'',manualReason:'Selected lead evidence could not be found in final_leads.'});return;}
     var audit=audits.find(function(a){return auditIdOf(a)&&auditIdOf(a)===auditIdOf(lead);})||audits.find(function(a){return prospectIdOf(a)&&prospectIdOf(a)===prospectIdOf(lead);})||{};
     renderEvidence(buildEvidence(lead,audit));
   }

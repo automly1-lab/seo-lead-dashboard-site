@@ -51,10 +51,23 @@
   }
 
   function style(){
-    if(document.getElementById('rfSeoEvidenceCopyPolishCss'))return;
+    var old=document.getElementById('rfSeoEvidenceCopyPolishCss');
+    if(old)old.remove();
     var css=document.createElement('style');
     css.id='rfSeoEvidenceCopyPolishCss';
-    css.textContent='.rf-confidence{color:#155eef;font-weight:900}';
+    css.textContent='\
+      .rf-confidence{color:#2563EB;font-weight:700}\
+      html,body,.dashboard-shell,.dashboard-main{overflow-x:hidden!important}\
+      #rfSeoEvidencePanel,#rfSeoEvidencePanel *{box-sizing:border-box!important;max-width:100%!important;min-width:0!important}\
+      #rfSeoEvidencePanel{overflow-x:hidden!important}\
+      #rfSeoEvidencePanel .rf-seo-v4-card,#rfSeoEvidencePanel .rf-seo-v3-card{overflow-x:hidden!important;max-width:100%!important}\
+      #rfSeoEvidencePanel .rf-list,#rfSeoEvidencePanel .rf-grid,#rfSeoEvidencePanel .rf-contact-wrap{max-width:100%!important;overflow-x:hidden!important}\
+      #rfSeoEvidencePanel .rf-issue,#rfSeoEvidencePanel .rf-fact,#rfSeoEvidencePanel .rf-src,#rfSeoEvidencePanel .rf-warn,#rfSeoEvidencePanel .rf-seo-summary{white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important;overflow-x:hidden!important}\
+      #rfSeoEvidencePanel .rf-issue strong,#rfSeoEvidencePanel .rf-issue p,#rfSeoEvidencePanel .rf-fact strong,#rfSeoEvidencePanel .rf-src{white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}\
+      #rfSeoEvidencePanel a,#rfSeoEvidencePanel code,#rfSeoEvidencePanel pre{white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important;overflow-x:hidden!important}\
+      .app-page-lead-detail .detail-section,.app-page-lead-detail .detail-story-card,.app-page-lead-detail .detail-contact-card,.app-page-lead-detail .detail-matrix-premium>div{overflow-x:hidden!important;max-width:100%!important}\
+      .app-page-lead-detail .rf-qualification-layout,.app-page-lead-detail .rf-qualification-main,.app-page-lead-detail .rf-qualification-side{min-width:0!important;max-width:100%!important;overflow-x:hidden!important}\
+    ';
     document.head.appendChild(css);
   }
 
@@ -63,4 +76,5 @@
   else setTimeout(start,1400);
   setTimeout(start,2400);
   setTimeout(start,3600);
+  setTimeout(start,5200);
 })();

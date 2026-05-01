@@ -1,0 +1,113 @@
+/* Compact spacing overrides for premium marketing pages: Home, Pricing, How It Works */
+body.rf-home-page .rf-hero,
+body.rf-pricing-page .rf-hero,
+body.rf-how-page .rf-hero{padding-top:54px!important;padding-bottom:30px!important}
+
+body.rf-home-page .rf-section,
+body.rf-pricing-page .rf-section,
+body.rf-how-page .rf-section{padding-top:30px!important;padding-bottom:30px!important}
+
+body.rf-home-page .rf-dark,
+body.rf-how-page .rf-trust-strip,
+body.rf-pricing-page .rf-trust{padding-top:30px!important;padding-bottom:30px!important}
+
+body.rf-home-page .rf-section-head,
+body.rf-pricing-page .rf-section-head,
+body.rf-how-page .rf-section-head{margin-bottom:16px!important}
+
+body.rf-home-page .rf-section-head p,
+body.rf-pricing-page .rf-section-head p,
+body.rf-how-page .rf-section-head p{margin-top:7px!important}
+
+body.rf-home-page .rf-hero-subtitle,
+body.rf-pricing-page .rf-hero-subtitle,
+body.rf-how-page .rf-hero-subtitle{margin-top:14px!important}
+
+body.rf-home-page .rf-hero-note,
+body.rf-pricing-page .rf-trust-line,
+body.rf-how-page .rf-hero-note{margin-top:8px!important}
+
+body.rf-home-page .rf-hero-actions,
+body.rf-pricing-page .rf-hero-actions,
+body.rf-how-page .rf-hero-actions{margin-top:18px!important}
+
+body.rf-home-page .rf-hero-badges,
+body.rf-pricing-page .rf-hero-badges,
+body.rf-how-page .rf-hero-badges{margin-top:14px!important}
+
+body.rf-home-page .rf-grid-3,
+body.rf-home-page .rf-grid-4,
+body.rf-home-page .rf-grid-2,
+body.rf-home-page .rf-steps,
+body.rf-home-page .rf-decision,
+body.rf-home-page .rf-price-grid,
+body.rf-home-page .rf-faq,
+body.rf-pricing-page .rf-pricing-grid,
+body.rf-pricing-page .rf-model-grid,
+body.rf-pricing-page .rf-feature-grid,
+body.rf-pricing-page .rf-faq,
+body.rf-how-page .rf-steps,
+body.rf-how-page .rf-gate-grid,
+body.rf-how-page .rf-grid-4,
+body.rf-how-page .rf-grid-2,
+body.rf-how-page .rf-faq{gap:12px!important}
+
+body.rf-home-page .rf-card,
+body.rf-home-page .rf-step,
+body.rf-home-page .rf-decision-card,
+body.rf-home-page .rf-price-card,
+body.rf-home-page .rf-faq-item,
+body.rf-pricing-page .rf-plan,
+body.rf-pricing-page .rf-info-card,
+body.rf-pricing-page .rf-feature-card,
+body.rf-pricing-page .rf-faq-item,
+body.rf-how-page .rf-step,
+body.rf-how-page .rf-card,
+body.rf-how-page .rf-score-card,
+body.rf-how-page .rf-gate-card,
+body.rf-how-page .rf-faq-item{padding:18px!important}
+
+body.rf-home-page .rf-dark-card,
+body.rf-pricing-page .rf-trust-card,
+body.rf-how-page .rf-trust-card{padding:28px!important}
+
+body.rf-home-page .rf-dark-points,
+body.rf-pricing-page .rf-trust-points,
+body.rf-how-page .rf-trust-points{margin-top:16px!important;gap:10px!important}
+
+body.rf-home-page .rf-credit-callout,
+body.rf-how-page .rf-credit-callout{padding:26px!important;gap:16px!important}
+
+body.rf-home-page .rf-final-cta,
+body.rf-pricing-page .rf-final-cta,
+body.rf-how-page .rf-final-cta{padding-top:30px!important;padding-bottom:38px!important}
+
+body.rf-home-page .rf-final-card,
+body.rf-pricing-page .rf-final-card,
+body.rf-how-page .rf-final-card{padding:28px!important}
+
+body.rf-home-page .rf-bridge,
+body.rf-pricing-page .rf-formula,
+body.rf-how-page .rf-note,
+body.rf-how-page .rf-formula{margin-top:14px!important}
+
+body.rf-pricing-page .rf-plan-top{min-height:122px!important}
+body.rf-pricing-page .rf-features{margin-top:14px!important;margin-bottom:14px!important;gap:7px!important}
+body.rf-pricing-page .rf-price{margin-top:10px!important}
+body.rf-how-page .rf-pipeline{gap:10px!important}
+body.rf-how-page .rf-stage-card{padding:16px 18px!important}
+
+@media(max-width:760px){
+  body.rf-home-page .rf-hero,
+  body.rf-pricing-page .rf-hero,
+  body.rf-how-page .rf-hero{padding-top:38px!important;padding-bottom:24px!important}
+  body.rf-home-page .rf-section,
+  body.rf-pricing-page .rf-section,
+  body.rf-how-page .rf-section{padding-top:24px!important;padding-bottom:24px!important}
+  body.rf-home-page .rf-dark,
+  body.rf-how-page .rf-trust-strip,
+  body.rf-pricing-page .rf-trust{padding-top:24px!important;padding-bottom:24px!important}
+  body.rf-home-page .rf-final-cta,
+  body.rf-pricing-page .rf-final-cta,
+  body.rf-how-page .rf-final-cta{padding-top:24px!important;padding-bottom:30px!important}
+}

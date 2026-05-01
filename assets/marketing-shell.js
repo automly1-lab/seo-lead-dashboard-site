@@ -2,9 +2,12 @@
   'use strict';
   function isNested(){return /\/(privacy|terms|refund-policy|pricing|how-it-works|login|signup)\//.test(location.pathname||'');}
   function prefix(){return isNested()?'../':'';}
+  function premiumPageHasFooter(){return !!document.querySelector('.rf-footer');}
+  function removeDuplicatePublicFooter(){document.querySelectorAll('.rf-public-footer').forEach(function(node){node.remove();});}
   function ensureLegalFooter(){
+    if(premiumPageHasFooter()){removeDuplicatePublicFooter();return;}
     if(document.querySelector('.rf-public-footer'))return;
-    var old=document.querySelector('.marketing-footer'); if(old) old.remove();
+    var old=document.querySelector('.marketing-footer,.footer'); if(old) old.remove();
     var footer=document.createElement('footer');
     footer.className='rf-public-footer';
     footer.innerHTML='<div class="rf-public-footer-inner"><div><strong>RankForge</strong><p>Evidence-based SEO lead intelligence for agencies.<br>RankForge by CrestlineOps.</p></div><nav><a href="'+prefix()+'pricing/">Pricing</a><a href="'+prefix()+'login/">Login</a><a href="'+prefix()+'signup/">Sign up</a><a href="'+prefix()+'privacy/">Privacy</a><a href="'+prefix()+'terms/">Terms</a><a href="'+prefix()+'refund-policy/">Refund Policy</a></nav></div>';
@@ -18,4 +21,5 @@
   }
   function init(){normalizeHeader();ensureLegalFooter();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  setTimeout(ensureLegalFooter,600);
 })();

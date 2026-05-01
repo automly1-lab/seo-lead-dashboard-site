@@ -3,30 +3,148 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RankForge Intelligence | Command Center</title>
+  <title>RankForge Intelligence | Dashboard</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/mvp-cleanup.css?v=mvp-cleanup-1">
-  <link rel="stylesheet" href="../assets/search-presets-clean.css?v=search-progress-panel-1">
-  <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-4">
+  <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-8">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <style>
-    .topbar-actions .button.danger,.topbar-actions button[onclick*="addDemoList"],.topbar-actions button[onclick*="deleteSelectedList"]{display:none!important}.sidebar .sidebar-panel,.sidebar form.sidebar-panel,.workspace-strip,.hero-grid{display:none!important}.dashboard-main{gap:16px}.topbar{padding-bottom:0!important}.topbar h1{font-size:28px!important}.topbar-copy{max-width:680px!important}.rf-search-first{padding:20px!important;border:1px solid #E5E7EB;border-radius:20px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04)}.rf-search-builder-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}.rf-search-builder-head h2{margin:0;color:#111827;font-size:20px;line-height:28px;letter-spacing:-.02em}.rf-search-builder-head p{margin:4px 0 0;color:#6B7280;font-size:14px;line-height:22px}.rf-search-first form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:end}.rf-search-first label{display:grid;gap:6px}.rf-search-first label span{font-size:13px;font-weight:600;color:#374151}.rf-search-first input,.rf-search-first select{height:42px;border:1px solid #D1D5DB;border-radius:10px;padding:0 12px;font:inherit;background:#fff;color:#111827}.rf-search-first input:focus,.rf-search-first select:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.12)}.rf-search-first button{height:42px}.rf-search-status{grid-column:1/-1;margin:0;color:#6B7280;font-size:13px;line-height:20px}.rf-preset-panel{padding:16px;border:1px solid #E5E7EB;border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04)}.rf-preset-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.rf-preset-head h2{margin:0;color:#111827;font-size:16px;line-height:24px;letter-spacing:-.01em}.rf-preset-head p{margin:2px 0 0;color:#6B7280;font-size:13px;line-height:20px}.rf-preset-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.rf-preset-btn{display:grid;gap:3px;min-height:72px;text-align:left;padding:11px 12px;border:1px solid #E5E7EB;border-radius:12px;background:#F9FAFB;cursor:pointer;transition:background .16s ease,border-color .16s ease}.rf-preset-btn:hover{background:#EFF6FF;border-color:#BFDBFE}.rf-preset-btn strong{font-size:13px;line-height:18px;color:#111827}.rf-preset-btn span{font-size:12px;line-height:18px;color:#6B7280}.metrics-grid{margin:0}.rf-quality-overview{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin:0}.rf-quality-card{padding:20px!important;border:1px solid #E5E7EB!important;border-radius:20px!important;background:#fff!important;box-shadow:0 1px 2px rgba(15,23,42,.04)!important}.rf-quality-card h2{margin:0!important;font-size:18px!important;line-height:26px!important;color:#111827!important;letter-spacing:-.015em!important}.rf-quality-card p{margin:6px 0 0!important;color:#6B7280!important;font-size:13px!important;line-height:20px!important}.rf-funnel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:14px}.rf-funnel-step{padding:14px!important;border:1px solid #E5E7EB!important;border-radius:14px!important;background:#F8FAFC!important}.rf-funnel-step span{display:block;font-size:12px!important;color:#6B7280!important;margin-bottom:6px}.rf-funnel-step strong{font-size:24px!important;line-height:30px!important;color:#111827!important;font-weight:700!important}.rf-coverage-grid{display:grid;gap:10px;margin-top:14px}.rf-coverage-row{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:12px 14px!important;border:1px solid #E5E7EB!important;border-radius:12px!important;background:#F9FAFB!important}.rf-coverage-row span{font-size:13px;color:#374151}.rf-coverage-row strong{font-size:14px;color:#111827;font-weight:700}.content-grid{gap:14px}.panel{border-radius:20px!important}.data-table thead th{padding:14px 16px!important;white-space:nowrap!important}.data-table tbody td{padding:18px 16px!important;vertical-align:middle!important}.status-completed,.status-running,.status-badge{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:96px!important;height:32px!important;padding:0 12px!important;border-radius:999px!important;white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important;line-height:1!important;font-size:13px!important;font-weight:600!important}.data-table tbody tr:has(.status-running){opacity:.7}@media(max-width:1180px){.rf-search-first form{grid-template-columns:repeat(2,minmax(0,1fr))}.rf-search-first button{grid-column:1/-1}.rf-quality-overview{grid-template-columns:1fr}.rf-funnel{grid-template-columns:repeat(3,minmax(0,1fr))}.rf-preset-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.rf-search-first form,.rf-funnel,.rf-preset-grid{grid-template-columns:1fr}.rf-preset-head,.rf-search-builder-head{display:grid}}
-  </style>
+  <link rel="stylesheet" href="../assets/dashboard-premium.css?v=premium-dashboard-1">
 </head>
 <body class="dashboard-body app-page-dashboard" data-auth="protected" data-page="dashboard">
   <div class="dashboard-shell">
-    <aside class="sidebar"><a class="brand" href="../"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a><nav class="sidebar-nav" aria-label="Primary"><a class="active" href="../dashboard/">Command Center</a><a href="../lists/">Searches</a><a href="../leads/">Prospects</a><a href="../lead-detail/">Qualification</a><a href="../opportunities/">Opportunities</a><a href="../competitors/">Competitors</a><a href="../settings/">Settings</a></nav></aside>
-    <main class="dashboard-main">
-      <header class="topbar"><div><p class="kicker">Command Center</p><h1>SEO prospect intelligence</h1><p class="topbar-copy">Start with a niche and city. Use keyword controls to shape the search before RankForge checks evidence, contact readiness, and qualification status.</p></div></header>
-      <section class="rf-search-first"><div class="rf-search-builder-head"><div><p class="panel-eyebrow">New Search</p><h2>Find local SEO opportunities</h2><p>Build a focused market search using niche, city, and keyword intent.</p></div></div><form id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)"><label><span>Market name</span><input id="searchNameInput" type="text" placeholder="Phoenix Plumbing Companies"></label><label><span>Niche</span><input id="nicheInput" type="text" placeholder="plumber"></label><label><span>City</span><input id="cityInput" type="text" placeholder="Phoenix"></label><label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label><label><span>Primary keyword</span><input id="keywordSeedInput" type="text" placeholder="emergency plumber"></label><label><span>Include terms</span><input id="includeTermsInput" type="text" placeholder="drain cleaning, water heater, sewer repair"></label><label><span>Exclude terms</span><input id="excludeTermsInput" type="text" placeholder="yelp, angi, homeadvisor, directory"></label><label><span>Search depth</span><select id="searchDepthInput"><option value="10">10 previews</option><option value="25" selected>25 leads</option><option value="50">50 leads</option></select></label><label><span>Strictness</span><select id="qualificationModeInput"><option value="strict" selected>Strict evidence</option><option value="balanced">Balanced pool</option></select></label><button class="button primary" type="submit">Create Search</button><input id="businessTypeInput" type="hidden" value="local service business"><input id="seoThresholdInput" type="hidden" value="60"><input id="leadThresholdInput" type="hidden" value="70"><p class="rf-search-status" id="createSearchStatus">Qualified leads require verified evidence and a usable contact path.</p></form></section>
-      <section class="rf-preset-panel"><div class="rf-preset-head"><div><p class="panel-eyebrow">Ready searches</p><h2>Start from a proven local market</h2><p>Click a preset to fill the search builder.</p></div></div><div class="rf-preset-grid"><button class="rf-preset-btn" type="button" data-name="Phoenix Plumbing Companies" data-niche="plumber" data-city="Phoenix" data-country="United States" data-keyword="emergency plumber" data-include="drain cleaning, water heater, sewer repair" data-exclude="yelp, angi, homeadvisor, directory"><strong>Phoenix Plumbing</strong><span>Plumber · Phoenix</span></button><button class="rf-preset-btn" type="button" data-name="Miami Dental Clinics" data-niche="dentist" data-city="Miami" data-country="United States" data-keyword="cosmetic dentist" data-include="dental implants, emergency dentist, family dentist" data-exclude="zocdoc, yelp, healthgrades"><strong>Miami Dentists</strong><span>Dentist · Miami</span></button><button class="rf-preset-btn" type="button" data-name="Miami Personal Injury Law Firms" data-niche="personal injury lawyer" data-city="Miami" data-country="United States" data-keyword="car accident lawyer" data-include="injury attorney, accident lawyer, slip and fall" data-exclude="avvo, findlaw, justia, yelp"><strong>Miami PI Lawyers</strong><span>Lawyer · Miami</span></button><button class="rf-preset-btn" type="button" data-name="Austin HVAC Companies" data-niche="hvac contractor" data-city="Austin" data-country="United States" data-keyword="ac repair" data-include="hvac repair, air conditioning, furnace repair" data-exclude="angi, homeadvisor, yelp"><strong>Austin HVAC</strong><span>HVAC · Austin</span></button><button class="rf-preset-btn" type="button" data-name="Tampa Roofing Companies" data-niche="roofer" data-city="Tampa" data-country="United States" data-keyword="roof repair" data-include="storm damage, metal roofing, roof replacement" data-exclude="angi, homeadvisor, yelp"><strong>Tampa Roofing</strong><span>Roofer · Tampa</span></button><button class="rf-preset-btn" type="button" data-name="Orlando Restoration Companies" data-niche="water damage restoration" data-city="Orlando" data-country="United States" data-keyword="water damage restoration" data-include="mold removal, flood cleanup, fire damage" data-exclude="angi, homeadvisor, yelp"><strong>Orlando Restoration</strong><span>Restoration · Orlando</span></button></div></section>
-      <section class="metrics-grid"><article class="metric-card"><p>Searches</p><strong id="metricSavedLists">0</strong><span>Search batches</span></article><article class="metric-card"><p>Qualified</p><strong id="metricQualified">0</strong><span>Evidence-backed prospects</span></article><article class="metric-card"><p>Needs Review</p><strong id="metricReviewNeeded">0</strong><span>Manual review pool</span></article><article class="metric-card"><p>Average Score</p><strong id="metricAverageScore">0</strong><span>Visible leads</span></article></section>
-      <section class="workspace-strip"><article class="workspace-card"><span class="workspace-label">Current Workspace User</span><strong id="workspaceUserBadge">Loading user…</strong><small>User-scoped lists and leads only</small></article><article class="workspace-card"><span class="workspace-label">Data Source</span><strong id="workspaceDataSource">Local workspace</strong><small id="workspaceLastSync">Waiting for first sync</small></article><article class="workspace-card workspace-card-highlight"><span class="workspace-label">Selected List Health</span><strong id="workspaceSelectedListHealth">No list selected</strong><small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small></article></section>
-      <section class="content-grid"><article class="panel panel-wide"><div class="panel-header"><div><p class="panel-eyebrow">Recent Searches</p><h2>Newest search batches</h2></div><div class="panel-actions"><a class="button ghost small" href="../lists/">Open Searches</a></div></div><div class="saved-list-table-wrap"><table class="data-table" id="savedListsTable"><thead><tr><th>Search</th><th>Market</th><th>Status</th><th>Last run</th><th>Qualified</th></tr></thead><tbody></tbody></table></div></article><article class="panel"><div class="panel-header"><div><p class="panel-eyebrow">Selected Search Funnel</p><h2 id="pipelineListTitle">Selected batch funnel</h2></div></div><div class="pipeline-stack" id="pipeline"><div class="pipeline-step"><span>Discovered</span><strong id="pipelineDiscovered">0</strong></div><div class="pipeline-step"><span>Audited</span><strong id="pipelineAudited">0</strong></div><div class="pipeline-step"><span>Contact-ready</span><strong id="pipelineEnriched">0</strong></div><div class="pipeline-step"><span>Qualified</span><strong id="pipelineQualified">0</strong></div><div class="pipeline-step"><span>Not a Fit</span><strong id="pipelineRejected">0</strong></div></div></article></section>
-      <section class="panel"><div class="panel-header"><div><p class="panel-eyebrow">Recent Prospects</p><h2>Live lead snapshot</h2></div><div class="panel-actions"><a class="button ghost small" href="../leads/">Open Prospects</a></div></div><div class="lead-summary-bar"><div><span class="workspace-label">Visible Leads</span><strong id="visibleLeadCount">0 leads</strong></div><div><span class="workspace-label">Search Snapshot</span><strong id="activeLeadSummary">No active list selected yet.</strong></div></div><div class="saved-list-table-wrap"><table class="data-table leads-table" id="leadsTable"><thead><tr><th>Company</th><th>Decision Maker</th><th>Contact</th><th>Overall</th><th>Status</th></tr></thead><tbody></tbody></table></div></section>
+    <aside class="sidebar">
+      <a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a class="active" href="../dashboard/">Dashboard</a>
+        <a href="../lists/">Searches</a>
+        <a href="../leads/">Prospects</a>
+        <a href="../lead-detail/">Lead Detail</a>
+        <a href="../opportunities/">Opportunities</a>
+        <a href="../competitors/">Competitors</a>
+        <a href="../settings/">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-main rf-dashboard-main">
+      <header class="rf-dashboard-header">
+        <div>
+          <p class="rf-eyebrow">Command Center</p>
+          <h1>Lead Intelligence Dashboard</h1>
+          <p>Track qualified SEO opportunities, evidence coverage, and monthly usage.</p>
+        </div>
+        <div class="rf-header-actions">
+          <span class="rf-badge rf-badge-plan" id="rfPlanBadge">Plan loading</span>
+          <span class="rf-badge rf-badge-credit" id="rfCreditBadge">Credits loading</span>
+          <a class="button primary" href="#rfNewSearchCard">New Search</a>
+          <a class="button ghost" href="../leads/">View Leads</a>
+        </div>
+      </header>
+
+      <section class="rf-empty-state" id="rfDashboardEmpty" hidden>
+        <div class="rf-empty-mark">RF</div>
+        <h2>Start your first lead search</h2>
+        <p>Create a search batch to find local businesses, verify SEO evidence, and identify contact-ready opportunities.</p>
+        <div class="rf-empty-actions"><a class="button primary" href="#rfNewSearchCard">Start New Search</a><a class="button ghost" href="../pricing/">View pricing limits</a></div>
+      </section>
+
+      <section class="rf-search-card" id="rfNewSearchCard">
+        <div class="rf-card-head">
+          <div><p class="rf-eyebrow">New Search</p><h2>Find local SEO opportunities</h2><p>Build a focused search using niche, market, and keyword intent.</p></div>
+        </div>
+        <form id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)" class="rf-search-form">
+          <label><span>Market name</span><input id="searchNameInput" type="text" placeholder="Phoenix Plumbing Companies"></label>
+          <label><span>Niche</span><input id="nicheInput" type="text" placeholder="plumber"></label>
+          <label><span>City</span><input id="cityInput" type="text" placeholder="Phoenix"></label>
+          <label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label>
+          <label><span>Primary keyword</span><input id="keywordSeedInput" type="text" placeholder="emergency plumber"></label>
+          <label><span>Include terms</span><input id="includeTermsInput" type="text" placeholder="drain cleaning, water heater, sewer repair"></label>
+          <label><span>Exclude terms</span><input id="excludeTermsInput" type="text" placeholder="yelp, angi, homeadvisor, directory"></label>
+          <label><span>Search depth</span><select id="searchDepthInput"><option value="10">10 previews</option><option value="25" selected>25 leads</option><option value="50">50 leads</option></select></label>
+          <label><span>Strictness</span><select id="qualificationModeInput"><option value="strict" selected>Strict evidence</option><option value="balanced">Balanced pool</option></select></label>
+          <button class="button primary" type="submit">Create Search</button>
+          <input id="businessTypeInput" type="hidden" value="local service business"><input id="seoThresholdInput" type="hidden" value="60"><input id="leadThresholdInput" type="hidden" value="70">
+          <p class="rf-search-status" id="createSearchStatus">Qualified leads require verified evidence and a usable contact path.</p>
+        </form>
+        <div class="rf-preset-row" aria-label="Ready searches">
+          <button type="button" data-name="Phoenix Plumbing Companies" data-niche="plumber" data-city="Phoenix" data-country="United States" data-keyword="emergency plumber" data-include="drain cleaning, water heater, sewer repair" data-exclude="yelp, angi, homeadvisor, directory">Phoenix Plumbing</button>
+          <button type="button" data-name="Miami Dental Clinics" data-niche="dentist" data-city="Miami" data-country="United States" data-keyword="cosmetic dentist" data-include="dental implants, emergency dentist, family dentist" data-exclude="zocdoc, yelp, healthgrades">Miami Dentists</button>
+          <button type="button" data-name="Miami Personal Injury Law Firms" data-niche="personal injury lawyer" data-city="Miami" data-country="United States" data-keyword="car accident lawyer" data-include="injury attorney, accident lawyer, slip and fall" data-exclude="avvo, findlaw, justia, yelp">Miami PI Lawyers</button>
+          <button type="button" data-name="Austin HVAC Companies" data-niche="hvac contractor" data-city="Austin" data-country="United States" data-keyword="ac repair" data-include="hvac repair, air conditioning, furnace repair" data-exclude="angi, homeadvisor, yelp">Austin HVAC</button>
+          <button type="button" data-name="Tampa Roofing Companies" data-niche="roofer" data-city="Tampa" data-country="United States" data-keyword="roof repair" data-include="storm damage, metal roofing, roof replacement" data-exclude="angi, homeadvisor, yelp">Tampa Roofing</button>
+        </div>
+      </section>
+
+      <section class="rf-kpi-grid" id="rfKpiGrid">
+        <article class="rf-kpi-card accent-success"><span>Qualified Leads</span><strong id="rfKpiQualified">—</strong><p>Evidence-backed opportunities</p></article>
+        <article class="rf-kpi-card accent-warning"><span>Needs Review</span><strong id="rfKpiReview">—</strong><p>Missing or partial evidence</p></article>
+        <article class="rf-kpi-card accent-primary"><span>Evidence Coverage</span><strong id="rfKpiEvidence">—</strong><p>Crawl signals available</p></article>
+        <article class="rf-kpi-card accent-purple"><span>Credits Used</span><strong id="rfKpiCredits">—</strong><p>Qualified leads only</p></article>
+      </section>
+
+      <section class="rf-dashboard-grid">
+        <article class="rf-card rf-funnel-card">
+          <div class="rf-card-head"><div><p class="rf-eyebrow">Lead Quality Funnel</p><h2>From search to qualified opportunity</h2><p>From search batch to evidence-backed qualified opportunity.</p></div></div>
+          <div class="rf-funnel-steps" id="rfLeadFunnel"></div>
+        </article>
+
+        <div class="rf-side-stack">
+          <article class="rf-card">
+            <div class="rf-card-head"><div><p class="rf-eyebrow">Plan & Usage</p><h2>Monthly access</h2></div></div>
+            <div class="rf-usage-list" id="rfUsageList"></div>
+            <p class="rf-usage-note">Qualified leads consume credits. Review-needed and rejected leads do not.</p>
+          </article>
+
+          <article class="rf-card">
+            <div class="rf-card-head"><div><p class="rf-eyebrow">Recommended Next Actions</p><h2>What to do next</h2></div></div>
+            <div class="rf-action-list" id="rfActionList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="rf-dashboard-grid rf-coverage-row-grid">
+        <article class="rf-card rf-evidence-coverage-card">
+          <div class="rf-card-head"><div><p class="rf-eyebrow">Evidence Coverage</p><h2>Evidence health</h2><p>RankForge only makes SEO claims when crawl evidence supports them.</p></div></div>
+          <div class="rf-evidence-rows" id="rfEvidenceRows"></div>
+          <div class="rf-trust-note">No evidence is not a failure. It prevents unsupported SEO claims.</div>
+        </article>
+
+        <article class="rf-card rf-admin-only" id="rfAdminQualityCard" hidden>
+          <div class="rf-card-head"><div><p class="rf-eyebrow">Admin-only</p><h2>Quality Health</h2><p>Crawler, evidence, and qualification gate diagnostics.</p></div></div>
+          <div class="rf-admin-metrics" id="rfAdminMetrics"></div>
+        </article>
+      </section>
+
+      <section class="rf-card rf-searches-card">
+        <div class="rf-card-head">
+          <div><p class="rf-eyebrow">Recent Search Batches</p><h2>Review markets and lead quality results</h2></div>
+          <a class="button ghost" href="../lists/">Open Searches</a>
+        </div>
+        <div class="rf-table-wrap"><table class="rf-table" id="rfRecentSearchesTable"><thead><tr><th>Search</th><th>Date</th><th>Found</th><th>Qualified</th><th>Needs Review</th><th>Rejected</th><th>Evidence</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="9"><div class="rf-table-loading">Loading lead intelligence…</div></td></tr></tbody></table></div>
+      </section>
+
+      <section class="rf-card rf-admin-only" id="rfAdminDebugTableCard" hidden>
+        <div class="rf-card-head"><div><p class="rf-eyebrow">Admin Diagnostics</p><h2>Crawl diagnostics table</h2></div></div>
+        <div class="rf-table-wrap"><table class="rf-table rf-debug-table" id="rfAdminDebugTable"><thead><tr><th>Search</th><th>Lead</th><th>Crawl source</th><th>HTML bytes</th><th>Text words</th><th>Issues</th><th>Signals</th><th>Verified</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+      </section>
+
+      <div class="rf-hidden-legacy" aria-hidden="true">
+        <section class="metrics-grid"><article><strong id="metricSavedLists">0</strong></article><article><strong id="metricQualified">0</strong></article><article><strong id="metricReviewNeeded">0</strong></article><article><strong id="metricAverageScore">0</strong></article></section>
+        <section class="workspace-strip"><strong id="workspaceUserBadge"></strong><strong id="workspaceDataSource"></strong><small id="workspaceLastSync"></small><strong id="workspaceSelectedListHealth"></strong><small id="workspaceSelectedListMeta"></small></section>
+        <table id="savedListsTable"><tbody></tbody></table>
+        <div id="pipelineListTitle"></div><strong id="pipelineDiscovered">0</strong><strong id="pipelineAudited">0</strong><strong id="pipelineEnriched">0</strong><strong id="pipelineQualified">0</strong><strong id="pipelineRejected">0</strong>
+        <strong id="visibleLeadCount">0 leads</strong><strong id="activeLeadSummary"></strong><table id="leadsTable"><tbody></tbody></table>
+      </div>
     </main>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../assets/supabase-config.js?v=supabase-auth-2"></script><script src="../assets/auth.js?v=user-isolation-1"></script><script src="../assets/user-sync.js?v=user-sync-1"></script><script src="../assets/test-growth-override.js?v=growth-test-1"></script><script src="../assets/app.js?v=selected-lead-true-fix-1"></script><script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script><script src="../assets/brand-consistency.js?v=brand-consistency-2"></script><script src="../assets/app-polish.js?v=final-intelligence-4"></script><script src="../assets/auto-sync.js?v=auto-sync-1"></script><script src="../assets/search-presets-clean.js?v=search-progress-panel-1"></script><script src="../assets/no-qualified-leads-message.js?v=no-qualified-1"></script>
-<script>(function(){if(((document.body||{}).dataset||{}).page!=='dashboard')return;function num(v){var n=Number(String(v||'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0}function txt(id){var el=document.getElementById(id);return el?el.textContent:''}function pct(a,b){return b?Math.round((a/b)*100)+'%':'0%'}function fill(id,value){var el=document.getElementById(id);if(el)el.value=value||''}function fillPreset(btn){fill('searchNameInput',btn.dataset.name);fill('nicheInput',btn.dataset.niche);fill('cityInput',btn.dataset.city);fill('countryInput',btn.dataset.country);fill('keywordSeedInput',btn.dataset.keyword);fill('includeTermsInput',btn.dataset.include);fill('excludeTermsInput',btn.dataset.exclude);var status=document.getElementById('createSearchStatus');if(status)status.textContent='Preset loaded. Adjust keywords or strictness, then create the search.'}document.querySelectorAll('.rf-preset-btn').forEach(function(btn){btn.addEventListener('click',function(){fillPreset(btn)})});function renderQuality(){var metrics=document.querySelector('.metrics-grid');if(!metrics)return;var saved=num(txt('metricSavedLists')),qualified=num(txt('metricQualified')),review=num(txt('metricReviewNeeded')),visible=num(txt('visibleLeadCount'));var discovered=Math.max(visible,qualified+review),pre=Math.max(discovered-review,qualified),audited=Math.max(qualified+review,0),contactReady=qualified;var html='<article class="rf-quality-card"><p class="panel-eyebrow">Lead Quality Funnel</p><h2>Search to qualified</h2><p>See whether searches produce evidence-backed prospects.</p><div class="rf-funnel"><div class="rf-funnel-step"><span>Searches</span><strong>'+saved+'</strong></div><div class="rf-funnel-step"><span>Found</span><strong>'+discovered+'</strong></div><div class="rf-funnel-step"><span>Priority</span><strong>'+pre+'</strong></div><div class="rf-funnel-step"><span>Audited</span><strong>'+audited+'</strong></div><div class="rf-funnel-step"><span>Qualified</span><strong>'+qualified+'</strong></div><div class="rf-funnel-step"><span>Exported</span><strong>0</strong></div></div></article><article class="rf-quality-card"><p class="panel-eyebrow">Quality Health</p><h2>Evidence coverage</h2><p>Keep exports focused on leads with evidence and contact paths.</p><div class="rf-coverage-grid"><div class="rf-coverage-row"><span>Qualified rate</span><strong>'+pct(qualified,discovered)+'</strong></div><div class="rf-coverage-row"><span>Review-needed pool</span><strong>'+review+'</strong></div><div class="rf-coverage-row"><span>Contact-ready estimate</span><strong>'+contactReady+'</strong></div></div><div class="rf-warning-list" id="rfQualityWarnings"></div></article>';var box=document.getElementById('rfQualityOverview');if(!box){box=document.createElement('section');box.id='rfQualityOverview';box.className='rf-quality-overview';metrics.insertAdjacentElement('afterend',box)}box.innerHTML=html;var warnings=[];if(discovered===0)warnings.push('Create a search batch to start measuring lead quality.');if(discovered>0&&qualified===0)warnings.push('No qualified opportunities yet. Try deeper discovery or a broader service query set.');if(review>qualified*3&&review>5)warnings.push('Large review pool detected. Prioritize leads with verified evidence and usable contact paths before export.');var warn=document.getElementById('rfQualityWarnings');if(warn)warn.innerHTML=warnings.map(function(w){return '<div class="rf-warning">'+w+'</div>'}).join('')}var ticks=0,t=setInterval(function(){ticks++;renderQuality();if(ticks>14)clearInterval(t)},700);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',renderQuality);else renderQuality();})();</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+<script src="../assets/auth.js?v=user-isolation-1"></script>
+<script src="../assets/user-sync.js?v=user-sync-1"></script>
+<script src="../assets/test-growth-override.js?v=growth-test-1"></script>
+<script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
+<script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
+<script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
+<script src="../assets/app-polish.js?v=final-intelligence-8"></script>
+<script src="../assets/auto-sync.js?v=auto-sync-1"></script>
+<script src="../assets/dashboard-premium.js?v=premium-dashboard-1"></script>
 </body>
 </html>

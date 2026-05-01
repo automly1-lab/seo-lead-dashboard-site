@@ -15,3 +15,7 @@
 .rf-kpi-card {
   min-height: 132px;
 }
+
+.rf-search-status:empty {
+  display: none !important;
+}

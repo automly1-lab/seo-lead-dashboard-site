@@ -1,0 +1,17 @@
+/* Final copy + loading-state polish for the premium Searches workspace. */
+.app-page-searches [hidden],
+.app-page-searches .rf-search-loading[hidden],
+.app-page-searches .rf-search-empty[hidden],
+.app-page-searches .rf-no-filter-results[hidden],
+.app-page-searches .rf-admin-diagnostics[hidden],
+.app-page-searches .rf-admin-panel[hidden] {
+  display: none !important;
+}
+
+.rf-search-kpis {
+  margin-top: 8px;
+}
+
+.rf-kpi-card {
+  min-height: 132px;
+}

@@ -1,6 +1,6 @@
 /*
   RankForge Supabase Auth Adapter
-  Replaces localStorage-only auth with Supabase Auth while keeping the old app contract:
+  Keeps the old app contract while powering premium login/signup pages:
   - window.rankforgeAuth.getSession()
   - localStorage rankforge-auth-session-v1
   - localStorage rankforge-current-user-id-v1
@@ -23,16 +23,44 @@
 
   function byId(id) { return document.getElementById(id); }
   function safeJson(raw, fallback) { try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } }
+  function safeInternalPath(value) {
+    const raw = String(value || "").trim();
+    if (!raw || raw.startsWith("http://") || raw.startsWith("https://") || raw.startsWith("//")) return "";
+    if (!raw.startsWith("/")) return "";
+    return raw;
+  }
+  function relativeFromRoot(path) {
+    const clean = String(path || "").replace(/^\/+/, "");
+    return "../" + clean;
+  }
+  function friendlyError(error) {
+    const msg = String((error && error.message) || error || "").toLowerCase();
+    if (msg.includes("invalid login credentials")) return "The email or password is incorrect.";
+    if (msg.includes("email not confirmed")) return "Please confirm your email before logging in.";
+    if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("user already registered")) return "An account with this email may already exist. Try logging in.";
+    if (msg.includes("password") && (msg.includes("weak") || msg.includes("at least"))) return "Please use a stronger password.";
+    if (msg.includes("invalid email")) return "Enter a valid email address.";
+    if (msg.includes("network") || msg.includes("fetch") || msg.includes("failed to fetch")) return "Could not reach authentication service. Try again.";
+    return error && error.message ? "Something went wrong. Please try again." : "Something went wrong. Please try again.";
+  }
   function setStatus(message, tone) {
     const ids = ["authStatus", "loginStatus", "signupStatus", "formStatus", "authFormStatus"];
     ids.forEach((id) => {
       const node = byId(id);
       if (!node) return;
       node.textContent = message;
+      node.hidden = false;
       node.classList.remove("is-success", "is-error");
       if (tone === "success") node.classList.add("is-success");
       if (tone === "error") node.classList.add("is-error");
     });
+  }
+  function setSubmitting(isSubmitting, fallbackText) {
+    const btn = byId("authSubmitButton") || document.querySelector(".rf-auth-button") || document.querySelector(".auth-form button[type='submit']");
+    if (!btn) return;
+    if (!btn.dataset.defaultText) btn.dataset.defaultText = btn.textContent.trim() || fallbackText || "Submit";
+    btn.disabled = !!isSubmitting;
+    btn.textContent = isSubmitting ? (btn.dataset.loadingText || fallbackText || "Working…") : btn.dataset.defaultText;
   }
 
   function billingConfig() { return window.RANKFORGE_BILLING || {}; }
@@ -52,7 +80,7 @@
   function preserveIntentLinks() {
     const search = window.location.search || "";
     if (!search) return;
-    document.querySelectorAll(".auth-switch a").forEach((link) => {
+    document.querySelectorAll(".auth-switch a,.rf-auth-switch a").forEach((link) => {
       try {
         const url = new URL(link.getAttribute("href"), window.location.href);
         const current = new URLSearchParams(search);
@@ -67,6 +95,9 @@
   }
   function resolvePostAuthDestination() {
     const params = new URLSearchParams(window.location.search || "");
+    const returnTo = safeInternalPath(params.get("returnTo"));
+    if (returnTo) return relativeFromRoot(returnTo);
+
     const intent = String(params.get("intent") || localStorage.getItem(CHECKOUT_INTENT_KEY) || "").trim().toLowerCase();
     const plan = normalizePlan(params.get("plan") || localStorage.getItem(CHECKOUT_PLAN_KEY) || localStorage.getItem(SELECTED_PLAN_KEY) || "starter");
 
@@ -148,25 +179,36 @@
     if (!session || !session.userId) window.location.replace(LOGIN_PATH);
   }
 
+  async function redirectAuthPagesIfSignedIn() {
+    const isAuthPage = document.body && document.body.dataset.authPage === "true";
+    if (!isAuthPage) return;
+    const params = new URLSearchParams(window.location.search || "");
+    if (params.get("intent") || params.get("plan") || params.get("returnTo")) return;
+    const session = await refreshSession();
+    if (session && session.userId) window.location.replace(DASHBOARD_PATH);
+  }
+
   function readAuthFields() {
     const email = byId("emailInput")?.value || byId("loginEmail")?.value || byId("signupEmail")?.value || document.querySelector('input[type="email"]')?.value || "";
     const password = byId("passwordInput")?.value || byId("loginPassword")?.value || byId("signupPassword")?.value || document.querySelector('input[type="password"]')?.value || "";
+    const confirm = byId("confirmPassword")?.value || document.querySelector('input[name="confirm_password"]')?.value || "";
     const name = byId("nameInput")?.value || byId("signupName")?.value || byId("fullNameInput")?.value || document.querySelector('input[name="full_name"]')?.value || "";
-    return { email: String(email).trim(), password: String(password), name: String(name).trim() };
+    return { email: String(email).trim(), password: String(password), confirm: String(confirm), name: String(name).trim() };
   }
 
   async function login(event) {
     if (event && event.preventDefault) event.preventDefault();
     const client = getClient();
-    if (!client) { setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error"); return false; }
+    if (!client) { setStatus("Could not reach authentication service. Try again.", "error"); return false; }
     const { email, password } = readAuthFields();
     if (!email || !password) { setStatus("Enter your email and password.", "error"); return false; }
-    setStatus("Signing in...", "");
+    setSubmitting(true, "Logging in…");
+    setStatus("Logging in…", "");
     const { data, error } = await client.auth.signInWithPassword({ email, password });
-    if (error) { setStatus(error.message || "Sign in failed.", "error"); return false; }
+    if (error) { setSubmitting(false); setStatus(friendlyError(error), "error"); return false; }
     const session = normalizeSession(data.session);
     saveSession(session);
-    setStatus("Signed in. Redirecting...", "success");
+    setStatus("Logged in. Redirecting…", "success");
     window.location.href = resolvePostAuthDestination();
     return false;
   }
@@ -174,20 +216,24 @@
   async function signup(event) {
     if (event && event.preventDefault) event.preventDefault();
     const client = getClient();
-    if (!client) { setStatus("Supabase config is missing. Check assets/supabase-config.js.", "error"); return false; }
-    const { email, password, name } = readAuthFields();
+    if (!client) { setStatus("Could not reach authentication service. Try again.", "error"); return false; }
+    const { email, password, confirm, name } = readAuthFields();
     if (!email || !password) { setStatus("Enter your email and password.", "error"); return false; }
-    if (password.length < 6) { setStatus("Password must be at least 6 characters.", "error"); return false; }
-    setStatus("Creating account...", "");
-    const { data, error } = await client.auth.signUp({ email, password, options: { data: { full_name: name || "" }, emailRedirectTo: window.location.origin + "/dashboard/" } });
-    if (error) { setStatus(error.message || "Signup failed.", "error"); return false; }
+    if (confirm && password !== confirm) { setStatus("Passwords do not match.", "error"); return false; }
+    if (password.length < 6) { setStatus("Please use a stronger password.", "error"); return false; }
+    setSubmitting(true, "Creating workspace…");
+    setStatus("Creating workspace…", "");
+    const redirectTo = window.location.origin + window.location.pathname.replace(/\/signup\/.*/, "/dashboard/");
+    const { data, error } = await client.auth.signUp({ email, password, options: { data: { full_name: name || "" }, emailRedirectTo: redirectTo } });
+    if (error) { setSubmitting(false); setStatus(friendlyError(error), "error"); return false; }
     const session = normalizeSession(data.session);
     if (session) {
       saveSession(session);
-      setStatus("Account created. Redirecting...", "success");
+      setStatus("Workspace created. Redirecting…", "success");
       window.location.href = resolvePostAuthDestination();
     } else {
-      setStatus("Account created. Check your email to confirm your account.", "success");
+      setSubmitting(false);
+      setStatus("Workspace created. Check your email to confirm your account.", "success");
     }
     return false;
   }
@@ -197,12 +243,27 @@
     const client = getClient();
     if (client) await client.auth.signOut();
     saveSession(null);
-    const loginUrl = new URL("login/", window.location.origin + "/").toString();
-    window.location.href = loginUrl;
+    window.location.href = LOGIN_PATH;
+  }
+
+  function bindPasswordToggles() {
+    document.querySelectorAll("[data-toggle-password]").forEach((btn) => {
+      if (btn.dataset.bound === "true") return;
+      btn.dataset.bound = "true";
+      btn.addEventListener("click", () => {
+        const input = byId(btn.getAttribute("data-toggle-password"));
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Hide" : "Show";
+        btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      });
+    });
   }
 
   function bindForms() {
     preserveIntentLinks();
+    bindPasswordToggles();
     const loginForm = byId("loginForm") || document.querySelector('form[data-auth-form="login"]') || (document.body?.classList.contains("app-page-login") ? document.querySelector("form") : null);
     const signupForm = byId("signupForm") || document.querySelector('form[data-auth-form="signup"]') || (document.body?.classList.contains("app-page-signup") ? document.querySelector("form") : null);
     if (loginForm) loginForm.onsubmit = login;
@@ -214,6 +275,7 @@
 
   async function boot() {
     bindForms();
+    await redirectAuthPagesIfSignedIn();
     await requireAuthIfNeeded();
     const client = getClient();
     if (client) {

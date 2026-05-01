@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   var ADMIN_EMAIL='automly1@gmail.com';
-  var PUBLIC_RE=/\/(how-it-works|pricing|privacy|terms|refund-policy|login|signup)\/?$/;
+  var PUBLIC_RE=/\/(how-it-works|pricing|privacy|terms|refund-policy|login|signup|checkout-success|checkout-cancelled|checkout-pending)\/?$/;
   function isPublic(){return location.pathname==='/'||/\/seo-lead-dashboard-site\/?$/.test(location.pathname)||PUBLIC_RE.test(location.pathname||'');}
   function nested(){return PUBLIC_RE.test(location.pathname||'');}
   function prefix(){return nested()?'../':'';}

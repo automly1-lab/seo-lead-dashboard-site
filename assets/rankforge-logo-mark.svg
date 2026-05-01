@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 180" role="img" aria-label="RankForge logo mark">
+  <defs>
+    <linearGradient id="blue" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#22C55E"/>
+    </linearGradient>
+  </defs>
+  <path d="M80 10 143 45 128 58 80 31 31 58v71l49 29 49-29V86h22v56L80 178 9 142V45L80 10Z" fill="#081B4D"/>
+  <path d="M39 108h18V79H39v29Zm34 0h18V55H73v53Zm34 0h18V38h-18v70Z" fill="url(#blue)"/>
+  <path d="M18 122c34-4 75-18 122-63" fill="none" stroke="#081B4D" stroke-width="20" stroke-linecap="round"/>
+  <path d="M20 115c36-5 75-19 116-58" fill="none" stroke="url(#teal)" stroke-width="12" stroke-linecap="round"/>
+  <path d="M118 55h23v23" fill="none" stroke="url(#teal)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M49 137 69 154 109 112" fill="none" stroke="url(#teal)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

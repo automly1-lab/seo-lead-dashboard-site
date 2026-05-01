@@ -1,0 +1,21 @@
+{
+  "overall": "operational",
+  "lastUpdated": "2026-05-02T00:00:00Z",
+  "manual": true,
+  "components": [
+    { "name": "Marketing Site", "status": "operational", "description": "Homepage, pricing, legal pages, and public navigation." },
+    { "name": "Authentication", "status": "operational", "description": "Sign up, log in, sessions, and user access." },
+    { "name": "Search Batches", "status": "operational", "description": "Creating search requests and sending them to the workflow." },
+    { "name": "Website Crawling", "status": "operational", "description": "Fetching websites and extracting crawlable content." },
+    { "name": "SEO Evidence Analyzer", "status": "operational", "description": "Converting crawl signals into verified SEO evidence fields." },
+    { "name": "Qualification Gate", "status": "operational", "description": "Classifying prospects as Qualified, Needs Review, or Rejected." },
+    { "name": "Data Layer", "status": "operational", "description": "Saving searches, prospects, evidence, and usage records." },
+    { "name": "CSV Export", "status": "operational", "description": "Exporting contact-ready prospects on eligible plans." },
+    { "name": "Billing & Checkout", "status": "operational", "description": "Stripe checkout, billing confirmation, and plan activation." },
+    { "name": "Admin Quality Tools", "status": "operational", "description": "Admin-only crawl, evidence, user, and credit diagnostics." }
+  ],
+  "incidents": [],
+  "history": [
+    { "date": "2026-05-02", "status": "operational", "title": "No incidents reported", "description": "All systems marked operational." }
+  ]
+}

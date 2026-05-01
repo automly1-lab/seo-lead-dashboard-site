@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-8">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <link rel="stylesheet" href="../assets/dashboard-premium.css?v=premium-dashboard-1">
+  <link rel="stylesheet" href="../assets/dashboard-premium.css?v=premium-dashboard-2">
 </head>
 <body class="dashboard-body app-page-dashboard" data-auth="protected" data-page="dashboard">
   <div class="dashboard-shell">
@@ -80,13 +80,29 @@
         <article class="rf-kpi-card accent-purple"><span>Credits Used</span><strong id="rfKpiCredits">—</strong><p>Qualified leads only</p></article>
       </section>
 
-      <section class="rf-dashboard-grid">
-        <article class="rf-card rf-funnel-card">
-          <div class="rf-card-head"><div><p class="rf-eyebrow">Lead Quality Funnel</p><h2>From search to qualified opportunity</h2><p>From search batch to evidence-backed qualified opportunity.</p></div></div>
-          <div class="rf-funnel-steps" id="rfLeadFunnel"></div>
-        </article>
+      <section class="rf-dashboard-layout">
+        <div class="rf-dashboard-left">
+          <article class="rf-card rf-funnel-card">
+            <div class="rf-card-head"><div><p class="rf-eyebrow">Lead Quality Funnel</p><h2>From search to qualified opportunity</h2><p>From search batch to evidence-backed qualified opportunity.</p></div></div>
+            <div class="rf-funnel-steps" id="rfLeadFunnel"></div>
+          </article>
 
-        <div class="rf-side-stack">
+          <article class="rf-card rf-evidence-coverage-card">
+            <div class="rf-card-head"><div><p class="rf-eyebrow">Evidence Coverage</p><h2>Evidence health</h2><p>RankForge only makes SEO claims when crawl evidence supports them.</p></div></div>
+            <div class="rf-evidence-rows" id="rfEvidenceRows"></div>
+            <div class="rf-trust-note">No evidence is not a failure. It prevents unsupported SEO claims.</div>
+          </article>
+
+          <section class="rf-card rf-searches-card">
+            <div class="rf-card-head">
+              <div><p class="rf-eyebrow">Recent Search Batches</p><h2>Review markets and lead quality results</h2></div>
+              <a class="button ghost" href="../lists/">Open Searches</a>
+            </div>
+            <div class="rf-table-wrap"><table class="rf-table" id="rfRecentSearchesTable"><thead><tr><th>Search</th><th>Date</th><th>Found</th><th>Qualified</th><th>Needs Review</th><th>Rejected</th><th>Evidence</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="9"><div class="rf-table-loading">Loading lead intelligence…</div></td></tr></tbody></table></div>
+          </section>
+        </div>
+
+        <aside class="rf-dashboard-right">
           <article class="rf-card">
             <div class="rf-card-head"><div><p class="rf-eyebrow">Plan & Usage</p><h2>Monthly access</h2></div></div>
             <div class="rf-usage-list" id="rfUsageList"></div>
@@ -97,33 +113,17 @@
             <div class="rf-card-head"><div><p class="rf-eyebrow">Recommended Next Actions</p><h2>What to do next</h2></div></div>
             <div class="rf-action-list" id="rfActionList"></div>
           </article>
-        </div>
-      </section>
 
-      <section class="rf-dashboard-grid rf-coverage-row-grid">
-        <article class="rf-card rf-evidence-coverage-card">
-          <div class="rf-card-head"><div><p class="rf-eyebrow">Evidence Coverage</p><h2>Evidence health</h2><p>RankForge only makes SEO claims when crawl evidence supports them.</p></div></div>
-          <div class="rf-evidence-rows" id="rfEvidenceRows"></div>
-          <div class="rf-trust-note">No evidence is not a failure. It prevents unsupported SEO claims.</div>
-        </article>
+          <article class="rf-card rf-admin-only" id="rfAdminQualityCard" hidden>
+            <div class="rf-card-head"><div><p class="rf-eyebrow">Admin-only</p><h2>Quality Health</h2><p>Crawler, evidence, and qualification gate diagnostics.</p></div></div>
+            <div class="rf-admin-metrics" id="rfAdminMetrics"></div>
+          </article>
 
-        <article class="rf-card rf-admin-only" id="rfAdminQualityCard" hidden>
-          <div class="rf-card-head"><div><p class="rf-eyebrow">Admin-only</p><h2>Quality Health</h2><p>Crawler, evidence, and qualification gate diagnostics.</p></div></div>
-          <div class="rf-admin-metrics" id="rfAdminMetrics"></div>
-        </article>
-      </section>
-
-      <section class="rf-card rf-searches-card">
-        <div class="rf-card-head">
-          <div><p class="rf-eyebrow">Recent Search Batches</p><h2>Review markets and lead quality results</h2></div>
-          <a class="button ghost" href="../lists/">Open Searches</a>
-        </div>
-        <div class="rf-table-wrap"><table class="rf-table" id="rfRecentSearchesTable"><thead><tr><th>Search</th><th>Date</th><th>Found</th><th>Qualified</th><th>Needs Review</th><th>Rejected</th><th>Evidence</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="9"><div class="rf-table-loading">Loading lead intelligence…</div></td></tr></tbody></table></div>
-      </section>
-
-      <section class="rf-card rf-admin-only" id="rfAdminDebugTableCard" hidden>
-        <div class="rf-card-head"><div><p class="rf-eyebrow">Admin Diagnostics</p><h2>Crawl diagnostics table</h2></div></div>
-        <div class="rf-table-wrap"><table class="rf-table rf-debug-table" id="rfAdminDebugTable"><thead><tr><th>Search</th><th>Lead</th><th>Crawl source</th><th>HTML bytes</th><th>Text words</th><th>Issues</th><th>Signals</th><th>Verified</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+          <section class="rf-card rf-admin-only" id="rfAdminDebugTableCard" hidden>
+            <div class="rf-card-head"><div><p class="rf-eyebrow">Admin Diagnostics</p><h2>Crawl diagnostics</h2></div></div>
+            <div class="rf-table-wrap"><table class="rf-table rf-debug-table" id="rfAdminDebugTable"><thead><tr><th>Search</th><th>Lead</th><th>Crawl source</th><th>HTML bytes</th><th>Text words</th><th>Issues</th><th>Signals</th><th>Verified</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+          </section>
+        </aside>
       </section>
 
       <div class="rf-hidden-legacy" aria-hidden="true">
@@ -145,6 +145,6 @@
 <script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
 <script src="../assets/app-polish.js?v=final-intelligence-8"></script>
 <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
-<script src="../assets/dashboard-premium.js?v=premium-dashboard-1"></script>
+<script src="../assets/dashboard-premium.js?v=premium-dashboard-2"></script>
 </body>
 </html>

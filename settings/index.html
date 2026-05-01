@@ -3,111 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RankForge Intelligence | Account Settings</title>
+  <title>RankForge Intelligence | Settings</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/app-polish.css?v=admin-portal-1">
+  <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-1">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
   <link rel="stylesheet" href="../assets/account-settings.css?v=account-settings-1">
+  <style>
+    .app-page-settings .dashboard-main{gap:20px}.app-page-settings .workspace-strip{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.settings-grid{gap:20px!important}.settings-card-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px!important}.settings-info-card{border:1px solid #E5E7EB!important;border-radius:14px!important;background:#fff!important;padding:16px!important;box-shadow:none!important}.settings-info-card strong{display:block;margin-top:6px;color:#111827;font-size:15px}.settings-info-card p{margin:8px 0 0;color:#6B7280;font-size:13px;line-height:20px}.settings-user-id{font-family:var(--rf-mono,"SFMono-Regular",Consolas,monospace);font-size:12px!important;line-break:anywhere}.rf-plan-note{padding:14px 16px;border-radius:14px;border:1px solid #BFDBFE;background:#EFF6FF;color:#1D4ED8;font-size:14px;line-height:22px}.panel-copy{font-size:14px;color:#6B7280;line-height:22px}@media(max-width:1100px){.app-page-settings .workspace-strip,.settings-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:680px){.app-page-settings .workspace-strip,.settings-card-grid{grid-template-columns:1fr!important}}
+  </style>
 </head>
 <body class="dashboard-body app-page-settings" data-auth="protected" data-page="settings">
   <div class="dashboard-shell">
-    <aside class="sidebar">
-      <a class="brand" href="../index.html">
-        <span class="brand-mark">RF</span>
-        <span class="brand-copy"><strong>RankForge</strong><small>by CrestlineOps</small></span>
-      </a>
-      <nav class="sidebar-nav">
-        <a href="../dashboard/">Dashboard</a>
-        <a href="../lists/">Saved Lists</a>
-        <a href="../leads/">Leads</a>
-        <a href="../lead-detail/">Lead Detail</a>
-        <a class="active" href="../settings/">Settings</a>
-      </nav>
-      <section class="sidebar-panel">
-        <p class="panel-eyebrow">Account</p>
-        <h2>Workspace identity.</h2>
-        <p>Manage the signed-in workspace session and confirm which user ID owns new searches and leads.</p>
-      </section>
-    </aside>
-
+    <aside class="sidebar"><a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>by CrestlineOps</small></span></a><nav class="sidebar-nav"><a href="../dashboard/">Command Center</a><a href="../lists/">Searches</a><a href="../leads/">Prospects</a><a href="../lead-detail/">Qualification</a><a href="../opportunities/">Opportunities</a><a href="../competitors/">Competitors</a><a class="active" href="../settings/">Settings</a></nav></aside>
     <main class="dashboard-main">
-      <header class="topbar">
-        <div>
-          <p class="kicker">Account Settings</p>
-          <h1>Workspace and account</h1>
-          <p class="topbar-copy">Confirm your RankForge account, current user ID, workspace access, and data isolation status.</p>
-        </div>
-        <div class="topbar-actions">
-          <div class="data-status" id="settingsStatus">Protected workspace</div>
-          <a class="button ghost" href="../dashboard/">Back to Dashboard</a>
-        </div>
-      </header>
-
-      <section class="workspace-strip">
-        <article class="workspace-card"><span class="workspace-label">Signed-in Email</span><strong id="accountEmail">Loading...</strong><small>Supabase Auth account email</small></article>
-        <article class="workspace-card"><span class="workspace-label">Workspace User ID</span><strong class="settings-user-id" id="accountUserId">Loading...</strong><small>Used to isolate searches, leads, and exports</small></article>
-        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Session Status</span><strong id="accountSessionStatus">Checking</strong><small id="accountSessionMeta">Waiting for session validation.</small></article>
-      </section>
-
-      <section class="workspace-strip">
-        <article class="workspace-card"><span class="workspace-label">Workspace Access</span><strong id="accountPlanName">Loading...</strong><small id="accountPlanPrice">Free access is shown until a paid plan is confirmed.</small></article>
-        <article class="workspace-card"><span class="workspace-label">Monthly Lead Credits</span><strong id="accountLeadLimit">-</strong><small id="accountLeadUsage">Paid lead credits activate after checkout confirmation.</small></article>
-        <article class="workspace-card"><span class="workspace-label">Search Batches</span><strong id="accountSearchLimit">-</strong><small id="accountSearchUsage">Search usage for this month.</small></article>
-        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Access Status</span><strong id="accountPlanStatus">Checking</strong><small id="accountPlanMeta">Paid plan access requires checkout confirmation.</small></article>
-      </section>
-
-      <section class="content-grid settings-grid">
-        <article class="panel panel-wide">
-          <div class="panel-header">
-            <div>
-              <p class="panel-eyebrow">Current Workspace</p>
-              <h2>Account details</h2>
-            </div>
-          </div>
-          <div class="settings-card-grid">
-            <div class="settings-info-card">
-              <span class="workspace-label">Auth Provider</span>
-              <strong>Supabase Auth</strong>
-              <p>Email/password authentication is active. Email confirmation can be enabled later after the production domain is connected.</p>
-            </div>
-            <div class="settings-info-card">
-              <span class="workspace-label">Data Isolation</span>
-              <strong>User-scoped</strong>
-              <p>Dashboard data is filtered by your Supabase user ID. Other users should not see your saved lists or leads.</p>
-            </div>
-            <div class="settings-info-card">
-              <span class="workspace-label">Plan Model</span>
-              <strong id="accountPlanModel">Starter / Growth / Agency Intelligence</strong>
-              <p id="accountPlanDescription">Selecting a plan does not activate paid access. Paid plans activate only after checkout confirmation.</p>
-            </div>
-            <div class="settings-info-card">
-              <span class="workspace-label">Webhook</span>
-              <strong id="accountWebhookStatus">Configured in browser</strong>
-              <p id="accountWebhookValue">Webhook URL is stored locally for now and can remain configurable while n8n changes.</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="panel panel-compact">
-          <div class="panel-header"><div><p class="panel-eyebrow">Session Control</p><h2>Sign out</h2></div></div>
-          <p class="panel-copy">Signing out clears local RankForge workspace cache from this browser and returns you to the login page.</p>
-          <div class="panel-actions top-space">
-            <button class="button danger" type="button" id="logoutButton">Log out</button>
-          </div>
-          <p class="form-status" id="logoutStatus"></p>
-        </article>
-      </section>
+      <header class="topbar"><div><p class="kicker">Settings</p><h1>Plan and workspace</h1><p class="topbar-copy">Manage account identity, plan access, usage limits, and export availability.</p></div><div class="topbar-actions"><div class="data-status" id="settingsStatus">Protected workspace</div><a class="button ghost" href="../dashboard/">Command Center</a></div></header>
+      <section class="workspace-strip"><article class="workspace-card"><span class="workspace-label">Plan</span><strong id="accountPlanName">Loading...</strong><small id="accountPlanPrice">Free until paid checkout is confirmed.</small></article><article class="workspace-card"><span class="workspace-label">Lead Credits</span><strong id="accountLeadLimit">-</strong><small id="accountLeadUsage">Qualified leads only.</small></article><article class="workspace-card"><span class="workspace-label">Search Batches</span><strong id="accountSearchLimit">-</strong><small id="accountSearchUsage">Monthly search usage.</small></article><article class="workspace-card workspace-card-highlight"><span class="workspace-label">Access</span><strong id="accountPlanStatus">Checking</strong><small id="accountPlanMeta">Paid access requires checkout confirmation.</small></article></section>
+      <section class="workspace-strip"><article class="workspace-card"><span class="workspace-label">Signed-in Email</span><strong id="accountEmail">Loading...</strong><small>Supabase Auth account</small></article><article class="workspace-card"><span class="workspace-label">Workspace User ID</span><strong class="settings-user-id" id="accountUserId">Loading...</strong><small>Used for data isolation</small></article><article class="workspace-card"><span class="workspace-label">Session</span><strong id="accountSessionStatus">Checking</strong><small id="accountSessionMeta">Validating workspace session.</small></article><article class="workspace-card"><span class="workspace-label">CSV Export</span><strong id="accountWebhookStatus">Plan gated</strong><small id="accountWebhookValue">Starter, Growth, and admin can export.</small></article></section>
+      <section class="content-grid settings-grid"><article class="panel panel-wide"><div class="panel-header"><div><p class="panel-eyebrow">Workspace</p><h2>Account details</h2></div></div><div class="settings-card-grid"><div class="settings-info-card"><span class="workspace-label">Authentication</span><strong>Supabase Auth</strong><p>Email/password authentication is active for this workspace.</p></div><div class="settings-info-card"><span class="workspace-label">Data Isolation</span><strong>User-scoped</strong><p>Searches, leads, and exports are filtered by your Supabase user ID.</p></div><div class="settings-info-card"><span class="workspace-label">Plan Model</span><strong id="accountPlanModel">Free / Starter / Growth</strong><p id="accountPlanDescription">Paid features activate only after checkout confirmation.</p></div><div class="settings-info-card"><span class="workspace-label">Billing Principle</span><strong>No pending access</strong><p>Pending payments should not appear as active paid plans.</p></div></div></article><article class="panel panel-compact"><div class="panel-header"><div><p class="panel-eyebrow">Session</p><h2>Sign out</h2></div></div><p class="panel-copy">Signing out clears local RankForge workspace cache from this browser and returns you to the login page.</p><div class="rf-plan-note">Lead credits are counted only when a lead is qualified. Review-needed and rejected records do not consume lead credits.</div><div class="panel-actions top-space"><button class="button danger" type="button" id="logoutButton">Log out</button></div><p class="form-status" id="logoutStatus"></p></article></section>
     </main>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
-  <script src="../assets/auth.js?v=user-isolation-4"></script>
-  <script src="../assets/user-sync.js?v=user-sync-1"></script>
-  <script src="../assets/billing-config.js?v=billing-config-2"></script>
-  <script src="../assets/account-settings.js?v=free-access-1"></script>
-  <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
-  <script src="../assets/app-polish.js?v=admin-portal-1"></script>
-  <script src="../assets/auto-sync.js?v=auto-sync-1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../assets/supabase-config.js?v=supabase-auth-2"></script><script src="../assets/auth.js?v=user-isolation-4"></script><script src="../assets/user-sync.js?v=user-sync-1"></script><script src="../assets/billing-config.js?v=billing-config-2"></script><script src="../assets/account-settings.js?v=free-access-1"></script><script src="../assets/brand-consistency.js?v=brand-consistency-1"></script><script src="../assets/app-polish.js?v=final-intelligence-1"></script><script src="../assets/auto-sync.js?v=auto-sync-1"></script>
 </body>
 </html>

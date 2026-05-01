@@ -3,8 +3,6 @@
   function set(selector, value){ const el=$(selector); if(el) el.textContent=value; }
   function patchStaticCopy(){
     set('#rfSearchUsageBadge', ($('#rfSearchUsageBadge')?.textContent || '').replace(/searches/gi,'batches').replace(/search/gi,'batch'));
-    const newBtn = document.querySelector('.rf-searches-header-actions a.button.primary');
-    if (newBtn) newBtn.textContent = 'New Batch';
     set('#rfKpiSearchesCreated', $('#rfKpiSearchesCreated')?.textContent || '—');
     const firstKpi = document.querySelector('.rf-search-kpis .rf-kpi-card:first-child span');
     if (firstKpi) firstKpi.textContent = 'Batches Created';
@@ -14,19 +12,18 @@
     if (fourthKpiTitle) fourthKpiTitle.textContent = 'Remaining This Month';
     const fourthKpiNote = document.querySelector('.rf-search-kpis .rf-kpi-card:nth-child(4) p');
     if (fourthKpiNote) fourthKpiNote.textContent = 'Based on your current plan';
-    const startButton = document.getElementById('rfStartSearchButton');
-    if (startButton && startButton.textContent.trim() === 'Start Search') startButton.textContent = 'Start Batch';
+    const createCard = document.getElementById('rfSearchCreateCard');
+    if (createCard) createCard.remove();
+    document.querySelectorAll('.rf-searches-header-actions a.button.primary').forEach((button)=>button.remove());
   }
 
   function patchAfterRender(){
     const usage = document.getElementById('rfSearchUsageBadge');
     if (usage) usage.textContent = usage.textContent.replace(/Unlimited searches/i,'Unlimited batches').replace(/searches left/i,'batches left').replace(/search left/i,'batch left');
-    const startButton = document.getElementById('rfStartSearchButton');
-    if (startButton) startButton.textContent = startButton.textContent.replace(/Search limit reached/i,'Batch limit reached').replace(/Start Search/i,'Start Batch');
-    const status = document.getElementById('createSearchStatus');
-    if (status) status.textContent = status.textContent.replace(/search batches/gi,'batches').replace(/Search batch/gi,'Batch').replace(/search batch/gi,'batch');
     const loading = document.getElementById('rfSearchLoading');
     if (loading) loading.hidden = true;
+    const createCard = document.getElementById('rfSearchCreateCard');
+    if (createCard) createCard.remove();
   }
 
   function install(){

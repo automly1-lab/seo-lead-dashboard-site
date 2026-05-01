@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>System Status | RankForge by CrestlineOps</title>
+  <meta name="description" content="RankForge system status for search batches, crawling, evidence analysis, exports, and billing.">
+  <link rel="stylesheet" href="../assets/status-page.css?v=status-page-1">
+</head>
+<body class="rf-status-page" data-page="status">
+  <main>
+    <section class="rf-status-hero">
+      <div class="rf-status-container">
+        <p class="rf-eyebrow">System Status</p>
+        <h1>RankForge status</h1>
+        <p>Check availability for search batches, crawling, evidence analysis, exports, and billing.</p>
+      </div>
+    </section>
+
+    <section class="rf-status-main">
+      <div class="rf-status-container">
+        <div class="rf-summary-card" data-status-summary>
+          <div class="rf-status-icon operational" aria-hidden="true">✓</div>
+          <div>
+            <div class="rf-summary-top">
+              <h2>All systems operational</h2>
+              <span class="rf-badge operational">Operational</span>
+            </div>
+            <p>Search, evidence analysis, exports, and billing are currently available.</p>
+            <div class="rf-meta"><span>Status is currently maintained manually</span></div>
+          </div>
+        </div>
+
+        <section class="rf-section">
+          <div class="rf-section-head">
+            <div>
+              <h2>System components</h2>
+              <p>Core product areas and their current availability.</p>
+            </div>
+          </div>
+          <div class="rf-component-grid" data-components></div>
+        </section>
+
+        <section class="rf-section">
+          <div class="rf-section-head">
+            <div>
+              <h2>Current incidents</h2>
+              <p>Public incident updates without internal workflow details.</p>
+            </div>
+          </div>
+          <div class="rf-panel" data-incidents>
+            <div class="rf-empty"><strong>No active incidents</strong><p>All monitored systems are currently marked operational.</p></div>
+          </div>
+        </section>
+
+        <section class="rf-section">
+          <div class="rf-section-head">
+            <div>
+              <h2>Recent history</h2>
+              <p>Recent status history is updated manually.</p>
+            </div>
+          </div>
+          <div class="rf-history" data-history></div>
+        </section>
+
+        <section class="rf-section">
+          <div class="rf-section-head">
+            <div>
+              <h2>How to interpret status</h2>
+              <p>Operational notes for search processing, evidence quality, and billing activation.</p>
+            </div>
+          </div>
+          <div class="rf-notes-grid">
+            <article class="rf-note-card"><h3>Search processing</h3><p>Search batches can take time while websites are discovered, crawled, analyzed, and qualified.</p></article>
+            <article class="rf-note-card"><h3>Evidence quality</h3><p>If a website cannot be crawled, RankForge avoids strong SEO claims and keeps the prospect in review.</p></article>
+            <article class="rf-note-card"><h3>Billing activation</h3><p>Paid features activate after checkout confirmation. Pending payments do not unlock paid limits.</p></article>
+          </div>
+          <div class="rf-admin-note" data-admin-status-note>
+            Admin shortcut: <a href="../quality/">Open Admin Quality</a>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/billing-config.js?v=billing-config-2"></script>
+  <script src="../assets/auth.js?v=user-isolation-3"></script>
+  <script src="../assets/marketing-session.js?v=marketing-session-2"></script>
+  <script src="../assets/status-page.js?v=status-page-1"></script>
+</body>
+</html>

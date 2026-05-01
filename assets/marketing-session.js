@@ -8,31 +8,19 @@
 
   function clean(value) { return String(value == null ? "" : value).trim(); }
   function normalizePlan(value) { const raw = clean(value).toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_"); if (raw === "growth" || raw === "pro") return "growth"; if (raw === "agency" || raw === "agency_intelligence") return "agency_intelligence"; return "starter"; }
-  function appRootUrl() { const brand = document.querySelector(".brand"); if (brand && brand.href) return new URL(brand.href, window.location.href).toString(); return new URL("./", window.location.href).toString(); }
-  function urlFromRoot(path) { return new URL(path, appRootUrl()).toString(); }
+  function isNested() { return /\/(how-it-works|pricing|privacy|terms|refund-policy|login|signup)\//.test(location.pathname || ""); }
+  function rootPrefix() { return isNested() ? "../" : ""; }
+  function urlFromRoot(path) { return rootPrefix() + path; }
 
   function loadScriptOnce(src, marker) { if (document.querySelector('script[data-' + marker + '="true"]')) return; const script = document.createElement("script"); script.src = src; script.defer = true; script.setAttribute('data-' + marker, 'true'); document.body.appendChild(script); }
   function loadStylesheetOnce(href, marker) { if (document.querySelector('link[data-' + marker + '="true"]')) return; const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; link.setAttribute('data-' + marker, 'true'); document.head.appendChild(link); }
-  function loadMobileBrandPolish() { loadStylesheetOnce(urlFromRoot("assets/mobile-brand-polish.css?v=mobile-brand-1"), "rf-mobile-brand-polish"); }
-  function loadMarketingShell() { loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-1"), "rf-marketing-shell"); }
+  function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-2"), "rf-marketing-shell-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-2"), "rf-marketing-shell"); }
 
   function getSession() { if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") return window.rankforgeAuth.getSession(); return null; }
   async function refreshSession() { if (window.rankforgeAuth && typeof window.rankforgeAuth.refreshSession === "function") return window.rankforgeAuth.refreshSession(); return getSession(); }
   function getBillingConfig() { return window.RANKFORGE_BILLING || {}; }
   function paymentLinkForPlan(planKey) { const config = getBillingConfig(); if (planKey === "starter") return clean(config.starterPaymentLink); if (planKey === "growth") return clean(config.growthPaymentLink); return ""; }
   function setCheckoutIntent(planKey) { const normalizedPlan = normalizePlan(planKey); localStorage.setItem(SELECTED_PLAN_KEY, normalizedPlan); localStorage.setItem(BILLING_STATUS_KEY, normalizedPlan === "agency_intelligence" ? "waitlist" : "pending_payment"); localStorage.setItem(CHECKOUT_PLAN_KEY, normalizedPlan); localStorage.setItem(CHECKOUT_INTENT_KEY, normalizedPlan === "agency_intelligence" ? "waitlist" : "checkout"); }
-
-  function updateNav(session) {
-    const actions = document.querySelector(".nav-actions");
-    if (!actions) return;
-    if (session && session.userId) {
-      actions.innerHTML = ['<a class="button secondary" href="' + urlFromRoot("dashboard/") + '">Dashboard</a>','<a class="button secondary" href="' + urlFromRoot("settings/") + '">Settings</a>','<button class="button primary" type="button" id="marketingLogoutButton">Log out</button>'].join("");
-      const logoutButton = document.getElementById("marketingLogoutButton");
-      if (logoutButton) logoutButton.addEventListener("click", async function () { try { if (window.rankforgeAuth && typeof window.rankforgeAuth.getSupabaseClient === "function") { const client = window.rankforgeAuth.getSupabaseClient(); if (client) await client.auth.signOut(); } } catch {} localStorage.removeItem("rankforge-auth-session-v1"); localStorage.removeItem("rankforge-current-user-id-v1"); window.location.href = urlFromRoot("login/"); });
-      return;
-    }
-    actions.innerHTML = ['<a class="button secondary" href="' + urlFromRoot("login/") + '">Log in</a>','<a class="button primary" href="' + urlFromRoot("signup/") + '">Start finding leads</a>'].join("");
-  }
 
   function bindPricingLinks(session) {
     document.querySelectorAll("[data-plan-key]").forEach(function (node) {
@@ -49,6 +37,6 @@
     });
   }
 
-  async function boot() { loadMobileBrandPolish(); loadMarketingShell(); const session = await refreshSession(); updateNav(session); bindPricingLinks(session); }
+  async function boot() { loadMarketingShell(); const session = await refreshSession(); bindPricingLinks(session); setTimeout(function(){ window.dispatchEvent(new CustomEvent('rankforge:session-ready', { detail: session || null })); }, 0); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

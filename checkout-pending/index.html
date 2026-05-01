@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Pending | RankForge by CrestlineOps</title>
+  <meta name="description" content="Your RankForge payment is pending and paid features will activate after billing confirmation.">
+  <link rel="stylesheet" href="../assets/checkout-pages.css?v=checkout-pages-1">
+</head>
+<body class="rf-checkout-page" data-page="checkout-pending">
+  <main class="rf-checkout-main">
+    <div class="rf-checkout-wrap">
+      <section class="rf-checkout-card" aria-labelledby="checkout-title">
+        <div class="rf-status-icon pending" aria-hidden="true">⏱</div>
+        <p class="rf-checkout-eyebrow">Billing</p>
+        <h1 id="checkout-title">Payment pending</h1>
+        <p class="rf-checkout-subtitle">Your checkout is still being confirmed. Paid features will activate after billing confirmation is received.</p>
+        <div class="rf-checkout-note warning">Until confirmation is complete, your account may continue to show the Free plan or previous plan. Do not treat pending payment as active paid access.</div>
+        <div class="rf-next-steps">
+          <h2>Next steps</h2>
+          <ol>
+            <li>Wait a moment and refresh your billing status.</li>
+            <li>Check Settings for your current confirmed plan.</li>
+            <li>Contact support if the status does not update after a few minutes.</li>
+          </ol>
+        </div>
+        <div class="rf-checkout-actions">
+          <button class="rf-checkout-btn primary" type="button" data-refresh-billing>Refresh Billing Status</button>
+          <a class="rf-checkout-btn secondary" href="../settings/" data-auth-primary="settings">Open Settings</a>
+          <a class="rf-checkout-link" href="../pricing/">Back to Pricing</a>
+        </div>
+        <p class="rf-support-line">If your payment was completed but your plan has not updated after a few minutes, contact support through your RankForge admin or billing contact.</p>
+      </section>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/billing-config.js?v=billing-config-2"></script>
+  <script src="../assets/auth.js?v=user-isolation-3"></script>
+  <script src="../assets/marketing-session.js?v=marketing-session-2"></script>
+  <script src="../assets/checkout-pages.js?v=checkout-pages-1"></script>
+</body>
+</html>

@@ -23,7 +23,7 @@
   function parseRows(parsed){var cols=((parsed.table&&parsed.table.cols)||[]).map(function(x){return x.label||x.id;});return ((parsed.table&&parsed.table.rows)||[]).map(function(r){var o={};(r.c||[]).forEach(function(cell,i){o[cols[i]]=cell?c(cell.f||cell.v||''):'';});return o;});}
   function fetchSheet(name){return new Promise(function(resolve){var cb='rfforce_'+name+'_'+Date.now()+'_'+Math.floor(Math.random()*99999),sc=document.createElement('script'),to=setTimeout(done,12000);function done(v){clearTimeout(to);try{sc.remove();}catch(e){}try{delete window[cb];}catch(e){}resolve(v||[]);}window[cb]=function(p){try{done(parseRows(p));}catch(e){done([]);}};sc.src='https://docs.google.com/spreadsheets/d/'+encodeURIComponent(SHEET_ID)+'/gviz/tq?sheet='+encodeURIComponent(name)+'&tqx=responseHandler:'+encodeURIComponent(cb);sc.async=true;sc.onerror=function(){done([]);};document.body.appendChild(sc);});}
   function merge(a,b){var o={},k;a=a||{};b=b||{};for(k in a)o[k]=a[k];for(k in b){if(!clean(o[k])&&clean(b[k]))o[k]=b[k];}
-    ['seo_claims_verified','seo_verified_claims','seo_top_issues','seo_evidence_summary','seo_evidence_signal_count','seo_issue_count','seo_need_score','commercial_fit_score','contact_confidence_score','overall_lead_score','crawl_source_field','homepage_html_bytes_analyzed','homepage_text_words_analyzed','crawl_debug','target_city','target_service','city','niche','business_type','lead_credit_counted','phone_visible','email_visible','contact_page_found','contact_cta_found'].forEach(function(key){if(clean(b[key]))o[key]=b[key];});return o;}
+    ['seo_claims_verified','seo_verified_claims','seo_top_issues','seo_evidence_summary','seo_evidence_signal_count','seo_issue_count','seo_need_score','commercial_fit_score','contact_confidence_score','overall_lead_score','crawl_source_field','homepage_html_bytes_analyzed','homepage_text_words_analyzed','crawl_debug','target_city','target_service','city','niche','business_type','lead_credit_counted','phone','email','decision_maker_phone','decision_maker_email','contact_phone','contact_email','phone_visible','email_visible','contact_page_found','contact_page_url','contact_url','contact_cta_found'].forEach(function(key){if(clean(b[key]))o[key]=b[key];});return o;}
   function selected(){var p=new URLSearchParams(location.search||''),snap=parse(sessionStorage.getItem('rankforge-selected-lead-snapshot-v1')||localStorage.getItem('rankforge-selected-lead-snapshot-v1'),{})||{};return {id:clean(p.get('lead_id')||p.get('id')||snap.lead_id||sessionStorage.getItem('rankforge-selected-lead-id-v1')||localStorage.getItem('rankforge-selected-lead-id-v1')),domain:domainFrom(p.get('domain')||snap.domain||snap.display_domain||sessionStorage.getItem('rankforge-selected-lead-domain-v1')||localStorage.getItem('rankforge-selected-lead-domain-v1')),name:clean(p.get('name')||snap.business_name||snap.company_name||sessionStorage.getItem('rankforge-selected-lead-name-v1')||localStorage.getItem('rankforge-selected-lead-name-v1')),snap:snap};}
   function load(){if(cache)return Promise.resolve(cache);return Promise.all([fetchSheet('final_leads'),fetchSheet('seo_audits')]).then(function(rs){cache={leads:rs[0]||[],audits:rs[1]||[]};return cache;});}
   function findRow(data){var sel=selected(),leads=data.leads||[],audits=data.audits||[];var lead=null;
@@ -43,7 +43,27 @@
   function list(raw){raw=clean(raw);if(!raw)return [];var p=parse(raw,null);if(Array.isArray(p))return p.map(function(x){return typeof x==='string'?x:clean(x.label||x.title||x.message||x.description||'');}).filter(Boolean);return raw.split('|').map(function(x){return x.replace(/^[a-z0-9_]+:\s*/i,'').trim();}).filter(Boolean);}
   function issues(row){var arr=list(get(row,['seo_verified_claims','seo_top_issues','seo_evidence_summary']));return arr.slice(0,6);}
   function scoreLabel(x){x=n(x);if(x>=80)return ['Strong','strong'];if(x>=65)return ['Good','good'];if(x>=40)return ['Needs Review','review'];return ['Weak','weak'];}
-  function badgeBool(label,ok){return '<div class="rf-contact-signal"><span>'+esc(label)+'</span><span class="rf-badge '+(ok?'rf-badge-success':'rf-badge-muted')+'">'+(ok?'Available':'Missing')+'</span></div>';}
+  function normalizeUrl(url,base){url=clean(url);if(!url)return '';if(/^https?:\/\//i.test(url))return url;if(url.charAt(0)==='/'&&base)return 'https://'+domainFrom(base)+url;return 'https://'+url;}
+  function contactValue(row,type,web){
+    if(type==='phone')return get(row,['phone','decision_maker_phone','contact_phone','business_phone','primary_phone','phone_number']);
+    if(type==='email')return get(row,['email','decision_maker_email','contact_email','business_email','primary_email']);
+    if(type==='page')return get(row,['contact_page_url','contact_url','contact_page','contact_link']);
+    return '';
+  }
+  function contactSignal(label,ok,value,kind,web){
+    var detail='';
+    if(value){
+      if(kind==='email')detail='<a class="rf-contact-value" href="mailto:'+esc(value)+'">'+esc(value)+'</a>';
+      else if(kind==='phone')detail='<a class="rf-contact-value" href="tel:'+esc(value).replace(/[^0-9+]/g,'')+'">'+esc(value)+'</a>';
+      else if(kind==='page'){var href=normalizeUrl(value,web);detail='<a class="rf-contact-value" href="'+esc(href)+'" target="_blank" rel="noreferrer">'+esc(value)+'</a>';}
+      else detail='<span class="rf-contact-value">'+esc(value)+'</span>';
+    }else if(ok){
+      detail='<span class="rf-contact-value muted">Detected, value not captured</span>';
+    }else{
+      detail='<span class="rf-contact-value muted">Not found</span>';
+    }
+    return '<div class="rf-contact-signal"><div><span>'+esc(label)+'</span>'+detail+'</div><span class="rf-badge '+(ok?'rf-badge-success':'rf-badge-muted')+'">'+(ok?'Available':'Missing')+'</span></div>';
+  }
   function dl(items){return items.filter(function(x){return clean(x[1]);}).map(function(x){return '<div><dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd></div>';}).join('')||'<div><dt>Status</dt><dd>Not available</dd></div>';}
   function render(row){
     if(!row)return;
@@ -56,7 +76,9 @@
     var seo=n(get(row,['seo_need_score','seo_score'])),fit=n(get(row,['commercial_fit_score','commercial_score'])),contact=n(get(row,['contact_confidence_score','contact_score'])),overall=n(get(row,['overall_lead_score','lead_score','score']));
     var iss=issues(row),signals=n(get(row,['seo_evidence_signal_count','seo_issue_count','signals','issues']))||iss.length,verified=yes(get(row,['seo_claims_verified']))||signals>=3;
     setText('detailCompany',name);setText('rfLeadCity',city);setText('rfLeadNiche',niche);var a=document.getElementById('detailWebsite');if(a){a.textContent=dom||web||'Website not available';a.href=web||'#';}
-    var qualified=verified&&signals>=3&&(contact>=60||yes(get(row,['phone_visible']))||yes(get(row,['email_visible']))||yes(get(row,['contact_page_found']))||yes(get(row,['contact_cta_found'])));
+    var phoneValue=contactValue(row,'phone',web),emailValue=contactValue(row,'email',web),contactPageValue=contactValue(row,'page',web);
+    var phone=yes(get(row,['phone_visible']))||!!phoneValue,email=yes(get(row,['email_visible']))||!!emailValue,cp=yes(get(row,['contact_page_found']))||!!contactPageValue,cta=yes(get(row,['contact_cta_found']));
+    var qualified=verified&&signals>=3&&(contact>=60||phone||email||cp||cta);
     cls('rfStatusBadge','rf-badge '+(qualified?'rf-badge-qualified':'rf-badge-review'));setText('rfStatusBadge',qualified?'Qualified':'Needs Review');
     cls('rfEvidenceBadge','rf-badge '+(verified?'rf-badge-verified':signals?'rf-badge-warning':'rf-badge-muted'));setText('rfEvidenceBadge',verified?'Verified evidence · '+signals+' signals':signals?'Partial evidence':'No verified evidence');
     cls('rfCreditBadge','rf-badge '+(qualified?'rf-badge-primary':'rf-badge-muted'));setText('rfCreditBadge',qualified?'Credit counted':'No credit used');
@@ -67,10 +89,9 @@
     setHtml('rfEvidenceList',iss.map(function(x){return '<li class="rf-evidence-item"><span class="rf-evidence-icon">✓</span><span class="rf-evidence-text"><strong>'+esc(x)+'</strong></span></li>';}).join(''));
     setText('rfEvidenceSource',web?'Evidence source: '+web:'');
     setHtml('rfScoreList',[['SEO Need','Potential SEO gap.',seo],['Commercial Fit','Likely agency value.',fit],['Contact Path','Reachability quality.',contact],['Overall Lead Score','Prioritization score.',overall]].map(function(s){var st=scoreLabel(s[2]);return '<div class="rf-score-row"><div><span class="rf-score-label">'+esc(s[0])+'</span><span class="rf-score-desc">'+esc(s[1])+'</span></div><div class="rf-score-value"><strong class="rf-score-number">'+s[2]+'</strong><span class="rf-score-status"><i class="rf-score-dot '+st[1]+'"></i>'+st[0]+'</span></div></div>';}).join(''));
-    var phone=yes(get(row,['phone_visible']))||!!get(row,['phone','decision_maker_phone']),email=yes(get(row,['email_visible']))||!!get(row,['email','decision_maker_email']),cp=yes(get(row,['contact_page_found'])),cta=yes(get(row,['contact_cta_found']));
-    setHtml('rfContactPathList',badgeBool('Phone visible',phone)+badgeBool('Email visible',email)+badgeBool('Contact page found',cp)+badgeBool('Contact CTA found',cta));
+    setHtml('rfContactPathList',contactSignal('Phone visible',phone,phoneValue,'phone',web)+contactSignal('Email visible',email,emailValue,'email',web)+contactSignal('Contact page found',cp,contactPageValue,'page',web)+contactSignal('Contact CTA found',cta,cta?'Detected':'','cta',web));
     setText('detailContactChannel',phone?'Call first':email?'Email':cp?'Contact form':'Manual enrichment needed');
-    setHtml('rfBusinessDetails',dl([['Business name',name],['Website',web],['Domain',dom],['City',city],['Niche',niche],['Business type',get(row,['business_type'])]]));
+    setHtml('rfBusinessDetails',dl([['Business name',name],['Website',web],['Domain',dom],['Phone',phoneValue || (phone?'Visible, number not captured':'')],['Email',emailValue || (email?'Visible, email not captured':'')],['Contact page',contactPageValue],['City',city],['Niche',niche],['Business type',get(row,['business_type'])]]));
     setHtml('rfSearchContext',dl([['Search batch/list ID',get(row,['search_id','list_id','listId'])],['Target city',get(row,['target_city','city'])],['Target service',get(row,['target_service','niche','business_type'])],['Qualification status',qualified?'Qualified':'Needs Review'],['Lead credit counted',qualified?'Yes':'No']]));
     setText('detailAngle',verified?'From the available crawl, the site appears to have local SEO signals worth reviewing. A local SEO visibility audit may be a relevant offer.':'No evidence-backed outreach angle is available yet. Review the site manually before contacting this business.');
     setText('detailPersonalization',verified?'I noticed your website may have room to strengthen local search signals from the available page data.':'Use cautious wording only after manual review.');

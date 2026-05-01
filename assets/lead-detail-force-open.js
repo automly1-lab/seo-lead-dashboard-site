@@ -2,9 +2,9 @@
   'use strict';
   if(((document.body||{}).dataset||{}).page!=='lead-detail')return;
   var SHEET_ID='1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco';
-  var cache=null;
+  var cache=null,lastRow=null,lastGoodName='';
   function c(v){return String(v==null?'':v).trim();}
-  function bad(v){return /^(undefined|null|nan|\[object object\]|-)$/i.test(c(v));}
+  function bad(v){return /^(undefined|null|nan|\[object object\]|-|no lead selected)$/i.test(c(v));}
   function clean(v){v=c(v);return bad(v)?'':v;}
   function esc(v){return clean(v).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[x];});}
   function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
@@ -47,8 +47,12 @@
   function dl(items){return items.filter(function(x){return clean(x[1]);}).map(function(x){return '<div><dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd></div>';}).join('')||'<div><dt>Status</dt><dd>Not available</dd></div>';}
   function render(row){
     if(!row)return;
+    var sel=selected();
+    var name=company(row)||sel.name||company(sel.snap)||'Selected lead';
+    if(clean(name))lastGoodName=name;
+    var web=get(row,['clean_website_url','website_url','final_url','website','url']),dom=domain(row)||sel.domain,city=get(row,['city','target_city'])||get(sel.snap,['city','target_city'])||'City not set',niche=get(row,['niche','business_type','target_service'])||get(sel.snap,['niche','business_type','target_service'])||'Niche not set';
+    lastRow=row;
     var page=document.getElementById('rfLeadDetailPage'),empty=document.getElementById('rfLeadEmptyState');if(page){page.hidden=false;page.style.display='block';}if(empty){empty.hidden=true;empty.style.display='none';}
-    var name=company(row)||'Unknown business',web=get(row,['clean_website_url','website_url','final_url','website','url']),dom=domain(row),city=get(row,['city','target_city'])||'City not set',niche=get(row,['niche','business_type','target_service'])||'Niche not set';
     var seo=n(get(row,['seo_need_score','seo_score'])),fit=n(get(row,['commercial_fit_score','commercial_score'])),contact=n(get(row,['contact_confidence_score','contact_score'])),overall=n(get(row,['overall_lead_score','lead_score','score']));
     var iss=issues(row),signals=n(get(row,['seo_evidence_signal_count','seo_issue_count','signals','issues']))||iss.length,verified=yes(get(row,['seo_claims_verified']))||signals>=3;
     setText('detailCompany',name);setText('rfLeadCity',city);setText('rfLeadNiche',niche);var a=document.getElementById('detailWebsite');if(a){a.textContent=dom||web||'Website not available';a.href=web||'#';}
@@ -72,6 +76,9 @@
     setText('detailPersonalization',verified?'I noticed your website may have room to strengthen local search signals from the available page data.':'Use cautious wording only after manual review.');
     setText('detailOffer','Local SEO visibility audit focused on service pages, location targeting, and Google Business Profile alignment.');
   }
-  function run(){load().then(function(data){render(findRow(data));});}
-  [250,900,1800,3500].forEach(function(ms){setTimeout(run,ms);});
+  function run(){load().then(function(data){var row=findRow(data);if(row)render(row);});}
+  function repairIfOverwritten(){var el=document.getElementById('detailCompany');if(!el)return;if(lastRow&&(bad(el.textContent)||/no lead selected/i.test(el.textContent)||!clean(el.textContent))){render(lastRow);}else if(lastGoodName&&/no lead selected/i.test(el.textContent)){el.textContent=lastGoodName;}}
+  [0,200,500,900,1400,2200,3500,5500,8000,12000,18000,25000,35000].forEach(function(ms){setTimeout(function(){run();setTimeout(repairIfOverwritten,80);},ms);});
+  setInterval(repairIfOverwritten,700);
+  try{new MutationObserver(repairIfOverwritten).observe(document.body,{subtree:true,childList:true,characterData:true});}catch(e){}
 })();

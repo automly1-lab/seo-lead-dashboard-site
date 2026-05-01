@@ -3,94 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RankForge Intelligence | Leads</title>
+  <title>RankForge Intelligence | Prospects</title>
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/app-shell.css?v=app-shell-1">
   <link rel="stylesheet" href="../assets/selected-lead-detail-fix.css?v=selected-lead-fix-1">
   <link rel="stylesheet" href="../assets/navigation-switcher.css?v=contact-stack-fix-4">
-  <link rel="stylesheet" href="../assets/app-polish.css?v=onboarding-settings-1">
+  <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-1">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
   <link rel="stylesheet" href="../assets/lead-feedback.css?v=lead-feedback-1">
   <link rel="stylesheet" href="../assets/contact-display-hotfix.css?v=contact-readable-fix-2">
   <link rel="stylesheet" href="../assets/selected-lead-true-fix.css?v=selected-lead-true-fix-1">
   <style>
-    .app-page-leads .dashboard-main{max-width:1480px;gap:18px}.app-page-leads .workspace-strip{display:none!important}.app-page-leads .topbar{padding-bottom:10px}.app-page-leads .topbar h1{letter-spacing:-.06em}.app-page-leads .topbar-copy{max-width:760px}.rf-lead-queue-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.rf-queue-card{padding:18px;border:1px solid rgba(15,23,42,.085);border-radius:22px;background:#fff;box-shadow:0 12px 30px rgba(15,23,42,.045);position:relative;overflow:hidden}.rf-queue-card:before{content:'';position:absolute;top:0;left:20px;width:42px;height:4px;border-radius:999px;background:#155eef}.rf-queue-card span{display:block;color:#667085;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.rf-queue-card strong{display:block;margin-top:12px;color:#0f172a;font-size:31px;line-height:1;letter-spacing:-.055em}.rf-queue-card small{display:block;margin-top:10px;color:#667085;line-height:1.45}.leads-panel{border-radius:26px!important;box-shadow:0 16px 40px rgba(15,23,42,.05)!important}.leads-panel .panel-header{align-items:flex-start;gap:18px}.leads-panel .panel-header h2{font-size:26px;letter-spacing:-.05em}.filters{display:flex!important;gap:10px;align-items:end;flex-wrap:wrap;padding:12px;border:1px solid rgba(15,23,42,.08);border-radius:18px;background:#f8fafc}.filters label{display:grid;gap:5px}.filters label span,.score-display span{color:#667085;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.filters select,.filters input[type='range']{min-height:38px;border:1px solid rgba(15,23,42,.12);border-radius:12px;background:#fff;padding:8px 10px;font:inherit}.filters .toggle-label{display:flex;align-items:center;gap:8px;min-height:38px;padding:8px 11px;border:1px solid rgba(15,23,42,.10);border-radius:999px;background:#fff}.filters .toggle-label span{font-size:12px;letter-spacing:0;text-transform:none;color:#344054}.lead-summary-bar{border-radius:18px!important;background:linear-gradient(135deg,rgba(21,94,239,.06),rgba(20,184,166,.04)),#fff!important}.score-display{display:inline-flex;align-items:center;gap:8px;margin:12px 0;padding:9px 12px;border:1px solid rgba(15,23,42,.08);border-radius:999px;background:#fff}.score-display strong{color:#155eef}.leads-table th{font-size:10.5px!important;letter-spacing:.08em;text-transform:uppercase;color:#667085!important}.leads-table tbody tr{transition:background .16s ease,transform .16s ease}.leads-table tbody tr:hover{background:#f8fbff;transform:translateY(-1px)}.detail-grid{gap:14px!important}.detail-grid .panel-compact{border-radius:22px!important}.rf-lead-queue-note{padding:14px 16px;border-radius:18px;background:#ecfdf3;border:1px solid #abefc6;color:#05603a;line-height:1.5;font-size:14px}.rf-table-helper{margin:0 0 12px;color:#667085;line-height:1.5}@media(max-width:1080px){.rf-lead-queue-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.leads-panel .panel-header{display:grid}.filters{width:100%}}@media(max-width:680px){.rf-lead-queue-summary{grid-template-columns:1fr}.filters{display:grid!important}.filters .toggle-label{border-radius:14px}.leads-table{min-width:860px}}
+    .app-page-leads .dashboard-main{gap:20px}.app-page-leads .workspace-strip{display:none!important}.rf-lead-queue-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.leads-panel .panel-header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:16px}.filters{display:flex!important;align-items:end;gap:10px;flex-wrap:wrap;padding:12px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:14px}.filters label{display:grid;gap:6px}.filters .toggle-label{display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;border:1px solid #D1D5DB;border-radius:999px;background:#fff}.score-display{display:inline-flex;align-items:center;gap:8px;margin:12px 0;padding:7px 10px;border:1px solid #E5E7EB;border-radius:999px;background:#fff}.score-display span{font-size:12px;color:#6B7280}.score-display strong{color:#2563EB}.lead-summary-bar{background:#fff!important;border:1px solid #E5E7EB!important}.rf-lead-queue-note{padding:14px 16px;border-radius:14px;background:#ECFDF5;border:1px solid #A7F3D0;color:#05603a;line-height:1.5;font-size:14px}.rf-table-helper{margin:4px 0 0;color:#6B7280;line-height:1.5}.detail-grid{gap:16px!important}.detail-grid .panel-compact{border-radius:16px!important}@media(max-width:1080px){.rf-lead-queue-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.leads-panel .panel-header{grid-template-columns:1fr}.filters{width:100%}}@media(max-width:680px){.rf-lead-queue-summary{grid-template-columns:1fr}.filters{display:grid!important}.filters .toggle-label{border-radius:10px}.leads-table{min-width:860px}}
   </style>
 </head>
 <body class="dashboard-body app-page-leads" data-auth="protected" data-page="leads">
   <div class="dashboard-shell">
-    <aside class="sidebar">
-      <a class="brand" href="../"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
-      <nav class="sidebar-nav"><a href="../dashboard/">Dashboard</a><a href="../lists/">Saved Lists</a><a class="active" href="../leads/">Leads</a><a href="../lead-detail/">Lead Detail</a><a href="../settings/">Settings</a></nav>
-    </aside>
+    <aside class="sidebar"><a class="brand" href="../"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a><nav class="sidebar-nav"><a href="../dashboard/">Command Center</a><a href="../lists/">Searches</a><a class="active" href="../leads/">Prospects</a><a href="../lead-detail/">Qualification</a><a href="../opportunities/">Opportunities</a><a href="../competitors/">Competitors</a><a href="../settings/">Settings</a></nav></aside>
     <main class="dashboard-main">
-      <header class="topbar">
-        <div><p class="kicker">Prospect Queue</p><h1>Prioritize evidence-backed leads</h1><p class="topbar-copy">Review qualified opportunities first, keep uncertain prospects in review, and export only leads with a usable contact path and verified SEO angle.</p></div>
-        <div class="topbar-actions"><a class="button primary" href="../lead-detail/">Open Lead Detail</a></div>
-      </header>
-      <section class="workspace-strip">
-        <article class="workspace-card"><span class="workspace-label">Current Workspace User</span><strong id="workspaceUserBadge">Loading user…</strong><small>User-scoped lists and leads only</small></article>
-        <article class="workspace-card"><span class="workspace-label">Data Source</span><strong id="workspaceDataSource">Local workspace</strong><small id="workspaceLastSync">Waiting for first sync</small></article>
-        <article class="workspace-card workspace-card-highlight"><span class="workspace-label">Selected List Health</span><strong id="workspaceSelectedListHealth">No list selected</strong><small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small></article>
-      </section>
-      <section class="rf-lead-queue-summary" id="rfLeadQueueSummary"><article class="rf-queue-card"><span>Qualified</span><strong id="rfQueueQualified">0</strong><small>Evidence-backed opportunities to inspect first.</small></article><article class="rf-queue-card"><span>Needs Review</span><strong id="rfQueueReview">0</strong><small>Potential prospects requiring manual check.</small></article><article class="rf-queue-card"><span>Contact-ready</span><strong id="rfQueueContact">0</strong><small>Visible leads with a usable contact path.</small></article><article class="rf-queue-card"><span>Visible Leads</span><strong id="rfQueueVisible">0</strong><small>Rejected records stay hidden from this workspace.</small></article></section>
-      <section class="panel leads-panel">
-        <div class="panel-header">
-          <div><p class="panel-eyebrow">Lead Queue</p><h2>Which businesses should you review next?</h2><p class="rf-table-helper">Use decision, score, and contact filters to focus on leads that are most likely to support a safe outreach angle.</p></div>
-          <div class="filters">
-            <label><span>Status</span><select id="qualificationFilter" onchange="window.rankforgeApp.refresh()"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review_needed">Needs Review</option></select></label>
-            <label><span>Min Score</span><input id="scoreFilter" type="range" min="0" max="100" value="0" oninput="document.getElementById('scoreFilterValue').textContent=this.value;window.rankforgeApp.refresh()"></label>
-            <label class="toggle-label"><input id="contactReadyFilter" type="checkbox" onchange="window.rankforgeApp.refresh()"><span>Only contact-ready</span></label>
-            <label class="toggle-label"><input id="paidAdsFilter" type="checkbox" onchange="window.rankforgeApp.refresh()"><span>Paid ads signal</span></label>
-          </div>
-        </div>
-        <div class="lead-summary-bar"><div><span class="workspace-label">Visible Leads</span><strong id="visibleLeadCount">0 leads</strong></div><div><span class="workspace-label">List Snapshot</span><strong id="activeLeadSummary">No active list selected yet.</strong></div></div>
-        <div class="score-display"><span>Minimum visible score</span><strong id="scoreFilterValue">0</strong></div>
-        <div class="saved-list-table-wrap"><table class="data-table leads-table" id="leadsTable"><thead><tr><th>Company</th><th>Decision Maker</th><th>Contact</th><th>SEO Score</th><th>Overall</th><th>Status</th><th>Outreach</th></tr></thead><tbody></tbody></table></div>
-      </section>
-      <section class="detail-grid">
-        <article class="panel panel-compact">
-          <div class="panel-header"><div><p class="panel-eyebrow">Export</p><h2 id="exportTargetList">No selected list</h2></div></div>
-          <div class="export-summary-card export-summary-card-inline"><span class="workspace-label">Export Scope</span><strong id="exportTargetListMirror">No selected list</strong><small id="exportTargetMeta">0 visible leads ready for export.</small></div>
-          <button class="button primary button-block" type="button" onclick="window.rankforgeApp.exportCsv()">Export CSV</button>
-          <p class="form-status" id="exportStatus">CSV export uses the leads currently visible in this workspace view.</p>
-        </article>
-        <article class="panel panel-compact">
-          <div class="panel-header"><div><p class="panel-eyebrow">Operating Rule</p><h2>No evidence, no claim</h2></div></div>
-          <p class="rf-lead-queue-note">Use qualified leads first. Keep review-needed leads in manual review unless the SEO evidence and contact path are strong enough for outreach.</p>
-        </article>
-      </section>
+      <header class="topbar"><div><p class="kicker">Prospect Queue</p><h1>Prioritize leads</h1><p class="topbar-copy">Filter by decision, score, and contact readiness. Rejected records stay hidden from normal workspaces.</p></div><div class="topbar-actions"><a class="button primary" href="../lead-detail/">Open selected lead</a></div></header>
+      <section class="workspace-strip"><article class="workspace-card"><span class="workspace-label">Current Workspace User</span><strong id="workspaceUserBadge">Loading user…</strong><small>User-scoped lists and leads only</small></article><article class="workspace-card"><span class="workspace-label">Data Source</span><strong id="workspaceDataSource">Local workspace</strong><small id="workspaceLastSync">Waiting for first sync</small></article><article class="workspace-card workspace-card-highlight"><span class="workspace-label">Selected List Health</span><strong id="workspaceSelectedListHealth">No list selected</strong><small id="workspaceSelectedListMeta">Pick a saved list to inspect funnel quality.</small></article></section>
+      <section class="rf-lead-queue-summary" id="rfLeadQueueSummary"><article class="rf-queue-card"><span>Qualified</span><strong id="rfQueueQualified">0</strong><small>Evidence-backed prospects.</small></article><article class="rf-queue-card"><span>Needs Review</span><strong id="rfQueueReview">0</strong><small>Manual check required.</small></article><article class="rf-queue-card"><span>Contact-ready</span><strong id="rfQueueContact">0</strong><small>Usable contact path found.</small></article><article class="rf-queue-card"><span>Visible Leads</span><strong id="rfQueueVisible">0</strong><small>Current filtered workspace.</small></article></section>
+      <section class="panel leads-panel"><div class="panel-header"><div><p class="panel-eyebrow">Lead Queue</p><h2>Review the best prospects first</h2><p class="rf-table-helper">Qualified leads require verified evidence and a usable contact path.</p></div><div class="filters"><label><span>Status</span><select id="qualificationFilter" onchange="window.rankforgeApp.refresh()"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review_needed">Needs Review</option></select></label><label><span>Min Score</span><input id="scoreFilter" type="range" min="0" max="100" value="0" oninput="document.getElementById('scoreFilterValue').textContent=this.value;window.rankforgeApp.refresh()"></label><label class="toggle-label"><input id="contactReadyFilter" type="checkbox" onchange="window.rankforgeApp.refresh()"><span>Contact-ready</span></label><label class="toggle-label"><input id="paidAdsFilter" type="checkbox" onchange="window.rankforgeApp.refresh()"><span>Paid ads signal</span></label></div></div><div class="lead-summary-bar"><div><span class="workspace-label">Visible Leads</span><strong id="visibleLeadCount">0 leads</strong></div><div><span class="workspace-label">Search Snapshot</span><strong id="activeLeadSummary">No active search selected yet.</strong></div></div><div class="score-display"><span>Minimum score</span><strong id="scoreFilterValue">0</strong></div><div class="saved-list-table-wrap"><table class="data-table leads-table" id="leadsTable"><thead><tr><th>Business</th><th>Decision Maker</th><th>Contact</th><th>SEO Need</th><th>Overall</th><th>Decision</th><th>Action</th></tr></thead><tbody></tbody></table></div></section>
+      <section class="detail-grid"><article class="panel panel-compact"><div class="panel-header"><div><p class="panel-eyebrow">Export</p><h2 id="exportTargetList">No selected search</h2></div></div><div class="export-summary-card export-summary-card-inline"><span class="workspace-label">Export Scope</span><strong id="exportTargetListMirror">No selected search</strong><small id="exportTargetMeta">0 visible leads ready for export.</small></div><button class="button primary button-block" type="button" onclick="window.rankforgeApp.exportCsv()">Export CSV</button><p class="form-status" id="exportStatus">Exports use the leads currently visible in this workspace.</p></article><article class="panel panel-compact"><div class="panel-header"><div><p class="panel-eyebrow">Operating Rule</p><h2>No evidence, no claim</h2></div></div><p class="rf-lead-queue-note">Use qualified leads first. Keep review-needed leads in manual review unless the SEO evidence and contact path are strong enough for outreach.</p></article></section>
     </main>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/supabase-config.js?v=supabase-auth-1"></script>
-<script src="../assets/auth.js?v=supabase-auth-1"></script>
-<script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
-<script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
-<script src="../assets/export-professional.js?v=professional-export-2"></script>
-<script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
-<script src="../assets/app-polish.js?v=app-shell-1"></script>
-<script src="../assets/auto-sync.js?v=auto-sync-1"></script>
-<script src="../assets/lead-feedback.js?v=lead-feedback-1"></script>
-<script src="../assets/selected-lead-detail-fix.js?v=selected-lead-fix-1"></script>
-<script src="../assets/hide-rejected-leads.js?v=hide-rejected-1"></script>
-<script>
-(function(){
-  if(((document.body||{}).dataset||{}).page!=='leads')return;
-  function num(v){var n=Number(String(v||'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0}
-  function text(el){return String((el&&el.textContent)||'')}
-  function updateQueue(){
-    var rows=Array.from(document.querySelectorAll('#leadsTable tbody tr')).filter(function(r){return r.offsetParent!==null});
-    var qualified=0,review=0,contact=0;
-    rows.forEach(function(row){var t=text(row).toLowerCase();if(t.indexOf('qualified')>=0)qualified++;if(t.indexOf('review')>=0)review++;if(/@|phone|call|email|\(\d{3}\)|\d{3}[-.\s]\d{3}/i.test(t))contact++;});
-    var visible=rows.length||num(text(document.getElementById('visibleLeadCount')));
-    document.getElementById('rfQueueQualified').textContent=qualified;
-    document.getElementById('rfQueueReview').textContent=review;
-    document.getElementById('rfQueueContact').textContent=contact;
-    document.getElementById('rfQueueVisible').textContent=visible;
-  }
-  var ticks=0,t=setInterval(function(){ticks++;updateQueue();if(ticks>18)clearInterval(t)},700);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',updateQueue);else updateQueue();
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../assets/supabase-config.js?v=supabase-auth-1"></script><script src="../assets/auth.js?v=supabase-auth-1"></script><script src="../assets/app.js?v=selected-lead-true-fix-1"></script><script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script><script src="../assets/export-professional.js?v=professional-export-2"></script><script src="../assets/brand-consistency.js?v=brand-consistency-2"></script><script src="../assets/app-polish.js?v=final-intelligence-1"></script><script src="../assets/auto-sync.js?v=auto-sync-1"></script><script src="../assets/lead-feedback.js?v=lead-feedback-1"></script><script src="../assets/selected-lead-detail-fix.js?v=selected-lead-fix-1"></script><script src="../assets/hide-rejected-leads.js?v=hide-rejected-1"></script>
+<script>(function(){if(((document.body||{}).dataset||{}).page!=='leads')return;function num(v){var n=Number(String(v||'').replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0}function text(el){return String((el&&el.textContent)||'')}function updateQueue(){var rows=Array.from(document.querySelectorAll('#leadsTable tbody tr')).filter(function(r){return r.offsetParent!==null});var qualified=0,review=0,contact=0;rows.forEach(function(row){var t=text(row).toLowerCase();if(t.indexOf('qualified')>=0)qualified++;if(t.indexOf('review')>=0)review++;if(/@|phone|call|email|\(\d{3}\)|\d{3}[-.\s]\d{3}/i.test(t))contact++;});var visible=rows.length||num(text(document.getElementById('visibleLeadCount')));document.getElementById('rfQueueQualified').textContent=qualified;document.getElementById('rfQueueReview').textContent=review;document.getElementById('rfQueueContact').textContent=contact;document.getElementById('rfQueueVisible').textContent=visible}var ticks=0,t=setInterval(function(){ticks++;updateQueue();if(ticks>18)clearInterval(t)},700);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',updateQueue);else updateQueue();})();</script>
 </body>
 </html>

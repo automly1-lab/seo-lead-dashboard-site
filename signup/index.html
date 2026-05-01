@@ -3,54 +3,83 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RankForge Intelligence | Sign Up</title>
-  <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <link rel="stylesheet" href="../assets/auth-polish.css?v=auth-polish-1">
+  <title>Sign up | RankForge by CrestlineOps</title>
+  <meta name="description" content="Create a RankForge workspace and start one free evidence-backed SEO lead search.">
+  <link rel="stylesheet" href="../assets/auth-pages.css?v=auth-pages-1">
 </head>
-<body class="dashboard-body auth-page-shell" data-auth-page="true">
-  <main class="auth-layout">
-    <section class="auth-hero">
-      <a class="auth-brand-link" href="../"><span>RF</span><strong>RankForge<small>by CrestlineOps</small></strong></a>
-      <span class="panel-eyebrow">Create your workspace</span>
-      <h1>Start finding local businesses worth pitching SEO to.</h1>
-      <p>Create a user-scoped RankForge workspace for focused niche + city searches, lead scoring, contact path review, feedback, and CSV export.</p>
-      <div class="auth-proof-row">
-        <span>Prioritized leads</span>
-        <span>SEO need scoring</span>
-        <span>No unlimited scraping</span>
+<body class="rf-auth-page rf-auth-signup" data-auth-page="true">
+  <main class="rf-auth-main">
+    <section class="rf-auth-layout" aria-label="Create a RankForge workspace">
+      <div class="rf-auth-card">
+        <p class="rf-auth-eyebrow">Start free</p>
+        <h1>Start your free test search</h1>
+        <p class="rf-auth-subtitle">Create a RankForge workspace and run one focused market search before upgrading.</p>
+
+        <form id="signupForm" class="rf-auth-form" novalidate>
+          <div class="rf-auth-grid-two">
+            <div class="rf-field">
+              <label for="signupName">Full name</label>
+              <input id="signupName" type="text" name="full_name" placeholder="Your name" autocomplete="name">
+            </div>
+            <div class="rf-field">
+              <label for="agencyName">Agency name</label>
+              <input id="agencyName" type="text" name="agency_name" placeholder="Agency or consultancy" autocomplete="organization">
+            </div>
+          </div>
+          <div class="rf-field">
+            <label for="signupEmail">Work email</label>
+            <input id="signupEmail" type="email" name="email" placeholder="founder@agency.com" autocomplete="email" required>
+          </div>
+          <div class="rf-field">
+            <label for="signupPassword">Password</label>
+            <div class="rf-input-wrap">
+              <input id="signupPassword" class="rf-password-input" type="password" name="password" placeholder="Use at least 6 characters" autocomplete="new-password" required>
+              <button class="rf-password-toggle" type="button" data-toggle-password="signupPassword" aria-label="Show password">Show</button>
+            </div>
+            <p class="rf-helper">Use at least 6 characters.</p>
+          </div>
+          <div class="rf-field">
+            <label for="confirmPassword">Confirm password</label>
+            <div class="rf-input-wrap">
+              <input id="confirmPassword" class="rf-password-input" type="password" name="confirm_password" placeholder="Repeat password" autocomplete="new-password" required>
+              <button class="rf-password-toggle" type="button" data-toggle-password="confirmPassword" aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <p id="authFormStatus" class="auth-form-status">Free includes one test search batch. Paid features activate only after checkout confirmation.</p>
+          <button id="authSubmitButton" class="rf-auth-button" type="submit" data-default-text="Create workspace" data-loading-text="Creating workspace…">Create workspace</button>
+        </form>
+
+        <p class="rf-auth-switch">Already have an account? <a href="../login/">Log in</a></p>
+        <p class="rf-terms-note">By creating an account, you agree to the <a href="../terms/">Terms</a> and acknowledge the <a href="../privacy/">Privacy Policy</a>.</p>
       </div>
-      <div class="auth-note-grid">
-        <article class="auth-note-card"><strong>Plan-aware signup</strong><small>Your selected plan is saved for checkout, but paid access only activates after payment confirmation.</small></article>
-        <article class="auth-note-card"><strong>Operator-first workflow</strong><small>After signup, open the workspace, run a focused search, review leads, then export the best opportunities.</small></article>
-      </div>
-    </section>
-    <section class="auth-card">
-      <div class="auth-card-head">
-        <span class="workspace-label">New account</span>
-        <h2>Create account</h2>
-        <p>Your Supabase user ID will own your searches, leads, feedback, and exports.</p>
-      </div>
-      <form id="signupForm" class="auth-form">
-        <label><span>Full name</span><input type="text" name="full_name" placeholder="Your name" autocomplete="name" required></label>
-        <label><span>Agency name</span><input type="text" name="agency_name" placeholder="Your agency or consultancy" autocomplete="organization" required></label>
-        <label><span>Email</span><input type="email" name="email" placeholder="founder@agency.com" autocomplete="email" required></label>
-        <div class="grid-two">
-          <label><span>Password</span><input type="password" name="password" placeholder="Minimum 8 characters" autocomplete="new-password" required></label>
-          <label><span>Confirm</span><input type="password" name="confirm_password" placeholder="Repeat password" autocomplete="new-password" required></label>
+
+      <aside class="rf-auth-panel">
+        <div>
+          <p class="rf-auth-eyebrow">One focused search. Real evidence.</p>
+          <h2>Evaluate one niche and city before paying.</h2>
+          <p>Use your free test search to see whether RankForge can surface evidence-backed, contact-ready SEO opportunities.</p>
+          <ul class="rf-trust-list">
+            <li>1 free test search batch</li>
+            <li>Up to 10 lead previews</li>
+            <li>No CSV export on Free</li>
+            <li>Upgrade when ready for monthly lead credits</li>
+          </ul>
         </div>
-        <p id="authFormStatus" class="auth-form-status">Create your workspace. Paid plan access activates only after checkout confirmation.</p>
-        <button class="button primary button-block" type="submit">Create account</button>
-      </form>
-      <p class="auth-switch">Already have an account? <a href="../login/">Log in</a></p>
-      <p class="auth-terms-note">By creating an account, you agree to use RankForge responsibly and review lead data before outreach. See <a href="../terms/">Terms</a> and <a href="../privacy/">Privacy</a>.</p>
+        <div class="rf-flow">
+          <div class="rf-flow-row"><div class="rf-flow-pill">Choose niche/city</div><span class="rf-flow-arrow">→</span></div>
+          <div class="rf-flow-row"><div class="rf-flow-pill">Verify signals</div><span class="rf-flow-arrow">→</span></div>
+          <div class="rf-flow-row"><div class="rf-flow-pill">Review prospects</div></div>
+        </div>
+        <div class="rf-auth-panel-footer">No verified evidence means no strong SEO claim.</div>
+      </aside>
     </section>
   </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
-<script src="../assets/billing-config.js?v=billing-config-2"></script>
-<script src="../assets/auth.js?v=user-isolation-4"></script>
-<script src="../assets/signup-plan.js?v=selected-plan-1"></script>
-<script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/billing-config.js?v=billing-config-2"></script>
+  <script src="../assets/auth.js?v=user-isolation-5"></script>
+  <script src="../assets/signup-plan.js?v=selected-plan-1"></script>
+  <script src="../assets/marketing-session.js?v=marketing-session-2"></script>
 </body>
 </html>

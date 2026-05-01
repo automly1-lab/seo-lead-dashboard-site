@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout Cancelled | RankForge by CrestlineOps</title>
+  <meta name="description" content="Your RankForge checkout was cancelled and no plan change was made.">
+  <link rel="stylesheet" href="../assets/checkout-pages.css?v=checkout-pages-1">
+</head>
+<body class="rf-checkout-page" data-page="checkout-cancelled">
+  <main class="rf-checkout-main">
+    <div class="rf-checkout-wrap">
+      <section class="rf-checkout-card" aria-labelledby="checkout-title">
+        <div class="rf-status-icon cancelled" aria-hidden="true">!</div>
+        <p class="rf-checkout-eyebrow">Billing</p>
+        <h1 id="checkout-title">Checkout cancelled</h1>
+        <p class="rf-checkout-subtitle">No payment was completed, and your current RankForge plan has not changed.</p>
+        <div class="rf-checkout-note warning">You can continue using your current access or choose a plan when you are ready. Paid features are not activated until checkout is completed and confirmed.</div>
+        <div class="rf-next-steps">
+          <h2>Next steps</h2>
+          <ol>
+            <li>Return to pricing when you are ready to choose a plan.</li>
+            <li>Continue to your dashboard if you already have access.</li>
+            <li>Start free if you have not created a workspace yet.</li>
+          </ol>
+        </div>
+        <div class="rf-checkout-actions">
+          <a class="rf-checkout-btn primary" href="../pricing/">View Pricing</a>
+          <a class="rf-checkout-btn secondary" href="../dashboard/" data-auth-secondary>Go to Dashboard</a>
+        </div>
+        <p class="rf-support-line">This is a normal checkout state. No billing change is applied from a cancelled checkout.</p>
+      </section>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/billing-config.js?v=billing-config-2"></script>
+  <script src="../assets/auth.js?v=user-isolation-3"></script>
+  <script src="../assets/marketing-session.js?v=marketing-session-2"></script>
+  <script src="../assets/checkout-pages.js?v=checkout-pages-1"></script>
+</body>
+</html>

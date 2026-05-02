@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 180" role="img" aria-label="RankForge">
+  <rect width="160" height="180" rx="34" fill="#0E1726"/>
+  <path d="M80 18 136 49 122 62 80 38 38 62v59l42 25 42-25V86h22v48L80 168 16 134V49L80 18Z" fill="#F8FAFC"/>
+  <path d="M42 105h18V78H42v27Zm33 0h18V56H75v49Zm33 0h18V40h-18v65Z" fill="#2563EB"/>
+  <path d="M25 115c35-5 74-19 112-57" fill="none" stroke="#14B8A6" stroke-width="12" stroke-linecap="round"/>
+  <path d="M51 135 70 151 110 111" fill="none" stroke="#22C55E" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

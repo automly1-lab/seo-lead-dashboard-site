@@ -63,6 +63,36 @@
     btn.textContent = isSubmitting ? (btn.dataset.loadingText || fallbackText || "Working…") : btn.dataset.defaultText;
   }
 
+  function isNestedPage() {
+    return /\/(dashboard|searches|leads|lead-detail|settings|quality|login|signup|checkout-success|checkout-cancelled|checkout-pending|how-it-works|pricing|status|privacy|terms|refund-policy)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || "");
+  }
+  function seoPrefix() { return isNestedPage() ? "../" : ""; }
+  function loadScriptOnce(src, marker) {
+    if (document.querySelector('script[data-' + marker + '="true"]')) return;
+    const script = document.createElement("script");
+    script.src = src;
+    script.defer = true;
+    script.setAttribute('data-' + marker, 'true');
+    document.body.appendChild(script);
+  }
+  function privateSeoPath() {
+    return /\/(dashboard|searches|leads|lead-detail|settings|quality|checkout-success|checkout-cancelled|checkout-pending)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || "");
+  }
+  function ensureNoindexForPrivatePages() {
+    if (!privateSeoPath()) return;
+    let robots = document.head.querySelector('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.setAttribute("name", "robots");
+      document.head.appendChild(robots);
+    }
+    robots.setAttribute("content", "noindex, follow");
+  }
+  function loadSeo() {
+    loadScriptOnce(seoPrefix() + "assets/seo.js?v=seo-1", "rf-seo");
+    ensureNoindexForPrivatePages();
+  }
+
   function billingConfig() { return window.RANKFORGE_BILLING || {}; }
   function normalizePlan(value) {
     const raw = String(value || "").trim().toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_");
@@ -274,6 +304,7 @@
   window.rankforgeAuth = { getSession: () => safeJson(localStorage.getItem(AUTH_SESSION_KEY), null), refreshSession, login, signup, logout, getSupabaseClient: getClient };
 
   async function boot() {
+    loadSeo();
     bindForms();
     await redirectAuthPagesIfSignedIn();
     await requireAuthIfNeeded();

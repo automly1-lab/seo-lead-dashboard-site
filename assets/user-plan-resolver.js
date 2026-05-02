@@ -20,7 +20,7 @@
   function num(v,fallback){var raw=clean(v);if(/^(infinity|unlimited|∞)$/i.test(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):(fallback||0);}
   function asBool(v){var t=low(v);return v===true||['true','yes','1','enabled','active'].indexOf(t)>=0;}
   function nowIso(){return new Date().toISOString();}
-  function signature(p){return [p.email,p.user_id,p.plan,p.billing_status,p.monthly_search_limit,p.monthly_qualified_lead_credit_limit,p.max_leads_per_batch,p.csv_export,p.source_row_source,p.source_row_priority,p.source_row_index].join('|');}
+  function signature(p){return [p.email,p.user_id,p.plan,p.billing_status,p.monthly_search_limit,p.monthly_qualified_lead_credit_limit,p.max_leads_per_batch,p.csv_export,p.source_row_source,p.source_row_priority,p.source_row_index,p.stripe_subscription_id,p.stripe_invoice_id,p.stripe_checkout_session_id].join('|');}
 
   function readSession(){
     try{
@@ -40,141 +40,51 @@
     }catch(e){}
     return {};
   }
-
-  function waitForSession(){
-    var started=Date.now();
-    return new Promise(function(resolve){
-      (function tick(){
-        var s=readSession();
-        if(s&&(s.email||s.userEmail||s.userId||s.id))return resolve(s);
-        if(Date.now()-started>=MAX_SESSION_WAIT_MS)return resolve(s||{});
-        setTimeout(tick,250);
-      })();
-    });
-  }
+  function waitForSession(){var started=Date.now();return new Promise(function(resolve){(function tick(){var s=readSession();if(s&&(s.email||s.userEmail||s.userId||s.id))return resolve(s);if(Date.now()-started>=MAX_SESSION_WAIT_MS)return resolve(s||{});setTimeout(tick,250);})();});}
 
   function normalizePlan(v){
     var raw=low(v).replace(/\s+/g,'_').replace(/-/g,'_');
     if(/admin|unlimited/.test(raw))return'admin_unlimited';
+    if(/stack|bundle|combined|multi/.test(raw))return'stacked';
     if(raw==='growth'||raw==='pro'||raw==='founding'||raw==='founding_plan')return'growth';
     if(raw==='starter'||raw==='start'||raw==='basic'||raw==='starter_plan')return'starter';
     return'free';
   }
-  function normalizeBilling(v){
-    var raw=low(v).replace(/\s+/g,'_').replace(/-/g,'_');
-    if(/admin|unlimited/.test(raw))return'admin_unlimited';
-    if(/active|paid|trialing|complete|checkout_complete|subscription_active|subscription/.test(raw))return'active';
-    if(/pending|incomplete/.test(raw))return'pending_payment';
-    if(/cancel/.test(raw))return'canceled';
-    return raw||'free';
-  }
-  function defaults(plan){
-    if(plan==='admin_unlimited')return{search:Infinity,credits:Infinity,batch:50,csv:true};
-    if(plan==='growth')return{search:150,credits:250,batch:50,csv:true};
-    if(plan==='starter')return{search:50,credits:50,batch:25,csv:true};
-    return{search:2,credits:10,batch:10,csv:false};
-  }
-  function planLabel(plan){return plan==='admin_unlimited'?'Admin Unlimited':plan==='growth'?'Growth':plan==='starter'?'Starter':'Free';}
+  function normalizeBilling(v){var raw=low(v).replace(/\s+/g,'_').replace(/-/g,'_');if(/admin|unlimited/.test(raw))return'admin_unlimited';if(/active|paid|trialing|complete|checkout_complete|subscription_active|subscription/.test(raw))return'active';if(/pending|incomplete/.test(raw))return'pending_payment';if(/cancel/.test(raw))return'canceled';return raw||'free';}
+  function defaults(plan){if(plan==='admin_unlimited')return{search:Infinity,credits:Infinity,batch:50,csv:true};if(plan==='stacked')return{search:0,credits:0,batch:50,csv:true};if(plan==='growth')return{search:150,credits:250,batch:50,csv:true};if(plan==='starter')return{search:50,credits:50,batch:25,csv:true};return{search:2,credits:10,batch:10,csv:false};}
+  function planLabel(plan){return plan==='admin_unlimited'?'Admin Unlimited':plan==='stacked'?'Stacked Paid':plan==='growth'?'Growth':plan==='starter'?'Starter':'Free';}
 
   function rowValue(r,k){return r&&Object.prototype.hasOwnProperty.call(r,k)?r[k]:'';}
   function rowSource(r){return low(first(r.source,r.profile_source,r.admin_override,r.override_active));}
   function rowPlan(r){return normalizePlan(first(r.plan_override,rowValue(r,'plan'),rowValue(r,'current_plan'),r.plan_name,r.subscription_plan,r.package,r.tier));}
   function rowBilling(r){return normalizeBilling(first(r.billing_status_override,r.billing_status,r.subscription_status,r.payment_status));}
-  function rowEmails(r){
-    var vals=[r.email,r.user_email,r.account_email,r.customer_email,r.billing_email];
-    if(isEmail(r.user_id))vals.push(r.user_id);
-    if(isEmail(r.userId))vals.push(r.userId);
-    return vals.map(low).filter(Boolean);
-  }
+  function rowEmails(r){var vals=[r.email,r.user_email,r.account_email,r.customer_email,r.billing_email];if(isEmail(r.user_id))vals.push(r.user_id);if(isEmail(r.userId))vals.push(r.userId);return vals.map(low).filter(Boolean);}
   function rowUserId(r){var raw=first(r.user_id,r.userId,r.owner_user_id,r.id);return isRealUserId(raw)?raw:'';}
   function rowTime(r){var t=Date.parse(first(r.updated_at,r.synced_at,r.created_at));return Number.isFinite(t)?t:0;}
   function isAdminOverride(r){var src=rowSource(r);return src==='admin_override'||src==='true'||src==='rankforge_admin_quality_override'||src.indexOf('admin')>=0;}
   function hasPaidSource(r){var src=rowSource(r);return src.indexOf('stripe')>=0||src.indexOf('checkout')>=0||src.indexOf('billing')>=0||src.indexOf('subscription')>=0;}
   function isPaidBillingRow(r){var plan=rowPlan(r),billing=rowBilling(r);return plan!=='free'&&(hasPaidSource(r)||billing==='active'||billing==='admin_unlimited');}
   function rowPriority(r){if(isAdminOverride(r))return 40;if(isPaidBillingRow(r))return 30;if(rowPlan(r)!=='free')return 15;return 0;}
-  function rowTieRank(r){if(isAdminOverride(r))return 3;if(hasPaidSource(r))return 2;if(rowBilling(r)==='active'&&rowPlan(r)!=='free')return 1;return 0;}
+  function rowTieRank(r){if(isAdminOverride(r))return 3;if(rowSource(r).indexOf('stack')>=0)return 3;if(hasPaidSource(r))return 2;if(rowBilling(r)==='active'&&rowPlan(r)!=='free')return 1;return 0;}
 
-  function parseRows(payload){
-    var cols=(payload.table&&payload.table.cols||[]).map(function(c){return c.label||c.id;});
-    return (payload.table&&payload.table.rows||[]).map(function(row,i){
-      var o={_row_index:i+2};
-      (row.c||[]).forEach(function(cell,idx){o[cols[idx]]=cell?clean(cell.f||cell.v||''):'';});
-      return o;
-    });
-  }
-  function fetchUsersSheet(){
-    return new Promise(function(resolve){
-      var cb='rfEffectiveUsers_'+Date.now()+'_'+Math.floor(Math.random()*999999);
-      var script=document.createElement('script');var done=false;
-      var timer=setTimeout(function(){finish([], 'timeout');},12000);
-      function finish(rows,error){if(done)return;done=true;clearTimeout(timer);try{script.remove();}catch(e){}try{delete window[cb];}catch(e){}resolve({rows:rows||[],error:error||''});}
-      window[cb]=function(payload){try{finish(parseRows(payload));}catch(e){finish([],e&&e.message||'parse_error');}};
-      script.src='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?sheet=users&tqx=responseHandler:'+cb+'&headers=1&cacheBust='+Date.now();
-      script.onerror=function(){finish([], 'script_error');};
-      (document.body||document.documentElement).appendChild(script);
-    });
-  }
-  function matchRows(rows,s){
-    var email=low(s.email||s.userEmail);var uid=clean(s.userId||s.id);
-    return rows.filter(function(r){var emails=rowEmails(r);var realId=rowUserId(r);return (email&&emails.indexOf(email)>=0)||(uid&&realId&&realId===uid);});
-  }
-  function chooseBest(rows){
-    return rows.slice().sort(function(a,b){var ap=rowPriority(a),bp=rowPriority(b);if(ap!==bp)return bp-ap;var ar=rowTieRank(a),br=rowTieRank(b);if(ar!==br)return br-ar;var at=rowTime(a),bt=rowTime(b);if(at!==bt)return bt-at;return Number(b._row_index||0)-Number(a._row_index||0);})[0]||null;
-  }
+  function parseRows(payload){var cols=(payload.table&&payload.table.cols||[]).map(function(c){return c.label||c.id;});return (payload.table&&payload.table.rows||[]).map(function(row,i){var o={_row_index:i+2};(row.c||[]).forEach(function(cell,idx){o[cols[idx]]=cell?clean(cell.f||cell.v||''):'';});return o;});}
+  function fetchUsersSheet(){return new Promise(function(resolve){var cb='rfEffectiveUsers_'+Date.now()+'_'+Math.floor(Math.random()*999999);var script=document.createElement('script');var done=false;var timer=setTimeout(function(){finish([], 'timeout');},12000);function finish(rows,error){if(done)return;done=true;clearTimeout(timer);try{script.remove();}catch(e){}try{delete window[cb];}catch(e){}resolve({rows:rows||[],error:error||''});}window[cb]=function(payload){try{finish(parseRows(payload));}catch(e){finish([],e&&e.message||'parse_error');}};script.src='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?sheet=users&tqx=responseHandler:'+cb+'&headers=1&cacheBust='+Date.now();script.onerror=function(){finish([], 'script_error');};(document.body||document.documentElement).appendChild(script);});}
+  function matchRows(rows,s){var email=low(s.email||s.userEmail);var uid=clean(s.userId||s.id);return rows.filter(function(r){var emails=rowEmails(r);var realId=rowUserId(r);return (email&&emails.indexOf(email)>=0)||(uid&&realId&&realId===uid);});}
+  function chooseBest(rows){return rows.slice().sort(function(a,b){var ap=rowPriority(a),bp=rowPriority(b);if(ap!==bp)return bp-ap;var ar=rowTieRank(a),br=rowTieRank(b);if(ar!==br)return br-ar;var at=rowTime(a),bt=rowTime(b);if(at!==bt)return bt-at;return Number(b._row_index||0)-Number(a._row_index||0);})[0]||null;}
+  function stripeIds(row){return{stripe_event_id:first(row.stripe_event_id,row.event_id),stripe_subscription_id:first(row.stripe_subscription_id,row.subscription_id),stripe_invoice_id:first(row.stripe_invoice_id,row.invoice_id),stripe_checkout_session_id:first(row.stripe_checkout_session_id,row.checkout_session_id),stripe_payment_intent_id:first(row.stripe_payment_intent_id,row.payment_intent_id)};}
   function buildProfile(row,s,meta){
     var loginEmail=low(s.email||s.userEmail||rowEmails(row)[0]);var plan=rowPlan(row);var billing=rowBilling(row);if(loginEmail===ADMIN_EMAIL){plan='admin_unlimited';billing='admin_unlimited';}
-    var d=defaults(plan);var searchRaw=first(row.effective_search_limit,row.monthly_search_limit,row.search_batches_limit,row.base_search_limit);var creditRaw=first(row.effective_qualified_lead_limit,row.monthly_qualified_lead_credit_limit,row.qualified_lead_credits_limit,row.base_qualified_lead_limit);var batchRaw=first(row.max_leads_per_batch,row.max_prospects_per_batch,row.max_batch);var csvRaw=first(row.csv_export,row.csv_enabled,row.can_export_csv);
-    var profile={user_id:first(s.userId,s.id,rowUserId(row),row.user_id,row.userId),email:first(s.email,s.userEmail,rowEmails(row)[0],row.email,row.user_email),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:searchRaw?num(searchRaw,d.search):d.search,monthly_qualified_lead_credit_limit:creditRaw?num(creditRaw,d.credits):d.credits,max_leads_per_batch:batchRaw?num(batchRaw,d.batch):d.batch,csv_export:csvRaw?asBool(csvRaw):d.csv,admin_managed:isAdminOverride(row),paid_managed:isPaidBillingRow(row),profile_source:'users_sheet',source_row_source:first(row.source,''),source_row_priority:rowPriority(row),source_row_tie_rank:rowTieRank(row),source_row_index:row._row_index,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v4'};
+    var d=defaults(plan);var searchRaw=first(row.effective_search_limit,row.monthly_search_limit,row.search_batches_limit,row.base_search_limit);var creditRaw=first(row.effective_qualified_lead_limit,row.monthly_qualified_lead_credit_limit,row.qualified_lead_credits_limit,row.base_qualified_lead_limit);var batchRaw=first(row.max_leads_per_batch,row.max_prospects_per_batch,row.max_batch);var csvRaw=first(row.csv_export,row.csv_enabled,row.can_export_csv);var ids=stripeIds(row);
+    var profile={user_id:first(s.userId,s.id,rowUserId(row),row.user_id,row.userId),email:first(s.email,s.userEmail,rowEmails(row)[0],row.email,row.user_email),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:searchRaw?num(searchRaw,d.search):d.search,monthly_qualified_lead_credit_limit:creditRaw?num(creditRaw,d.credits):d.credits,max_leads_per_batch:batchRaw?num(batchRaw,d.batch):d.batch,csv_export:csvRaw?asBool(csvRaw):d.csv,admin_managed:isAdminOverride(row),paid_managed:isPaidBillingRow(row),profile_source:'users_sheet',source_row_source:first(row.source,''),source_row_priority:rowPriority(row),source_row_tie_rank:rowTieRank(row),source_row_index:row._row_index,stack_note:first(row.stack_note,''),stripe_event_id:ids.stripe_event_id,stripe_subscription_id:ids.stripe_subscription_id,stripe_invoice_id:ids.stripe_invoice_id,stripe_checkout_session_id:ids.stripe_checkout_session_id,stripe_payment_intent_id:ids.stripe_payment_intent_id,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v5-stacked'};
     if(meta)profile.debug_meta=meta;return profile;
   }
-  function fallbackProfile(s,reason){
-    var email=low(s.email||s.userEmail);var plan=email===ADMIN_EMAIL?'admin_unlimited':'free';var billing=email===ADMIN_EMAIL?'admin_unlimited':'free';var d=defaults(plan);
-    return {user_id:first(s.userId,s.id),email:first(s.email,s.userEmail),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:d.search,monthly_qualified_lead_credit_limit:d.credits,max_leads_per_batch:d.batch,csv_export:d.csv,admin_managed:plan==='admin_unlimited',paid_managed:false,profile_source:'default',source_row_source:'',source_row_priority:plan==='admin_unlimited'?40:0,source_row_index:null,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v4',debug_meta:{reason:reason||'no_matching_users_sheet_row'}};
-  }
-  function writeProfile(profile,changed){
-    localStorage.setItem(CACHE_KEY,JSON.stringify(profile));
-    localStorage.setItem(DEBUG_KEY,JSON.stringify(profile));
-    localStorage.setItem('rankforge-plan-v1',profile.plan);
-    localStorage.setItem('rankforge-current-plan-v1',profile.plan);
-    localStorage.setItem('rankforge-billing-status-v1',profile.billing_status);
-    localStorage.setItem('rankforge-monthly-search-limit-v1',String(profile.monthly_search_limit));
-    localStorage.setItem('rankforge-monthly-qualified-credit-limit-v1',String(profile.monthly_qualified_lead_credit_limit));
-    localStorage.setItem('rankforge-max-leads-per-batch-v1',String(profile.max_leads_per_batch));
-    localStorage.setItem('rankforge-admin-plan-managed-v1',profile.admin_managed?'true':'false');
-    localStorage.setItem('rankforge-paid-plan-managed-v1',profile.paid_managed?'true':'false');
-    window.rankforgeUserProfile=profile;
-    if(changed)window.dispatchEvent(new CustomEvent('rankforge:user-profile-resolved',{detail:profile}));
-  }
+  function fallbackProfile(s,reason){var email=low(s.email||s.userEmail);var plan=email===ADMIN_EMAIL?'admin_unlimited':'free';var billing=email===ADMIN_EMAIL?'admin_unlimited':'free';var d=defaults(plan);return {user_id:first(s.userId,s.id),email:first(s.email,s.userEmail),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:d.search,monthly_qualified_lead_credit_limit:d.credits,max_leads_per_batch:d.batch,csv_export:d.csv,admin_managed:plan==='admin_unlimited',paid_managed:false,profile_source:'default',source_row_source:'',source_row_priority:plan==='admin_unlimited'?40:0,source_row_index:null,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v5-stacked',debug_meta:{reason:reason||'no_matching_users_sheet_row'}};}
+  function writeProfile(profile,changed){localStorage.setItem(CACHE_KEY,JSON.stringify(profile));localStorage.setItem(DEBUG_KEY,JSON.stringify(profile));localStorage.setItem('rankforge-plan-v1',profile.plan);localStorage.setItem('rankforge-current-plan-v1',profile.plan);localStorage.setItem('rankforge-billing-status-v1',profile.billing_status);localStorage.setItem('rankforge-monthly-search-limit-v1',String(profile.monthly_search_limit));localStorage.setItem('rankforge-monthly-qualified-credit-limit-v1',String(profile.monthly_qualified_lead_credit_limit));localStorage.setItem('rankforge-max-leads-per-batch-v1',String(profile.max_leads_per_batch));localStorage.setItem('rankforge-admin-plan-managed-v1',profile.admin_managed?'true':'false');localStorage.setItem('rankforge-paid-plan-managed-v1',profile.paid_managed?'true':'false');window.rankforgeUserProfile=profile;if(changed)window.dispatchEvent(new CustomEvent('rankforge:user-profile-resolved',{detail:profile}));}
   function setText(id,value){var el=document.getElementById(id);if(el)el.textContent=value;}
   function fmtLimit(v,suffix){return v===Infinity?'Unlimited':String(v)+(suffix||'');}
-  function applyDom(profile,changed){
-    if(!changed)return;
-    var name=planLabel(profile.plan);
-    setText('rfPlanBadge',name+' Plan');setText('rfProspectPlanBadge',name+' Plan');
-    setText('rfCreditBadge',profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited qualified lead credits':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit');
-    setText('rfProspectCreditBadge',profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited qualified lead credits':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit');
-    var card=document.getElementById('rfMvpUsageCard');if(card){var title=card.querySelector('h2');if(title)title.textContent=name+' Plan';var pill=card.querySelector('.rf-mvp-pill');if(pill)pill.textContent=profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited access':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit';}
-    setText('accountPlanName',name);setText('accountPlanStatus',profile.billing_status==='active'||profile.billing_status==='admin_unlimited'?'Active':profile.billing_status);setText('accountLeadLimit',fmtLimit(profile.monthly_qualified_lead_credit_limit,' qualified leads/month'));setText('accountSearchLimit',fmtLimit(profile.monthly_search_limit,' search batches/month')+' · max '+fmtLimit(profile.max_leads_per_batch,' leads/batch'));setText('accountWebhookStatus',profile.csv_export?'Enabled':'Plan gated');setText('accountWebhookValue',profile.csv_export?'CSV export enabled for this plan.':'CSV export requires Starter, Growth, or admin.');
-  }
-  async function resolveEffectiveUserProfile(options){
-    options=options||{};
-    var cached=parse(localStorage.getItem(CACHE_KEY),null);
-    if(!options.force&&cached&&Date.now()-lastResolvedAt<REFRESH_TTL_MS){window.rankforgeUserProfile=cached;return cached;}
-    if(inFlight)return inFlight;
-    inFlight=(async function(){
-      var session=options.session||await waitForSession();
-      if(!session||(!session.email&&!session.userEmail&&!session.userId&&!session.id)){var noSession=fallbackProfile({},'no_session_email_or_user_id');localStorage.setItem(DEBUG_KEY,JSON.stringify(noSession));return noSession;}
-      var result=await fetchUsersSheet();var matches=matchRows(result.rows,session);var selected=chooseBest(matches);
-      var profile=selected?buildProfile(selected,session,{matched_rows:matches.length,total_rows:result.rows.length,sheet_error:result.error||''}):fallbackProfile(session,result.error?'users_sheet_fetch_'+result.error:'no_exact_match');
-      profile.profile_source=selected?'users_sheet':'default';
-      var sig=signature(profile);var changed=sig!==lastSignature;lastSignature=sig;lastResolvedAt=Date.now();
-      writeProfile(profile,changed);applyDom(profile,changed);
-      return profile;
-    })().finally(function(){inFlight=null;});
-    return inFlight;
-  }
-  window.rankforgeResolveEffectiveUserProfile=resolveEffectiveUserProfile;
-  window.rankforgeResolveUserPlan=function(){return resolveEffectiveUserProfile({force:true});};
+  function applyDom(profile,changed){if(!changed)return;var name=planLabel(profile.plan);setText('rfPlanBadge',name+' Plan');setText('rfProspectPlanBadge',name+' Plan');setText('rfCreditBadge',profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited qualified lead credits':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit');setText('rfProspectCreditBadge',profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited qualified lead credits':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit');var card=document.getElementById('rfMvpUsageCard');if(card){var title=card.querySelector('h2');if(title)title.textContent=name+' Plan';var pill=card.querySelector('.rf-mvp-pill');if(pill)pill.textContent=profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited access':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit';}setText('accountPlanName',name);setText('accountPlanStatus',profile.billing_status==='active'||profile.billing_status==='admin_unlimited'?'Active':profile.billing_status);setText('accountLeadLimit',fmtLimit(profile.monthly_qualified_lead_credit_limit,' qualified leads/month'));setText('accountSearchLimit',fmtLimit(profile.monthly_search_limit,' search batches/month')+' · max '+fmtLimit(profile.max_leads_per_batch,' leads/batch'));setText('accountWebhookStatus',profile.csv_export?'Enabled':'Plan gated');setText('accountWebhookValue',profile.csv_export?'CSV export enabled for this plan.':'CSV export requires Starter, Growth, or admin.');}
+  async function resolveEffectiveUserProfile(options){options=options||{};var cached=parse(localStorage.getItem(CACHE_KEY),null);if(!options.force&&cached&&Date.now()-lastResolvedAt<REFRESH_TTL_MS){window.rankforgeUserProfile=cached;return cached;}if(inFlight)return inFlight;inFlight=(async function(){var session=options.session||await waitForSession();if(!session||(!session.email&&!session.userEmail&&!session.userId&&!session.id)){var noSession=fallbackProfile({},'no_session_email_or_user_id');localStorage.setItem(DEBUG_KEY,JSON.stringify(noSession));return noSession;}var result=await fetchUsersSheet();var matches=matchRows(result.rows,session);var selected=chooseBest(matches);var profile=selected?buildProfile(selected,session,{matched_rows:matches.length,total_rows:result.rows.length,sheet_error:result.error||''}):fallbackProfile(session,result.error?'users_sheet_fetch_'+result.error:'no_exact_match');profile.profile_source=selected?'users_sheet':'default';var sig=signature(profile);var changed=sig!==lastSignature;lastSignature=sig;lastResolvedAt=Date.now();writeProfile(profile,changed);applyDom(profile,changed);return profile;})().finally(function(){inFlight=null;});return inFlight;}
+  window.rankforgeResolveEffectiveUserProfile=resolveEffectiveUserProfile;window.rankforgeResolveUserPlan=function(){return resolveEffectiveUserProfile({force:true});};
   function start(){resolveEffectiveUserProfile({force:true,reason:'initial_load'});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
   window.addEventListener('focus',function(){resolveEffectiveUserProfile({force:true,reason:'focus'});});

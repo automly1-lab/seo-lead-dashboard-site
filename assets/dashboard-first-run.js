@@ -1,5 +1,13 @@
 (function(){
   'use strict';
+  function nested(){return /\/(dashboard|lists|leads|lead-detail|opportunities|competitors|settings)\//.test(location.pathname||'')}
+  function base(p){return (nested()?'../':'')+p}
+  function loadCss(href,id){if(document.getElementById(id))return;var l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;document.head.appendChild(l)}
+  function loadJs(src,id){if(document.getElementById(id))return;var s=document.createElement('script');s.id=id;s.src=src;s.defer=true;document.body.appendChild(s)}
+  loadJs(base('assets/page-reset.js?v=page-reset-1'),'rf-page-reset-js');
+  loadCss(base('assets/search-feedback-modal.css?v=search-feedback-1'),'rf-search-feedback-css');
+  loadJs(base('assets/search-feedback-modal.js?v=search-feedback-1'),'rf-search-feedback-js');
+
   var PENDING='rankforge_first_run_pending',SESSION='rankforge-auth-session-v1';
   var steps=['agency_size','agency_type','weekly_outreach_goal','target_verticals','summary'];
   var state={step:0,agency_size:'',agency_type:'',weekly_outreach_goal:'',target_verticals:[],primary_niche:''};

@@ -3,11 +3,24 @@
   if(!document.body.classList.contains('app-page-leads')) return;
 
   var MIN_SEO_NEED_FOR_QUALIFIED = 40;
+  var running = false;
+  var scheduled = false;
 
   function text(node){return String((node&&node.textContent)||'').replace(/\s+/g,' ').trim();}
   function verified(node){var t=text(node);return /Verified/i.test(t)&&/(signal|evidence)/i.test(t);}
   function hasDirectContact(node){var t=text(node);return /(Phone|Email)/i.test(t)&&!/Needs enrichment|missing|not found/i.test(t);}
-  function seoNeed(cell){var m=text(cell).match(/\b(\d{1,3})\b/);return m?Math.max(0,Math.min(100,Number(m[1]))):0;}
+  function seoNeed(cell){
+    var t=text(cell);
+    var nums=t.match(/\b(\d{1,3})\b/g);
+    if(nums&&nums.length){
+      var best=Math.max.apply(null,nums.map(function(x){return Math.max(0,Math.min(100,Number(x)));}));
+      if(Number.isFinite(best)) return best;
+    }
+    if(/High need/i.test(t)) return 80;
+    if(/Good need/i.test(t)) return 65;
+    if(/Medium|Review/i.test(t)) return 40;
+    return 0;
+  }
 
   function setDecision(cell,label,cls,reasonText){
     if(!cell) return false;
@@ -31,6 +44,8 @@
   function makeRejected(cell){return setDecision(cell,'Rejected','rf-badge-rejected','No phone or email found');}
 
   function fixRows(){
+    if(running) return;
+    running = true;
     var changed=false;
     document.querySelectorAll('#rfProspectsTable tbody tr').forEach(function(row){
       var cells=row.children;
@@ -49,8 +64,10 @@
 
     document.querySelectorAll('.rf-prospect-card').forEach(function(card){
       var cardText=text(card);
-      var scoreMatch=cardText.match(/SEO\s*(\d{1,3})/i) || cardText.match(/\b(\d{1,3})\b/);
-      var need=scoreMatch?Number(scoreMatch[1]):0;
+      var nums=cardText.match(/\b(\d{1,3})\b/g);
+      var need=nums&&nums.length?Math.max.apply(null,nums.map(Number)):0;
+      if(/High need/i.test(cardText)) need=Math.max(need,80);
+      if(/Good need/i.test(cardText)) need=Math.max(need,65);
       var directContact=/(Phone|Email)/i.test(cardText)&&!/Needs enrichment|missing|not found/i.test(cardText);
       if(!directContact){changed=makeRejected(card)||changed;return;}
       if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(card,'SEO need below qualified threshold')||changed;return;}
@@ -66,20 +83,26 @@
       if(qn) qn.textContent=q;
       if(rn) rn.textContent=r;
     }
+    running = false;
+  }
+
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){scheduled=false;fixRows();});
   }
 
   function observe(){
     var target=document.getElementById('rfProspectsTable') || document.getElementById('rfProspectCards') || document.body;
     if(!target || target.dataset.rfDecisionFixObserved==='true') return;
     target.dataset.rfDecisionFixObserved='true';
-    new MutationObserver(function(){fixRows();}).observe(target,{childList:true,subtree:true,characterData:true});
+    new MutationObserver(schedule).observe(target,{childList:true,subtree:true});
   }
 
   function init(){
     fixRows();
     observe();
-    [100,300,700,1200,2000,3500,6000].forEach(function(ms){setTimeout(fixRows,ms);});
-    setInterval(fixRows,1500);
+    [150,600,1400].forEach(function(ms){setTimeout(fixRows,ms);});
     document.addEventListener('input',function(){setTimeout(fixRows,80);},true);
     document.addEventListener('change',function(){setTimeout(fixRows,80);},true);
     document.addEventListener('click',function(){setTimeout(fixRows,120);},true);

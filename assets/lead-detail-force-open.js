@@ -3,6 +3,7 @@
   if(((document.body||{}).dataset||{}).page!=='lead-detail')return;
   var SHEET_ID='1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco';
   var cache=null,lastRow=null,lastGoodName='';
+  var MIN_SEO_NEED_FOR_QUALIFIED=40;
   function c(v){return String(v==null?'':v).trim();}
   function bad(v){return /^(undefined|null|nan|\[object object\]|-|no lead selected)$/i.test(c(v));}
   function clean(v){v=c(v);return bad(v)?'':v;}
@@ -78,24 +79,28 @@
     setText('detailCompany',name);setText('rfLeadCity',city);setText('rfLeadNiche',niche);var a=document.getElementById('detailWebsite');if(a){a.textContent=dom||web||'Website not available';a.href=web||'#';}
     var phoneValue=contactValue(row,'phone',web),emailValue=contactValue(row,'email',web),contactPageValue=contactValue(row,'page',web);
     var phone=yes(get(row,['phone_visible']))||!!phoneValue,email=yes(get(row,['email_visible']))||!!emailValue,cp=yes(get(row,['contact_page_found']))||!!contactPageValue,cta=yes(get(row,['contact_cta_found']));
-    var qualified=verified&&signals>=3&&(contact>=60||phone||email||cp||cta);
-    cls('rfStatusBadge','rf-badge '+(qualified?'rf-badge-qualified':'rf-badge-review'));setText('rfStatusBadge',qualified?'Qualified':'Needs Review');
+    var hasDirectContact=phone||email;
+    var rejected=!hasDirectContact;
+    var qualified=!rejected&&verified&&signals>=3&&seo>=MIN_SEO_NEED_FOR_QUALIFIED;
+    var statusLabel=rejected?'Rejected':(qualified?'Qualified':'Needs Review');
+    cls('rfStatusBadge','rf-badge '+(qualified?'rf-badge-qualified':rejected?'rf-badge-rejected':'rf-badge-review'));setText('rfStatusBadge',statusLabel);
     cls('rfEvidenceBadge','rf-badge '+(verified?'rf-badge-verified':signals?'rf-badge-warning':'rf-badge-muted'));setText('rfEvidenceBadge',verified?'Verified evidence · '+signals+' signals':signals?'Partial evidence':'No verified evidence');
     cls('rfCreditBadge','rf-badge '+(qualified?'rf-badge-primary':'rf-badge-muted'));setText('rfCreditBadge',qualified?'Credit counted':'No credit used');
-    setText('detailNextAction',qualified?'Contact this business with a local SEO visibility offer.':'Review this lead manually before outreach.');
-    setText('rfDecisionReason',verified?'This lead has available crawl signals. Use the verified evidence below before outreach.':'No verified evidence means no strong SEO claim. Keep this lead in Needs Review unless manually checked.');
+    setText('detailNextAction',rejected?'Reject this lead. No direct phone or email was found.':qualified?'Contact this business with a local SEO visibility offer.':'Review this lead manually before outreach.');
+    setText('rfDecisionReason',rejected?'RankForge requires a phone number or email address before a lead can be qualified. Contact pages and CTAs alone are not enough.':verified?'This lead has available crawl signals. Use the verified evidence below before outreach.':'No verified evidence means no strong SEO claim. Keep this lead in Needs Review unless manually checked.');
+    ['rfExportLeadButton','rfCopyAngleButton'].forEach(function(id){var btn=document.getElementById(id);if(btn){btn.disabled=rejected;btn.setAttribute('aria-disabled',rejected?'true':'false');btn.title=rejected?'Direct phone or email is required before outreach/export.':'';}});
     cls('rfEvidenceConfidenceBadge','rf-badge '+(verified?'rf-badge-success':signals?'rf-badge-warning':'rf-badge-muted'));setText('rfEvidenceConfidenceBadge',verified?'Evidence confidence: Verified':signals?'Partial evidence available':'No verified evidence');
     setHtml('rfEvidenceState','<div class="rf-evidence-state '+(verified?'verified':signals?'partial':'no-evidence')+'"><h3>'+esc(verified?'Verified crawl evidence found':signals?'Partial evidence available':'No verified SEO evidence yet')+'</h3><p>'+esc(verified?'From the available crawl, this lead has evidence-backed SEO issue(s) worth reviewing before outreach.':signals?'Some crawl signals were found, but review manually before making strong SEO claims.':'We could not verify specific SEO issues from the available crawl. Keep this lead in Needs Review unless the website is manually checked.')+'</p></div>');
     setHtml('rfEvidenceList',iss.map(function(x){return '<li class="rf-evidence-item"><span class="rf-evidence-icon">✓</span><span class="rf-evidence-text"><strong>'+esc(x)+'</strong></span></li>';}).join(''));
     setText('rfEvidenceSource',web?'Evidence source: '+web:'');
     setHtml('rfScoreList',[['SEO Need','Potential SEO gap.',seo],['Commercial Fit','Likely agency value.',fit],['Contact Path','Reachability quality.',contact],['Overall Lead Score','Prioritization score.',overall]].map(function(s){var st=scoreLabel(s[2]);return '<div class="rf-score-row"><div><span class="rf-score-label">'+esc(s[0])+'</span><span class="rf-score-desc">'+esc(s[1])+'</span></div><div class="rf-score-value"><strong class="rf-score-number">'+s[2]+'</strong><span class="rf-score-status"><i class="rf-score-dot '+st[1]+'"></i>'+st[0]+'</span></div></div>';}).join(''));
     setHtml('rfContactPathList',contactSignal('Phone visible',phone,phoneValue,'phone',web)+contactSignal('Email visible',email,emailValue,'email',web)+contactSignal('Contact page found',cp,contactPageValue,'page',web)+contactSignal('Contact CTA found',cta,cta?'Detected':'','cta',web));
-    setText('detailContactChannel',phone?'Call first':email?'Email':cp?'Contact form':'Manual enrichment needed');
+    setText('detailContactChannel',phone?'Call first':email?'Email':'No direct contact found');
     setHtml('rfBusinessDetails',dl([['Business name',name],['Website',web],['Domain',dom],['Phone',phoneValue || (phone?'Visible, number not captured':'')],['Email',emailValue || (email?'Visible, email not captured':'')],['Contact page',contactPageValue],['City',city],['Niche',niche],['Business type',get(row,['business_type'])]]));
-    setHtml('rfSearchContext',dl([['Search batch/list ID',get(row,['search_id','list_id','listId'])],['Target city',get(row,['target_city','city'])],['Target service',get(row,['target_service','niche','business_type'])],['Qualification status',qualified?'Qualified':'Needs Review'],['Lead credit counted',qualified?'Yes':'No']]));
-    setText('detailAngle',verified?'From the available crawl, the site appears to have local SEO signals worth reviewing. A local SEO visibility audit may be a relevant offer.':'No evidence-backed outreach angle is available yet. Review the site manually before contacting this business.');
-    setText('detailPersonalization',verified?'I noticed your website may have room to strengthen local search signals from the available page data.':'Use cautious wording only after manual review.');
-    setText('detailOffer','Local SEO visibility audit focused on service pages, location targeting, and Google Business Profile alignment.');
+    setHtml('rfSearchContext',dl([['Search batch/list ID',get(row,['search_id','list_id','listId'])],['Target city',get(row,['target_city','city'])],['Target service',get(row,['target_service','niche','business_type'])],['Qualification status',statusLabel],['Lead credit counted',qualified?'Yes':'No']]));
+    setText('detailAngle',qualified?'From the available crawl, the site appears to have local SEO signals worth reviewing. A local SEO visibility audit may be a relevant offer.':'No outreach angle should be used until a direct phone or email is found and the lead is reviewed.');
+    setText('detailPersonalization',qualified?'I noticed your website may have room to strengthen local search signals from the available page data.':'Do not start outreach until direct contact data is available.');
+    setText('detailOffer',qualified?'Local SEO visibility audit focused on service pages, location targeting, and Google Business Profile alignment.':'Reject or enrich manually before outreach.');
   }
   function run(){load().then(function(data){var row=findRow(data);if(row)render(row);});}
   function repairIfOverwritten(){var el=document.getElementById('detailCompany');if(!el)return;if(lastRow&&(bad(el.textContent)||/no lead selected/i.test(el.textContent)||!clean(el.textContent))){render(lastRow);}else if(lastGoodName&&/no lead selected/i.test(el.textContent)){el.textContent=lastGoodName;}}

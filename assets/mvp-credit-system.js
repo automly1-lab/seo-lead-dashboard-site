@@ -17,6 +17,7 @@
   function num(v){var n=Number(String(v||0).replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}
   function escapeHtml(v){return text(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
   function profile(){return window.rankforgeUserProfile||parse(localStorage.getItem(PROFILE_KEY),null)||{};}
+  function hasResolvedProfile(prof){return !!(prof&&prof.resolved_at&&(prof.profile_source==='users_sheet'||prof.profile_source==='force_users_sheet'||prof.profile_source==='default'));}
   function limitValue(v,fallback){var raw=text(v);if(!raw)return fallback;if(/infinity|unlimited|∞/i.test(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):fallback;}
   function getRows(){var s=state();return {lists:[].concat(s.localLists||[],s.remoteCache&&s.remoteCache.lists||[]).filter(Boolean),leads:[].concat(s.localLeads||[],s.remoteCache&&s.remoteCache.leads||[]).filter(Boolean)};}
   function owner(row){return text(row&& (row.userId||row.user_id||row.owner_user_id));}
@@ -31,16 +32,23 @@
   function planInfo(){
     var prof=profile();
     if(isAdmin(null,prof))return planDefaults('admin');
-    var raw=lower((prof&&prof.plan)||localStorage.getItem(PLAN_KEY)||localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free').replace(/\s+/g,'_').replace(/-/g,'_');
-    var billing=lower((prof&&prof.billing_status)||localStorage.getItem('rankforge-billing-status-v1')||'');
-    var managed=String((prof&&prof.admin_managed)||localStorage.getItem('rankforge-admin-plan-managed-v1')||'').toLowerCase()==='true';
-    if(!managed&&(billing==='pending'||billing==='pending_payment'||billing==='free'||billing===''))raw='free';
+    var hasProfile=hasResolvedProfile(prof);
+    var raw=lower(hasProfile?prof.plan:(localStorage.getItem(PLAN_KEY)||localStorage.getItem('rankforge-current-plan-v1')||'free')).replace(/\s+/g,'_').replace(/-/g,'_');
+    var billing=lower(hasProfile?prof.billing_status:(localStorage.getItem('rankforge-billing-status-v1')||''));
+    var active=(billing==='active'||billing==='admin_unlimited'||billing==='trialing'||billing==='paid');
+    if(!active)raw='free';
     var key=/growth/.test(raw)?'growth':/starter/.test(raw)?'starter':/admin|unlimited/.test(raw)?'admin':'free';
     var p=planDefaults(key);
-    p.searchLimit=limitValue(prof.monthly_search_limit||localStorage.getItem('rankforge-monthly-search-limit-v1'),p.searchLimit);
-    p.creditLimit=limitValue(prof.monthly_qualified_lead_credit_limit||localStorage.getItem('rankforge-monthly-qualified-credit-limit-v1'),p.creditLimit);
-    p.maxBatch=limitValue(prof.max_leads_per_batch||localStorage.getItem('rankforge-max-leads-per-batch-v1'),p.maxBatch);
-    if(prof.csv_export!==undefined)p.csv=(prof.csv_export===true||String(prof.csv_export).toLowerCase()==='true');
+    if(hasProfile){
+      p.searchLimit=limitValue(prof.monthly_search_limit,p.searchLimit);
+      p.creditLimit=limitValue(prof.monthly_qualified_lead_credit_limit,p.creditLimit);
+      p.maxBatch=limitValue(prof.max_leads_per_batch,p.maxBatch);
+      if(prof.csv_export!==undefined)p.csv=(prof.csv_export===true||String(prof.csv_export).toLowerCase()==='true');
+    }else{
+      p.searchLimit=limitValue(localStorage.getItem('rankforge-monthly-search-limit-v1'),p.searchLimit);
+      p.creditLimit=limitValue(localStorage.getItem('rankforge-monthly-qualified-credit-limit-v1'),p.creditLimit);
+      p.maxBatch=limitValue(localStorage.getItem('rankforge-max-leads-per-batch-v1'),p.maxBatch);
+    }
     return p;
   }
   function status(row){var s=lower(row&&(row.qualification_status||row.status||row.decision));if(s==='qualified')return 'qualified';if(s==='qualified_locked'||s==='locked_qualified'||s==='qualified locked')return 'qualified_locked';if(s==='rejected'||s==='filtered_out'||s==='filtered out')return 'rejected';return 'review_needed';}

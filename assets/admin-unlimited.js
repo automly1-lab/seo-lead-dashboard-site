@@ -5,15 +5,6 @@
   function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(_){return fallback;}}
   function session(){
     try{if(window.rankforgeAuth&&typeof window.rankforgeAuth.getSession==='function'){var s=window.rankforgeAuth.getSession();if(s)return s;}}catch(_){}
-    try{
-      for(var i=0;i<localStorage.length;i++){
-        var k=localStorage.key(i)||'';
-        if(!/^sb-.+-auth-token$/.test(k))continue;
-        var p=parse(localStorage.getItem(k),{});
-        var u=p.user||(p.currentSession&&p.currentSession.user)||(p.session&&p.session.user);
-        if(u&&u.email)return{userId:u.id||'',email:u.email||''};
-      }
-    }catch(_){}
     return parse(localStorage.getItem('rankforge-auth-session-v1'),{})||{};
   }
   function activeEmail(user){

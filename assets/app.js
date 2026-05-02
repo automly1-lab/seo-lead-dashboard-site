@@ -173,43 +173,6 @@ function numberValue(value) {
   return Number.isFinite(parsed) ? Math.round(parsed) : 0;
 }
 
-async function getResolvedProfile(options = {}) {
-  if (window.rankforgeUserPlanResolver && typeof window.rankforgeUserPlanResolver.resolveProfile === "function") {
-    return window.rankforgeUserPlanResolver.resolveProfile(options);
-  }
-  return {
-    plan: "starter",
-    plan_label: "Starter",
-    billing_status: "pending_payment",
-    monthly_search_limit: 3,
-    monthly_qualified_lead_credit_limit: 50,
-    max_leads_per_batch: 25,
-    remaining_searches: 3,
-    remaining_qualified_lead_credits: 50,
-    searches_this_month: 0,
-    qualified_leads_this_month: 0,
-    source_row_source: "local_fallback",
-  };
-}
-
-function getResolvedProfileSync() {
-  if (window.rankforgeUserPlanResolver && typeof window.rankforgeUserPlanResolver.getResolvedProfileSync === "function") {
-    return window.rankforgeUserPlanResolver.getResolvedProfileSync();
-  }
-  return {
-    plan: "starter",
-    plan_label: "Starter",
-    monthly_search_limit: 3,
-    monthly_qualified_lead_credit_limit: 50,
-    max_leads_per_batch: 25,
-    remaining_searches: 3,
-    remaining_qualified_lead_credits: 50,
-    searches_this_month: 0,
-    qualified_leads_this_month: 0,
-    source_row_source: "local_fallback",
-  };
-}
-
 function statusClass(value) {
   const normalized = String(value || "").toLowerCase();
   if (normalized === "qualified" || normalized === "completed" || normalized === "active") {
@@ -253,43 +216,6 @@ function uniqueBy(items, keyFn) {
     result.push(item);
   }
   return result;
-}
-
-function searchesThisMonthForUser(userId) {
-  if (!userId) return 0;
-  const start = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
-  const seen = new Set();
-  [...runtimeData.lists, ...(appState.localLists || [])].forEach((item) => {
-    if (recordUserId(item) !== userId) return;
-    const stamp = new Date(item.lastRun || item.created_at || item.createdAt || item.updated_at || "").getTime();
-    if (!Number.isFinite(stamp) || stamp < start) return;
-    const key = normalizeKey(item.id || item.search_id);
-    if (key) seen.add(key);
-  });
-  return seen.size;
-}
-
-function ensureDashboardPlanBadge() {
-  const topbarActions = document.querySelector(".topbar-actions");
-  if (!topbarActions) return null;
-  let badge = document.getElementById("workspacePlanBadge");
-  if (badge) return badge;
-  badge = document.createElement("div");
-  badge.id = "workspacePlanBadge";
-  badge.className = "data-status";
-  badge.textContent = "Plan loading";
-  topbarActions.insertBefore(badge, topbarActions.firstChild || null);
-  return badge;
-}
-
-function renderResolvedPlanBadge(profile) {
-  const badge = ensureDashboardPlanBadge();
-  if (!badge || !profile) return;
-  const searchLimit = numberValue(profile.monthly_search_limit || 0);
-  const leadLimit = numberValue(profile.monthly_qualified_lead_credit_limit || 0);
-  badge.textContent = searchLimit >= 9999
-    ? `${profile.plan_label} · Unlimited`
-    : `${profile.plan_label} · ${profile.searches_this_month}/${searchLimit} searches · ${leadLimit} lead credits`;
 }
 
 function upsertLocalList(nextList) {
@@ -457,10 +383,6 @@ function addDemoList() {
 }
 
 function buildSearchPayload() {
-  const profile = getResolvedProfileSync();
-  const requestedRaw = Number(document.getElementById("maxResultsInput")?.value || 20);
-  const maxPerBatch = Math.max(5, numberValue(profile.max_leads_per_batch || 25));
-  const requested = Math.max(5, Math.min(maxPerBatch, requestedRaw || maxPerBatch));
   return {
     search_id: `srch_${Date.now()}`,
     user_id: getCurrentUserId(),
@@ -476,7 +398,7 @@ function buildSearchPayload() {
     secondary_keywords: "",
     discovery_query_limit: "1",
     discovery_page_limit: "1",
-    max_results_requested: String(requested),
+    max_results_requested: "20",
     min_audit_score: String(document.getElementById("seoThresholdInput")?.value || 60),
     min_lead_score: String(document.getElementById("leadThresholdInput")?.value || 70),
     started_at: "",
@@ -504,22 +426,6 @@ async function sendSearchToWebhook(payload) {
 
 async function createSearch(event) {
   if (event) event.preventDefault();
-  const profile = await getResolvedProfile({ force: true });
-  const currentUserId = getCurrentUserId();
-  const searchesThisMonth = searchesThisMonthForUser(currentUserId);
-  const searchLimit = numberValue(profile.monthly_search_limit || 0);
-  const requestedRaw = Number(document.getElementById("maxResultsInput")?.value || 20);
-  const maxPerBatch = Math.max(5, numberValue(profile.max_leads_per_batch || 25));
-
-  if (searchLimit > 0 && searchLimit < 9999 && searchesThisMonth >= searchLimit) {
-    updateStatus("createSearchStatus", `Search limit reached for ${profile.plan_label}. Monthly limit: ${searchLimit}.`, "error");
-    return false;
-  }
-
-  if (document.getElementById("maxResultsInput")) {
-    document.getElementById("maxResultsInput").value = String(Math.max(5, Math.min(maxPerBatch, requestedRaw || maxPerBatch)));
-  }
-
   const payload = buildSearchPayload();
   if (!payload.search_name || !payload.niche || !payload.business_type || !payload.city || !payload.country) {
     updateStatus("createSearchStatus", "Please fill List Name, Niche, Business Type, City, and Country.", "error");
@@ -538,7 +444,7 @@ async function createSearch(event) {
   });
   mergeRuntime(runtimeData);
   renderAll();
-  updateStatus("createSearchStatus", `List created locally. Sending to n8n with ${payload.max_results_requested} max leads...`, "success");
+  updateStatus("createSearchStatus", "List created locally. Sending to n8n...", "success");
   try {
     await sendSearchToWebhook(payload);
     updateStatus("createSearchStatus", "List created and sent to n8n.", "success");
@@ -993,7 +899,6 @@ function renderDashboardPage() {
   setText("metricReviewNeeded", String(reviewNeeded));
   setText("metricAverageScore", String(averageScore));
   setText("visibleLeadCount", `${leads.length} leads`);
-  renderResolvedPlanBadge(getResolvedProfileSync());
 
   if (!selected) return;
   setText("workspaceSelectedListHealth", selected.qualified > 0 ? "List has qualified leads" : "List needs review");
@@ -1302,16 +1207,7 @@ window.rankforgeApp = {
   archiveSelectedList,
   deleteSelectedList,
   exportCsv,
-  getResolvedProfile,
 };
-
-window.buildSearchPayload = buildSearchPayload;
-
-document.addEventListener("rankforge-profile-resolved", () => {
-  try {
-    renderAll();
-  } catch {}
-});
 
 mergeRuntime(runtimeData);
 renderAll();

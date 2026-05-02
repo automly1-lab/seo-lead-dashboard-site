@@ -7,7 +7,7 @@
   function nested(){return is404()||PUBLIC_RE.test(location.pathname||'');}
   function prefix(){return nested()?'../':'';}
   function page(){var p=location.pathname;if(/\/how-it-works\//.test(p))return'how';if(/\/pricing\//.test(p))return'pricing';if(/\/privacy\//.test(p))return'privacy';if(/\/terms\//.test(p))return'terms';if(/\/refund-policy\//.test(p))return'refund';if(/\/login\//.test(p))return'login';if(/\/signup\//.test(p))return'signup';return'home';}
-  function session(){try{if(window.rankforgeAuth&&typeof window.rankforgeAuth.getSession==='function')return window.rankforgeAuth.getSession();for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||'';if(/^sb-.+-auth-token$/.test(k)){var p=JSON.parse(localStorage.getItem(k)||'{}');var u=p.user||p.currentSession&&p.currentSession.user||p.session&&p.session.user;if(u)return{userId:u.id,email:u.email};}}return JSON.parse(localStorage.getItem('rankforge-auth-session-v1')||'null');}catch(e){return null;}}
+  function session(){try{if(window.rankforgeAuth&&typeof window.rankforgeAuth.getSession==='function')return window.rankforgeAuth.getSession();return null;}catch(e){return null;}}
   function userEmail(){var s=session();return String(s&&(s.email||s.userEmail)||'').trim().toLowerCase();}
   function loggedIn(){var s=session();return !!(s&&s.userId);}
   function isAdmin(){return userEmail()===ADMIN_EMAIL;}
@@ -43,7 +43,7 @@
     var f=document.createElement('footer');
     f.className='rf-public-footer';
     f.setAttribute('data-rf-shell','true');
-    f.innerHTML='<div class="rf-container rf-public-footer-inner"><div><strong>RankForge by CrestlineOps</strong><p>Evidence-based SEO lead intelligence for agencies.</p></div><div class="rf-footer-cols"><div><h3>Product</h3><a href="'+prefix()+'">Home</a><a href="'+href('how-it-works/')+'">How it works</a><a href="'+href('pricing/')+'">Pricing</a><a href="'+href('dashboard/')+'">Dashboard</a></div><div><h3>Account</h3><a href="'+href('login/')+'">Log in</a><a href="'+href('signup/')+'">Start free</a></div><div><h3>Legal</h3><a href="'+href('privacy/')+'">Privacy</a><a href="'+href('terms/')+'">Terms</a><a href="'+href('refund-policy/')+'">Refund Policy</a></div><div><h3>Support</h3><a href="'+href('status/')+'">System Status</a></div></div></div>';
+    f.innerHTML='<div class="rf-container rf-public-footer-inner"><div><strong>RankForge by CrestlineOps</strong><p>Evidence-based prospect qualification for SEO agencies.</p></div><div class="rf-footer-cols"><div><h3>Product</h3><a href="'+prefix()+'">Home</a><a href="'+href('how-it-works/')+'">How it works</a><a href="'+href('pricing/')+'">Pricing</a><a href="'+href('dashboard/')+'">Dashboard</a></div><div><h3>Account</h3><a href="'+href('login/')+'">Log in</a><a href="'+href('signup/')+'">Start free</a></div><div><h3>Legal</h3><a href="'+href('privacy/')+'">Privacy</a><a href="'+href('terms/')+'">Terms</a><a href="'+href('refund-policy/')+'">Refund Policy</a></div><div><h3>Support</h3><a href="'+href('status/')+'">System Status</a></div></div></div>';
     document.body.appendChild(f);
   }
   function closeAccount(){var dd=document.querySelector('.rf-account-dropdown'),chip=document.querySelector('.rf-account-chip');if(dd)dd.hidden=true;if(chip)chip.setAttribute('aria-expanded','false');}

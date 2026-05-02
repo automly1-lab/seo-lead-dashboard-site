@@ -1,0 +1,183 @@
+{
+  "name": "RankForge - User Profile Upsert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rankforge-user-profile-upsert",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-user-profile-upsert",
+      "name": "Webhook - User Profile Upsert",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst now = new Date().toISOString();\nconst user_id = String(body.user_id || '').trim();\nconst email = String(body.email || '').trim().toLowerCase();\nif (!user_id && !email) {\n  return [{ json: { ok: false, statusCode: 400, error: 'Missing user_id or email' } }];\n}\nconst verticals = Array.isArray(body.target_verticals) ? body.target_verticals : String(body.target_verticals || '').split('|').map(s => s.trim()).filter(Boolean);\nreturn [{\n  json: {\n    event: body.event || 'first_run_setup_completed',\n    user_id,\n    email,\n    agency_size: String(body.agency_size || '').trim(),\n    agency_type: String(body.agency_type || '').trim(),\n    weekly_outreach_goal: String(body.weekly_outreach_goal || '').trim(),\n    target_verticals: verticals.join(' | '),\n    primary_niche: String(body.primary_niche || '').trim(),\n    onboarding_completed: body.onboarding_completed === true || body.onboarding_completed === 'true',\n    onboarding_skipped: body.onboarding_skipped === true || body.onboarding_skipped === 'true',\n    created_at: body.created_at || now,\n    updated_at: now,\n    source: body.source || 'dashboard_first_run'\n  }\n}];"
+      },
+      "id": "normalize-profile-payload",
+      "name": "Normalize Profile Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+        "sheetName": "user_profiles",
+        "options": {}
+      },
+      "id": "read-user-profiles",
+      "name": "Read user_profiles",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [480, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const profile = $('Normalize Profile Payload').first().json;\nconst rows = $input.all().map((item, index) => ({ ...item.json, __rowIndex: index + 2 }));\nconst existing = rows.find(r => (profile.user_id && String(r.user_id || '').trim() === profile.user_id) || (profile.email && String(r.email || '').trim().toLowerCase() === profile.email));\nreturn [{ json: { ...profile, row_number: existing ? existing.__rowIndex : '', action: existing ? 'updated' : 'inserted' } }];"
+      },
+      "id": "find-existing-profile-row",
+      "name": "Find Existing Profile Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.row_number}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "profile-row-exists",
+      "name": "Profile Row Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [960, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+        "sheetName": "user_profiles",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user_id": "={{$json.user_id}}",
+            "email": "={{$json.email}}",
+            "agency_size": "={{$json.agency_size}}",
+            "agency_type": "={{$json.agency_type}}",
+            "weekly_outreach_goal": "={{$json.weekly_outreach_goal}}",
+            "target_verticals": "={{$json.target_verticals}}",
+            "primary_niche": "={{$json.primary_niche}}",
+            "onboarding_completed": "={{$json.onboarding_completed}}",
+            "onboarding_skipped": "={{$json.onboarding_skipped}}",
+            "created_at": "={{$json.created_at}}",
+            "updated_at": "={{$json.updated_at}}"
+          },
+          "matchingColumns": ["user_id"]
+        },
+        "options": {}
+      },
+      "id": "update-profile-row",
+      "name": "Update Profile Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1200, -120],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco",
+        "sheetName": "user_profiles",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user_id": "={{$json.user_id}}",
+            "email": "={{$json.email}}",
+            "agency_size": "={{$json.agency_size}}",
+            "agency_type": "={{$json.agency_type}}",
+            "weekly_outreach_goal": "={{$json.weekly_outreach_goal}}",
+            "target_verticals": "={{$json.target_verticals}}",
+            "primary_niche": "={{$json.primary_niche}}",
+            "onboarding_completed": "={{$json.onboarding_completed}}",
+            "onboarding_skipped": "={{$json.onboarding_skipped}}",
+            "created_at": "={{$json.created_at}}",
+            "updated_at": "={{$json.updated_at}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "append-profile-row",
+      "name": "Append Profile Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1200, 120],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, action: $('Find Existing Profile Row').first().json.action, user_id: $('Find Existing Profile Row').first().json.user_id, email: $('Find Existing Profile Row').first().json.email } }}",
+        "options": {}
+      },
+      "id": "respond-ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1460, 0]
+    }
+  ],
+  "connections": {
+    "Webhook - User Profile Upsert": {
+      "main": [[{"node": "Normalize Profile Payload", "type": "main", "index": 0}]]
+    },
+    "Normalize Profile Payload": {
+      "main": [[{"node": "Read user_profiles", "type": "main", "index": 0}]]
+    },
+    "Read user_profiles": {
+      "main": [[{"node": "Find Existing Profile Row", "type": "main", "index": 0}]]
+    },
+    "Find Existing Profile Row": {
+      "main": [[{"node": "Profile Row Exists?", "type": "main", "index": 0}]]
+    },
+    "Profile Row Exists?": {
+      "main": [[{"node": "Update Profile Row", "type": "main", "index": 0}], [{"node": "Append Profile Row", "type": "main", "index": 0}]]
+    },
+    "Update Profile Row": {
+      "main": [[{"node": "Respond OK", "type": "main", "index": 0}]]
+    },
+    "Append Profile Row": {
+      "main": [[{"node": "Respond OK", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "rankforge-user-profile-upsert-v1"
+}

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Onboarding — RankForge</title>
+  <meta name="description" content="Set up your first RankForge search batch and start reviewing evidence-backed SEO prospects.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://automly1-lab.github.io/seo-lead-dashboard-site/onboarding/">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <meta name="theme-color" content="#0E1726">
+  <link rel="stylesheet" href="../assets/onboarding.css?v=onboarding-1">
+</head>
+<body class="rf-onboarding-page" data-page="onboarding">
+  <main class="rf-onboarding-main">
+    <section id="onboardingSignedOut" class="rf-auth-required" hidden>
+      <div class="rf-auth-required-card">
+        <p class="rf-eyebrow">Sign in required</p>
+        <h1>Admin access is not needed — just sign in first.</h1>
+        <p>Log in to your RankForge workspace to create your first evidence-based search batch.</p>
+        <div class="rf-actions"><a class="rf-btn primary" href="../login/?returnTo=/onboarding/">Log in</a><a class="rf-btn secondary" href="../signup/">Start free</a></div>
+      </div>
+    </section>
+
+    <section id="onboardingApp" class="rf-onboarding-wrap" hidden>
+      <div class="rf-hero-card">
+        <div>
+          <p class="rf-eyebrow">Welcome to RankForge</p>
+          <h1>Run your first evidence-based search.</h1>
+          <p class="rf-hero-copy">Choose one focused niche and city. RankForge will discover local businesses, verify crawl-based SEO evidence, check contact paths, and classify prospects for review.</p>
+          <p class="rf-hero-note">No verified evidence means no strong SEO claim.</p>
+        </div>
+        <aside class="rf-brand-panel" aria-label="Evidence-first principles">
+          <div class="rf-logo-mark">RF</div>
+          <h2>Evidence-first by design</h2>
+          <p>Scores help prioritize review, but verified evidence and a contact path must support qualification.</p>
+          <ul>
+            <li>No verified evidence = no strong SEO claim</li>
+            <li>High score without evidence stays in Needs Review</li>
+            <li>Rejected prospects skip detailed SEO audit claims</li>
+          </ul>
+        </aside>
+      </div>
+
+      <section class="rf-progress-card" aria-label="Onboarding progress">
+        <div class="rf-step active"><span>1</span><strong>Choose market</strong><p>Pick one niche and city.</p></div>
+        <div class="rf-step"><span>2</span><strong>Run search</strong><p>Create a focused batch.</p></div>
+        <div class="rf-step"><span>3</span><strong>Review prospects</strong><p>Inspect evidence and contact paths.</p></div>
+        <div class="rf-step"><span>4</span><strong id="stepFourTitle">Upgrade to export CSV</strong><p id="stepFourCopy">Free users can preview results first.</p></div>
+      </section>
+
+      <div class="rf-onboarding-grid">
+        <section class="rf-form-card">
+          <div class="rf-card-head">
+            <p class="rf-eyebrow">First search batch</p>
+            <h2>Create your first search batch</h2>
+            <p>Start narrow. One niche and one city gives better quality control.</p>
+          </div>
+          <form id="onboardingSearchForm" novalidate>
+            <div class="rf-field">
+              <label for="onboardingNiche">Service or niche</label>
+              <input id="onboardingNiche" name="niche" type="text" placeholder="Plumbers, dentists, roofers…" autocomplete="organization-title" required>
+              <p class="rf-field-error" id="nicheError" hidden>Enter a service or niche.</p>
+            </div>
+            <div class="rf-field">
+              <label for="onboardingCity">City or market</label>
+              <input id="onboardingCity" name="city" type="text" placeholder="Austin, TX" autocomplete="address-level2" required>
+              <p class="rf-field-error" id="cityError" hidden>Enter a city or market.</p>
+            </div>
+            <div class="rf-field">
+              <label for="onboardingCountry">Country</label>
+              <input id="onboardingCountry" name="country" type="text" value="United States" autocomplete="country-name">
+            </div>
+            <div class="rf-field">
+              <label for="onboardingDepth">Search depth</label>
+              <select id="onboardingDepth" name="search_depth">
+                <option value="10">Up to 10 previews</option>
+              </select>
+            </div>
+            <div class="rf-field">
+              <label for="onboardingStrictness">Qualification strictness</label>
+              <select id="onboardingStrictness" name="qualification_strictness">
+                <option value="strict">Strict — verified evidence required</option>
+              </select>
+              <p class="rf-help">Recommended. Prospects without verified evidence stay in Needs Review.</p>
+            </div>
+            <div id="onboardingStatus" class="rf-status-box" hidden></div>
+            <div class="rf-form-actions">
+              <button class="rf-btn primary" id="startFirstSearchBtn" type="submit">Start first search</button>
+              <a class="rf-btn secondary" href="../dashboard/">Skip for now</a>
+            </div>
+          </form>
+        </section>
+
+        <aside class="rf-side-stack">
+          <section class="rf-plan-card">
+            <p class="rf-eyebrow">Your plan</p>
+            <h2 id="planTitle">Free test search</h2>
+            <p id="planCopy">You have 1 test search batch and up to 10 lead previews. CSV export is available on paid plans.</p>
+            <div class="rf-plan-grid">
+              <div><span>Current plan</span><strong id="planName">Free</strong></div>
+              <div><span>Search depth</span><strong id="planDepth">10 previews</strong></div>
+              <div><span>CSV export</span><strong id="csvStatus">Paid plans</strong></div>
+            </div>
+            <p id="billingPending" class="rf-warning-note" hidden>Payment pending — paid features activate after confirmation.</p>
+          </section>
+
+          <section class="rf-next-card">
+            <p class="rf-eyebrow">What happens next</p>
+            <div class="rf-next-list">
+              <div><strong>Discover businesses</strong><p>RankForge gathers local business candidates for the selected niche and city.</p></div>
+              <div><strong>Verify signals</strong><p>The workflow checks website content, local SEO indicators, and contact paths.</p></div>
+              <div><strong>Apply the qualification gate</strong><p>Prospects become Qualified, Needs Review, or Rejected based on evidence and contact readiness.</p></div>
+              <div><strong>Review your list</strong><p>Open Prospects to inspect evidence, scores, and outreach angles.</p></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rf-mini-footer">RankForge by CrestlineOps · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a> · <a href="../refund-policy/">Refund Policy</a> · <a href="../status/">System Status</a></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
+  <script src="../assets/billing-config.js?v=billing-config-2"></script>
+  <script src="../assets/auth.js?v=onboarding-auth-1"></script>
+  <script src="../assets/onboarding.js?v=onboarding-1"></script>
+</body>
+</html>

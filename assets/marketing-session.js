@@ -18,6 +18,7 @@
   function loadPageReset() { loadScriptOnce(urlFromRoot("assets/page-reset.js?v=page-reset-1"), "rf-page-reset"); }
   function loadSeo() { loadScriptOnce(urlFromRoot("assets/seo.js?v=seo-1"), "rf-seo"); }
   function loadCopyPositioning() { loadScriptOnce(urlFromRoot("assets/copy-positioning.js?v=copy-positioning-1"), "rf-copy-positioning"); loadScriptOnce(urlFromRoot("assets/copy-final-cleanup.js?v=copy-final-2"), "rf-copy-final-cleanup"); }
+  function loadPricingCreditCopy() { if (/\/pricing\//.test(location.pathname || "")) loadScriptOnce(urlFromRoot("assets/pricing-credit-copy.js?v=pricing-credit-copy-1"), "rf-pricing-credit-copy"); }
 
   function getSession() { if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") return window.rankforgeAuth.getSession(); return null; }
   async function refreshSession() { if (window.rankforgeAuth && typeof window.rankforgeAuth.refreshSession === "function") return window.rankforgeAuth.refreshSession(); return getSession(); }
@@ -40,6 +41,6 @@
     });
   }
 
-  async function boot() { loadPageReset(); loadSeo(); loadMarketingShell(); loadCopyPositioning(); const session = await refreshSession(); bindPricingLinks(session); setTimeout(function(){ window.dispatchEvent(new CustomEvent('rankforge:session-ready', { detail: session || null })); }, 0); }
+  async function boot() { loadPageReset(); loadSeo(); loadMarketingShell(); loadCopyPositioning(); loadPricingCreditCopy(); const session = await refreshSession(); bindPricingLinks(session); setTimeout(function(){ window.dispatchEvent(new CustomEvent('rankforge:session-ready', { detail: session || null })); }, 0); }
   boot();
 })();

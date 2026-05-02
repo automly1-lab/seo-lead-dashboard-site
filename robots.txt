@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /seo-lead-dashboard-site/
+Disallow: /seo-lead-dashboard-site/dashboard/
+Disallow: /seo-lead-dashboard-site/searches/
+Disallow: /seo-lead-dashboard-site/leads/
+Disallow: /seo-lead-dashboard-site/lead-detail/
+Disallow: /seo-lead-dashboard-site/settings/
+Disallow: /seo-lead-dashboard-site/quality/
+Disallow: /seo-lead-dashboard-site/checkout-success/
+Disallow: /seo-lead-dashboard-site/checkout-cancelled/
+Disallow: /seo-lead-dashboard-site/checkout-pending/
+
+Sitemap: https://automly1-lab.github.io/seo-lead-dashboard-site/sitemap.xml

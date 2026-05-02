@@ -14,7 +14,7 @@
     const el=$('#rfAdminStatus');
     if(!el)return;
     el.textContent=msg;
-    el.className='rf-pill '+(type==='error'?'rf-badge-error':'rf-badge-ok');
+    el.className='rf-pill '+(type==='error'?'rf-badge-error':type==='warn'?'rf-badge-warning':'rf-badge-ok');
   }
   function rowUserId(row){return clean(row?.querySelector('.rf-user-id')?.textContent||row?.querySelector('.rf-mono')?.textContent||'')}
   function baseUsed(row,type){
@@ -42,6 +42,39 @@
     if(limit==='Unlimited')return 'Unlimited';
     return 'custom';
   }
+  function rootWebhook(path){
+    const stored=clean(localStorage.getItem('rankforge-search-submit-webhook-v1'));
+    if(stored&&/\/webhook\//.test(stored))return stored.replace(/\/webhook\/[^/?#]+/,'/webhook/'+path);
+    return 'https://lastaccount1907.app.n8n.cloud/webhook/'+path;
+  }
+  async function postJson(url,payload){
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    return res;
+  }
+  async function persistRemote(payload){
+    const adminPayload={...payload,plan:payload.plan_override,billing_status:payload.billing_status_override,admin_override:true,source:'rankforge_admin_quality_override'};
+    try{
+      await postJson(rootWebhook('rankforge-admin-user-override'),adminPayload);
+      return {ok:true,endpoint:'rankforge-admin-user-override'};
+    }catch(firstError){
+      await postJson(rootWebhook('rankforge-user-sync'),{
+        user_id:payload.user_id,
+        email:payload.email,
+        plan:payload.plan_override,
+        billing_status:payload.billing_status_override,
+        monthly_search_limit:payload.monthly_search_limit,
+        monthly_qualified_lead_credit_limit:payload.monthly_qualified_lead_credit_limit,
+        search_batches_used:payload.search_batches_used_override,
+        qualified_leads_used:payload.qualified_leads_used_override,
+        admin_override:true,
+        override_note:payload.note,
+        source:'rankforge_admin_quality_override',
+        synced_at:new Date().toISOString()
+      });
+      return {ok:true,endpoint:'rankforge-user-sync'};
+    }
+  }
   function renderUsageCell(row,type){
     const idx=type==='search'?3:4;
     if(!row.cells[idx])return;
@@ -62,7 +95,7 @@
     const noteVal=clean(row.querySelector('[data-note]')?.value||'');
     row.cells[6].innerHTML=`<div class="rf-adjust-stack"><label><span>Search +/-</span><input data-search-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(searchVal)}"></label><label><span>Credit +/-</span><input data-lead-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(leadVal)}"></label><div class="rf-billing-actions rf-billing-actions-inline"><button class="button small primary" type="button" data-save-override="${esc(userId)}">Save Override</button><button class="button small ghost" type="button" data-copy-override="${esc(userId)}">Copy JSON</button></div></div>`;
     row.cells[7].innerHTML=`<textarea data-note="${esc(userId)}" rows="3" placeholder="Reason / note">${esc(noteVal)}</textarea>`;
-    row.cells[8].innerHTML=`<div class="rf-muted" style="font-size:12px;line-height:18px">Use buttons in Manual Adjustment.</div>`;
+    row.cells[8].innerHTML=`<div class="rf-muted" style="font-size:12px;line-height:18px">Save writes through admin webhook.</div>`;
     row.dataset.rfControlsReady='1';
   }
   function hydrateRows(){
@@ -118,21 +151,33 @@
     if(!activities.length)return;
     box.innerHTML=activities.slice(0,20).map(a=>`<article><strong>${esc(a.email||a.user_id)}</strong><p class="rf-muted">${esc(a.note||'Admin override')}</p><span class="rf-mono">${esc(a.summary||'')}</span><div class="rf-muted">${esc(new Date(a.timestamp).toLocaleString())}</div></article>`).join('');
   }
-  function saveLocal(row){
-    updateRow(row);
-    const payload=overrideJSON(row);
-    if(!payload.user_id){status('User ID missing; cannot save override','error');return;}
+  function saveLocalPayload(payload){
     const overrides=parse(localStorage.getItem(OVERRIDE_KEY),{})||{};
     const activities=parse(localStorage.getItem(ACTIVITY_KEY),[])||[];
     overrides[payload.user_id]=payload;
     activities.unshift({timestamp:new Date().toISOString(),user_id:payload.user_id,email:payload.email,summary:`${payload.plan_override} · ${payload.billing_status_override} · searches ${payload.search_batches_used_override}/${payload.monthly_search_limit} · credits ${payload.qualified_leads_used_override}/${payload.monthly_qualified_lead_credit_limit}`,note:payload.note});
     localStorage.setItem(OVERRIDE_KEY,JSON.stringify(overrides));
     localStorage.setItem(ACTIVITY_KEY,JSON.stringify(activities.slice(0,100)));
-    copy(JSON.stringify(payload,null,2));
-    const btn=row.querySelector('[data-save-override]');
-    if(btn){const original=btn.textContent;btn.textContent='Saved ✓';btn.disabled=true;setTimeout(()=>{btn.textContent=original;btn.disabled=false},1200)}
-    status('Override saved locally and copied as JSON','ok');
     renderActivity();
+  }
+  async function saveOverride(row){
+    updateRow(row);
+    const payload=overrideJSON(row);
+    const btn=row.querySelector('[data-save-override]');
+    if(!payload.user_id){status('User ID missing; cannot save override','error');return;}
+    if(btn){btn.textContent='Saving…';btn.disabled=true;}
+    saveLocalPayload(payload);
+    try{
+      const remote=await persistRemote(payload);
+      await copy(JSON.stringify(payload,null,2));
+      if(btn){btn.textContent='Saved to Sheets ✓';setTimeout(()=>{btn.textContent='Save Override';btn.disabled=false},1600)}
+      status('Override saved through '+remote.endpoint,'ok');
+    }catch(error){
+      await copy(JSON.stringify(payload,null,2));
+      if(btn){btn.textContent='Local only';setTimeout(()=>{btn.textContent='Save Override';btn.disabled=false},1800)}
+      status('Webhook save failed. JSON copied; apply through n8n/Sheets.', 'warn');
+      console.warn('RankForge admin override webhook failed',error);
+    }
   }
   document.addEventListener('change',e=>{
     const input=e.target.closest('#billingTable select,#billingTable input,#billingTable textarea');
@@ -146,7 +191,7 @@
   });
   document.addEventListener('click',e=>{
     const saveBtn=e.target.closest('#billingTable [data-save-override]');
-    if(saveBtn){e.preventDefault();e.stopPropagation();saveLocal(saveBtn.closest('tr'));return;}
+    if(saveBtn){e.preventDefault();e.stopPropagation();saveOverride(saveBtn.closest('tr'));return;}
     const copyBtn=e.target.closest('#billingTable [data-copy-override]');
     if(copyBtn){e.preventDefault();e.stopPropagation();const row=copyBtn.closest('tr');updateRow(row);copy(JSON.stringify(overrideJSON(row),null,2));status('Override JSON copied','ok');return;}
   },true);

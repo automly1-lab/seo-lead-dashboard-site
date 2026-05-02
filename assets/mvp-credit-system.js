@@ -28,14 +28,8 @@
     if(key==='starter')return {key:'starter',name:'Starter',searchLimit:50,creditLimit:50,previewLimit:Infinity,maxBatch:25,csv:true,cta:'Upgrade to Growth',ctaHref:'../pricing/'};
     return {key:'free',name:'Free',searchLimit:2,creditLimit:10,previewLimit:10,maxBatch:10,csv:false,cta:'Upgrade to Starter',ctaHref:'../pricing/'};
   }
-  function resolvedProfile(){
-    if(window.rankforgeUserPlanResolver&&typeof window.rankforgeUserPlanResolver.getResolvedProfileSync==='function'){
-      return window.rankforgeUserPlanResolver.getResolvedProfileSync();
-    }
-    return profile();
-  }
   function planInfo(){
-    var prof=resolvedProfile()||profile();
+    var prof=profile();
     if(isAdmin(null,prof))return planDefaults('admin');
     var raw=lower((prof&&prof.plan)||localStorage.getItem(PLAN_KEY)||localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free').replace(/\s+/g,'_').replace(/-/g,'_');
     var billing=lower((prof&&prof.billing_status)||localStorage.getItem('rankforge-billing-status-v1')||'');

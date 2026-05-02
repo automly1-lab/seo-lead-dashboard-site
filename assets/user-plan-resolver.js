@@ -17,11 +17,9 @@
   var USERS_SHEET = "users";
   var ADMIN_EMAIL = "automly1@gmail.com";
   var CACHE_TTL_MS = 2 * 60 * 1000;
-  var MAX_AUTH_RETRIES = 30;
   var lastResolvedProfile = null;
   var lastResolvedAt = 0;
   var inflightPromise = null;
-  var authRetryCount = 0;
 
   var PLAN_DEFAULTS = {
     free: { plan: "free", plan_label: "Free", monthly_search_limit: 2, monthly_qualified_lead_credit_limit: 10, max_leads_per_batch: 10, access_label: "Free workspace" },
@@ -389,14 +387,6 @@
     return finalizeProfile(cached, false);
   }
 
-  function scheduleAuthRetry() {
-    if (authRetryCount >= MAX_AUTH_RETRIES) return;
-    authRetryCount += 1;
-    setTimeout(function () {
-      resolveProfile({ force: true, allowRetry: true });
-    }, 500);
-  }
-
   function resolveProfile(options) {
     options = options || {};
     var force = Boolean(options.force);
@@ -405,11 +395,7 @@
 
     var userId = getCurrentUserId();
     var email = getCurrentEmail();
-    if (!userId && !email) {
-      if (options.allowRetry !== false) scheduleAuthRetry();
-      return Promise.resolve(null);
-    }
-    authRetryCount = 0;
+    if (!userId && !email) return Promise.resolve(null);
     if (isAdminEmail(email)) return Promise.resolve(finalizeProfile(adminProfile(userId, email), true));
 
     var cached = !force ? (safeParse(localStorage.getItem(CACHE_KEY), null) || safeParse(localStorage.getItem(LEGACY_CACHE_KEY), null)) : null;
@@ -479,11 +465,9 @@
   };
 
   function boot() {
-    authRetryCount = 0;
-    resolveProfile({ force: false, allowRetry: true });
-    setTimeout(function () { resolveProfile({ force: true, allowRetry: true }); }, 1500);
-    setTimeout(function () { resolveProfile({ force: true, allowRetry: true }); }, 4000);
-    setTimeout(function () { resolveProfile({ force: true, allowRetry: true }); }, 8000);
+    resolveProfile({ force: false });
+    setTimeout(function () { resolveProfile({ force: true }); }, 1500);
+    setTimeout(function () { resolveProfile({ force: true }); }, 4000);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

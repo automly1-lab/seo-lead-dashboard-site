@@ -5,8 +5,10 @@
   function loadCss(href,id){if(document.getElementById(id))return;var l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;document.head.appendChild(l)}
   function loadJs(src,id){if(document.getElementById(id))return;var s=document.createElement('script');s.id=id;s.src=src;s.defer=true;document.body.appendChild(s)}
   loadJs(base('assets/page-reset.js?v=page-reset-1'),'rf-page-reset-js');
-  loadCss(base('assets/search-feedback-modal.css?v=search-feedback-1'),'rf-search-feedback-css');
-  loadJs(base('assets/search-feedback-modal.js?v=search-feedback-1'),'rf-search-feedback-js');
+  loadCss(base('assets/search-feedback-modal.css?v=search-feedback-2'),'rf-search-feedback-css');
+  loadCss(base('assets/search-processing-ux.css?v=search-processing-1'),'rf-search-processing-css');
+  loadJs(base('assets/search-processing-state.js?v=search-processing-state-1'),'rf-search-processing-state-js');
+  setTimeout(function(){loadJs(base('assets/search-feedback-modal.js?v=search-feedback-2'),'rf-search-feedback-js')},40);
 
   var PENDING='rankforge_first_run_pending',SESSION='rankforge-auth-session-v1';
   var steps=['agency_size','agency_type','weekly_outreach_goal','target_verticals','summary'];

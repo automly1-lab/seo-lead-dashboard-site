@@ -14,7 +14,7 @@
 
   function loadScriptOnce(src, marker) { if (document.querySelector('script[data-' + marker + '="true"]')) return; const script = document.createElement("script"); script.src = src; script.defer = true; script.setAttribute('data-' + marker, 'true'); document.body.appendChild(script); }
   function loadStylesheetOnce(href, marker) { if (document.querySelector('link[data-' + marker + '="true"]')) return; const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; link.setAttribute('data-' + marker, 'true'); document.head.appendChild(link); }
-  function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-5"), "rf-marketing-shell-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-5"), "rf-marketing-shell"); }
+  function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-5"), "rf-marketing-shell-css"); loadStylesheetOnce(urlFromRoot("assets/hero-title-normalize.css?v=hero-title-1"), "rf-hero-title-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-5"), "rf-marketing-shell"); }
   function loadSeo() { loadScriptOnce(urlFromRoot("assets/seo.js?v=seo-1"), "rf-seo"); }
   function loadCopyPositioning() { loadScriptOnce(urlFromRoot("assets/copy-positioning.js?v=copy-positioning-1"), "rf-copy-positioning"); loadScriptOnce(urlFromRoot("assets/copy-final-cleanup.js?v=copy-final-2"), "rf-copy-final-cleanup"); }
 

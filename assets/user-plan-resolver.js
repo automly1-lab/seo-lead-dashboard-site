@@ -6,6 +6,10 @@
   var DEBUG_KEY='rankforge-profile-debug-v1';
   var ADMIN_EMAIL='automly1@gmail.com';
   var MAX_SESSION_WAIT_MS=12000;
+  var inFlight=null;
+  var lastResolvedAt=0;
+  var lastSignature='';
+  var REFRESH_TTL_MS=5*60*1000;
 
   function clean(v){return String(v==null?'':v).trim();}
   function low(v){return clean(v).toLowerCase();}
@@ -16,6 +20,7 @@
   function num(v,fallback){var raw=clean(v);if(/^(infinity|unlimited|∞)$/i.test(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):(fallback||0);}
   function asBool(v){var t=low(v);return v===true||['true','yes','1','enabled','active'].indexOf(t)>=0;}
   function nowIso(){return new Date().toISOString();}
+  function signature(p){return [p.email,p.user_id,p.plan,p.billing_status,p.monthly_search_limit,p.monthly_qualified_lead_credit_limit,p.max_leads_per_batch,p.csv_export,p.source_row_source,p.source_row_priority,p.source_row_index].join('|');}
 
   function readSession(){
     try{
@@ -81,38 +86,13 @@
     if(isEmail(r.userId))vals.push(r.userId);
     return vals.map(low).filter(Boolean);
   }
-  function rowUserId(r){
-    var raw=first(r.user_id,r.userId,r.owner_user_id,r.id);
-    return isRealUserId(raw)?raw:'';
-  }
-  function rowTime(r){
-    var t=Date.parse(first(r.updated_at,r.synced_at,r.created_at));
-    return Number.isFinite(t)?t:0;
-  }
-  function isAdminOverride(r){
-    var src=rowSource(r);
-    return src==='admin_override'||src==='true'||src==='rankforge_admin_quality_override'||src.indexOf('admin')>=0;
-  }
-  function hasPaidSource(r){
-    var src=rowSource(r);
-    return src.indexOf('stripe')>=0||src.indexOf('checkout')>=0||src.indexOf('billing')>=0||src.indexOf('subscription')>=0;
-  }
-  function isPaidBillingRow(r){
-    var plan=rowPlan(r),billing=rowBilling(r);
-    return plan!=='free'&&(hasPaidSource(r)||billing==='active'||billing==='admin_unlimited');
-  }
-  function rowPriority(r){
-    if(isAdminOverride(r))return 40;
-    if(isPaidBillingRow(r))return 30;
-    if(rowPlan(r)!=='free')return 15;
-    return 0;
-  }
-  function rowTieRank(r){
-    if(isAdminOverride(r))return 3;
-    if(hasPaidSource(r))return 2;
-    if(rowBilling(r)==='active'&&rowPlan(r)!=='free')return 1;
-    return 0;
-  }
+  function rowUserId(r){var raw=first(r.user_id,r.userId,r.owner_user_id,r.id);return isRealUserId(raw)?raw:'';}
+  function rowTime(r){var t=Date.parse(first(r.updated_at,r.synced_at,r.created_at));return Number.isFinite(t)?t:0;}
+  function isAdminOverride(r){var src=rowSource(r);return src==='admin_override'||src==='true'||src==='rankforge_admin_quality_override'||src.indexOf('admin')>=0;}
+  function hasPaidSource(r){var src=rowSource(r);return src.indexOf('stripe')>=0||src.indexOf('checkout')>=0||src.indexOf('billing')>=0||src.indexOf('subscription')>=0;}
+  function isPaidBillingRow(r){var plan=rowPlan(r),billing=rowBilling(r);return plan!=='free'&&(hasPaidSource(r)||billing==='active'||billing==='admin_unlimited');}
+  function rowPriority(r){if(isAdminOverride(r))return 40;if(isPaidBillingRow(r))return 30;if(rowPlan(r)!=='free')return 15;return 0;}
+  function rowTieRank(r){if(isAdminOverride(r))return 3;if(hasPaidSource(r))return 2;if(rowBilling(r)==='active'&&rowPlan(r)!=='free')return 1;return 0;}
 
   function parseRows(payload){
     var cols=(payload.table&&payload.table.cols||[]).map(function(c){return c.label||c.id;});
@@ -125,86 +105,33 @@
   function fetchUsersSheet(){
     return new Promise(function(resolve){
       var cb='rfEffectiveUsers_'+Date.now()+'_'+Math.floor(Math.random()*999999);
-      var script=document.createElement('script');
-      var done=false;
+      var script=document.createElement('script');var done=false;
       var timer=setTimeout(function(){finish([], 'timeout');},12000);
-      function finish(rows,error){
-        if(done)return;
-        done=true;clearTimeout(timer);
-        try{script.remove();}catch(e){}
-        try{delete window[cb];}catch(e){}
-        resolve({rows:rows||[],error:error||''});
-      }
+      function finish(rows,error){if(done)return;done=true;clearTimeout(timer);try{script.remove();}catch(e){}try{delete window[cb];}catch(e){}resolve({rows:rows||[],error:error||''});}
       window[cb]=function(payload){try{finish(parseRows(payload));}catch(e){finish([],e&&e.message||'parse_error');}};
       script.src='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?sheet=users&tqx=responseHandler:'+cb+'&headers=1&cacheBust='+Date.now();
       script.onerror=function(){finish([], 'script_error');};
       (document.body||document.documentElement).appendChild(script);
     });
   }
-
   function matchRows(rows,s){
-    var email=low(s.email||s.userEmail);
-    var uid=clean(s.userId||s.id);
-    return rows.filter(function(r){
-      var emails=rowEmails(r);
-      var realId=rowUserId(r);
-      return (email&&emails.indexOf(email)>=0)||(uid&&realId&&realId===uid);
-    });
+    var email=low(s.email||s.userEmail);var uid=clean(s.userId||s.id);
+    return rows.filter(function(r){var emails=rowEmails(r);var realId=rowUserId(r);return (email&&emails.indexOf(email)>=0)||(uid&&realId&&realId===uid);});
   }
   function chooseBest(rows){
-    return rows.slice().sort(function(a,b){
-      var ap=rowPriority(a),bp=rowPriority(b);if(ap!==bp)return bp-ap;
-      var ar=rowTieRank(a),br=rowTieRank(b);if(ar!==br)return br-ar;
-      var at=rowTime(a),bt=rowTime(b);if(at!==bt)return bt-at;
-      return Number(b._row_index||0)-Number(a._row_index||0);
-    })[0]||null;
+    return rows.slice().sort(function(a,b){var ap=rowPriority(a),bp=rowPriority(b);if(ap!==bp)return bp-ap;var ar=rowTieRank(a),br=rowTieRank(b);if(ar!==br)return br-ar;var at=rowTime(a),bt=rowTime(b);if(at!==bt)return bt-at;return Number(b._row_index||0)-Number(a._row_index||0);})[0]||null;
   }
-
   function buildProfile(row,s,meta){
-    var loginEmail=low(s.email||s.userEmail||rowEmails(row)[0]);
-    var plan=rowPlan(row);
-    var billing=rowBilling(row);
-    if(loginEmail===ADMIN_EMAIL){plan='admin_unlimited';billing='admin_unlimited';}
-    var d=defaults(plan);
-    var searchRaw=first(row.effective_search_limit,row.monthly_search_limit,row.search_batches_limit,row.base_search_limit);
-    var creditRaw=first(row.effective_qualified_lead_limit,row.monthly_qualified_lead_credit_limit,row.qualified_lead_credits_limit,row.base_qualified_lead_limit);
-    var batchRaw=first(row.max_leads_per_batch,row.max_prospects_per_batch,row.max_batch);
-    var csvRaw=first(row.csv_export,row.csv_enabled,row.can_export_csv);
-    var profile={
-      user_id:first(s.userId,s.id,rowUserId(row),row.user_id,row.userId),
-      email:first(s.email,s.userEmail,rowEmails(row)[0],row.email,row.user_email),
-      plan:plan,
-      current_plan:plan,
-      plan_name:planLabel(plan),
-      billing_status:billing,
-      subscription_status:billing,
-      monthly_search_limit:searchRaw?num(searchRaw,d.search):d.search,
-      monthly_qualified_lead_credit_limit:creditRaw?num(creditRaw,d.credits):d.credits,
-      max_leads_per_batch:batchRaw?num(batchRaw,d.batch):d.batch,
-      csv_export:csvRaw?asBool(csvRaw):d.csv,
-      admin_managed:isAdminOverride(row),
-      paid_managed:isPaidBillingRow(row),
-      profile_source:'users_sheet',
-      source_row_source:first(row.source,''),
-      source_row_priority:rowPriority(row),
-      source_row_tie_rank:rowTieRank(row),
-      source_row_index:row._row_index,
-      resolved_at:nowIso(),
-      resolver_version:'effective-users-sheet-v3'
-    };
-    if(meta)profile.debug_meta=meta;
-    return profile;
+    var loginEmail=low(s.email||s.userEmail||rowEmails(row)[0]);var plan=rowPlan(row);var billing=rowBilling(row);if(loginEmail===ADMIN_EMAIL){plan='admin_unlimited';billing='admin_unlimited';}
+    var d=defaults(plan);var searchRaw=first(row.effective_search_limit,row.monthly_search_limit,row.search_batches_limit,row.base_search_limit);var creditRaw=first(row.effective_qualified_lead_limit,row.monthly_qualified_lead_credit_limit,row.qualified_lead_credits_limit,row.base_qualified_lead_limit);var batchRaw=first(row.max_leads_per_batch,row.max_prospects_per_batch,row.max_batch);var csvRaw=first(row.csv_export,row.csv_enabled,row.can_export_csv);
+    var profile={user_id:first(s.userId,s.id,rowUserId(row),row.user_id,row.userId),email:first(s.email,s.userEmail,rowEmails(row)[0],row.email,row.user_email),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:searchRaw?num(searchRaw,d.search):d.search,monthly_qualified_lead_credit_limit:creditRaw?num(creditRaw,d.credits):d.credits,max_leads_per_batch:batchRaw?num(batchRaw,d.batch):d.batch,csv_export:csvRaw?asBool(csvRaw):d.csv,admin_managed:isAdminOverride(row),paid_managed:isPaidBillingRow(row),profile_source:'users_sheet',source_row_source:first(row.source,''),source_row_priority:rowPriority(row),source_row_tie_rank:rowTieRank(row),source_row_index:row._row_index,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v4'};
+    if(meta)profile.debug_meta=meta;return profile;
   }
-
   function fallbackProfile(s,reason){
-    var email=low(s.email||s.userEmail);
-    var plan=email===ADMIN_EMAIL?'admin_unlimited':'free';
-    var billing=email===ADMIN_EMAIL?'admin_unlimited':'free';
-    var d=defaults(plan);
-    return {user_id:first(s.userId,s.id),email:first(s.email,s.userEmail),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:d.search,monthly_qualified_lead_credit_limit:d.credits,max_leads_per_batch:d.batch,csv_export:d.csv,admin_managed:plan==='admin_unlimited',paid_managed:false,profile_source:'default',source_row_source:'',source_row_priority:plan==='admin_unlimited'?40:0,source_row_index:null,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v3',debug_meta:{reason:reason||'no_matching_users_sheet_row'}};
+    var email=low(s.email||s.userEmail);var plan=email===ADMIN_EMAIL?'admin_unlimited':'free';var billing=email===ADMIN_EMAIL?'admin_unlimited':'free';var d=defaults(plan);
+    return {user_id:first(s.userId,s.id),email:first(s.email,s.userEmail),plan:plan,current_plan:plan,plan_name:planLabel(plan),billing_status:billing,subscription_status:billing,monthly_search_limit:d.search,monthly_qualified_lead_credit_limit:d.credits,max_leads_per_batch:d.batch,csv_export:d.csv,admin_managed:plan==='admin_unlimited',paid_managed:false,profile_source:'default',source_row_source:'',source_row_priority:plan==='admin_unlimited'?40:0,source_row_index:null,resolved_at:nowIso(),resolver_version:'effective-users-sheet-v4',debug_meta:{reason:reason||'no_matching_users_sheet_row'}};
   }
-
-  function writeProfile(profile){
+  function writeProfile(profile,changed){
     localStorage.setItem(CACHE_KEY,JSON.stringify(profile));
     localStorage.setItem(DEBUG_KEY,JSON.stringify(profile));
     localStorage.setItem('rankforge-plan-v1',profile.plan);
@@ -216,59 +143,40 @@
     localStorage.setItem('rankforge-admin-plan-managed-v1',profile.admin_managed?'true':'false');
     localStorage.setItem('rankforge-paid-plan-managed-v1',profile.paid_managed?'true':'false');
     window.rankforgeUserProfile=profile;
-    window.dispatchEvent(new CustomEvent('rankforge:user-profile-resolved',{detail:profile}));
+    if(changed)window.dispatchEvent(new CustomEvent('rankforge:user-profile-resolved',{detail:profile}));
   }
-
   function setText(id,value){var el=document.getElementById(id);if(el)el.textContent=value;}
   function fmtLimit(v,suffix){return v===Infinity?'Unlimited':String(v)+(suffix||'');}
-  function applyDom(profile){
+  function applyDom(profile,changed){
+    if(!changed)return;
     var name=planLabel(profile.plan);
-    setText('rfPlanBadge',name+' Plan');
-    setText('rfProspectPlanBadge',name+' Plan');
+    setText('rfPlanBadge',name+' Plan');setText('rfProspectPlanBadge',name+' Plan');
     setText('rfCreditBadge',profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited qualified lead credits':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit');
     setText('rfProspectCreditBadge',profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited qualified lead credits':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit');
-    var card=document.getElementById('rfMvpUsageCard');
-    if(card){
-      var title=card.querySelector('h2');if(title)title.textContent=name+' Plan';
-      var pill=card.querySelector('.rf-mvp-pill');if(pill)pill.textContent=profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited access':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit';
-    }
-    setText('accountPlanName',name);
-    setText('accountPlanStatus',profile.billing_status==='active'||profile.billing_status==='admin_unlimited'?'Active':profile.billing_status);
-    setText('accountLeadLimit',fmtLimit(profile.monthly_qualified_lead_credit_limit,' qualified leads/month'));
-    setText('accountSearchLimit',fmtLimit(profile.monthly_search_limit,' search batches/month')+' · max '+fmtLimit(profile.max_leads_per_batch,' leads/batch'));
-    setText('accountWebhookStatus',profile.csv_export?'Enabled':'Plan gated');
-    setText('accountWebhookValue',profile.csv_export?'CSV export enabled for this plan.':'CSV export requires Starter, Growth, or admin.');
+    var card=document.getElementById('rfMvpUsageCard');if(card){var title=card.querySelector('h2');if(title)title.textContent=name+' Plan';var pill=card.querySelector('.rf-mvp-pill');if(pill)pill.textContent=profile.monthly_qualified_lead_credit_limit===Infinity?'Unlimited access':profile.monthly_qualified_lead_credit_limit+' qualified lead credit limit';}
+    setText('accountPlanName',name);setText('accountPlanStatus',profile.billing_status==='active'||profile.billing_status==='admin_unlimited'?'Active':profile.billing_status);setText('accountLeadLimit',fmtLimit(profile.monthly_qualified_lead_credit_limit,' qualified leads/month'));setText('accountSearchLimit',fmtLimit(profile.monthly_search_limit,' search batches/month')+' · max '+fmtLimit(profile.max_leads_per_batch,' leads/batch'));setText('accountWebhookStatus',profile.csv_export?'Enabled':'Plan gated');setText('accountWebhookValue',profile.csv_export?'CSV export enabled for this plan.':'CSV export requires Starter, Growth, or admin.');
   }
-
   async function resolveEffectiveUserProfile(options){
     options=options||{};
-    var session=options.session||await waitForSession();
-    if(!session||(!session.email&&!session.userEmail&&!session.userId&&!session.id)){
-      var noSession=fallbackProfile({},'no_session_email_or_user_id');
-      localStorage.setItem(DEBUG_KEY,JSON.stringify(noSession));
-      return noSession;
-    }
-    var result=await fetchUsersSheet();
-    var matches=matchRows(result.rows,session);
-    var selected=chooseBest(matches);
-    var profile=selected?buildProfile(selected,session,{matched_rows:matches.length,total_rows:result.rows.length,sheet_error:result.error||''}):fallbackProfile(session,result.error?'users_sheet_fetch_'+result.error:'no_exact_match');
-    profile.profile_source=selected?'users_sheet':'default';
-    writeProfile(profile);
-    applyDom(profile);
-    if(window.rankforgeMvpCredits&&typeof window.rankforgeMvpCredits.usage==='function')setTimeout(function(){window.dispatchEvent(new CustomEvent('rankforge:user-profile-resolved',{detail:profile}));},50);
-    return profile;
+    var cached=parse(localStorage.getItem(CACHE_KEY),null);
+    if(!options.force&&cached&&Date.now()-lastResolvedAt<REFRESH_TTL_MS){window.rankforgeUserProfile=cached;return cached;}
+    if(inFlight)return inFlight;
+    inFlight=(async function(){
+      var session=options.session||await waitForSession();
+      if(!session||(!session.email&&!session.userEmail&&!session.userId&&!session.id)){var noSession=fallbackProfile({},'no_session_email_or_user_id');localStorage.setItem(DEBUG_KEY,JSON.stringify(noSession));return noSession;}
+      var result=await fetchUsersSheet();var matches=matchRows(result.rows,session);var selected=chooseBest(matches);
+      var profile=selected?buildProfile(selected,session,{matched_rows:matches.length,total_rows:result.rows.length,sheet_error:result.error||''}):fallbackProfile(session,result.error?'users_sheet_fetch_'+result.error:'no_exact_match');
+      profile.profile_source=selected?'users_sheet':'default';
+      var sig=signature(profile);var changed=sig!==lastSignature;lastSignature=sig;lastResolvedAt=Date.now();
+      writeProfile(profile,changed);applyDom(profile,changed);
+      return profile;
+    })().finally(function(){inFlight=null;});
+    return inFlight;
   }
-
   window.rankforgeResolveEffectiveUserProfile=resolveEffectiveUserProfile;
   window.rankforgeResolveUserPlan=function(){return resolveEffectiveUserProfile({force:true});};
-
-  function start(){
-    resolveEffectiveUserProfile();
-    setTimeout(resolveEffectiveUserProfile,1200);
-    setTimeout(resolveEffectiveUserProfile,3500);
-    setTimeout(resolveEffectiveUserProfile,8000);
-  }
+  function start(){resolveEffectiveUserProfile({force:true,reason:'initial_load'});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-  window.addEventListener('focus',function(){resolveEffectiveUserProfile();});
-  window.addEventListener('storage',function(e){if(e.key==='rankforge-auth-session-v1')resolveEffectiveUserProfile();});
+  window.addEventListener('focus',function(){resolveEffectiveUserProfile({force:true,reason:'focus'});});
+  window.addEventListener('storage',function(e){if(e.key==='rankforge-auth-session-v1')resolveEffectiveUserProfile({force:true,reason:'auth_storage'});});
 })();

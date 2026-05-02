@@ -32,6 +32,13 @@
     loadStylesheetOnce(`${getBasePrefix()}assets/mvp-cleanup.css?v=mvp-cleanup-1`, "rf-mvp-cleanup");
   }
 
+  function loadMvpCreditSystem() {
+    const page = document.body?.dataset?.page || "";
+    if (!["dashboard", "lists", "searches", "leads", "lead-detail", "settings", "quality"].includes(page)) return;
+    loadStylesheetOnce(`${getBasePrefix()}assets/mvp-credit-system.css?v=mvp-credit-1`, "rf-mvp-credit-css");
+    loadScriptOnce(`${getBasePrefix()}assets/mvp-credit-system.js?v=mvp-credit-1`, "rf-mvp-credit-js");
+  }
+
   function loadLeadQualityReasons() {
     const page = document.body?.dataset?.page || "";
     if (!["dashboard", "leads"].includes(page)) return;
@@ -67,6 +74,7 @@
     /* Shell/menu rendering now belongs only to assets/app-shell.js, loaded by brand-consistency.js. */
     loadMobileBrandPolish();
     loadMvpCleanupStyles();
+    loadMvpCreditSystem();
     addDashboardOnboarding();
     loadLeadQualityReasons();
     loadLeadDetailQuality();

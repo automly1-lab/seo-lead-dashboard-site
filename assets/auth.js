@@ -19,6 +19,7 @@
   const SUPABASE_URL = window.RANKFORGE_SUPABASE_URL || "";
   const SUPABASE_ANON_KEY = window.RANKFORGE_SUPABASE_ANON_KEY || "";
   const DASHBOARD_PATH = "../dashboard/";
+  const ONBOARDING_PATH = "../onboarding/";
   const LOGIN_PATH = "../login/";
 
   function byId(id) { return document.getElementById(id); }
@@ -64,7 +65,7 @@
   }
 
   function isNestedPage() {
-    return /\/(dashboard|searches|leads|lead-detail|settings|quality|login|signup|checkout-success|checkout-cancelled|checkout-pending|how-it-works|pricing|status|privacy|terms|refund-policy)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || "");
+    return /\/(dashboard|searches|leads|lead-detail|settings|quality|login|signup|onboarding|checkout-success|checkout-cancelled|checkout-pending|how-it-works|pricing|status|privacy|terms|refund-policy)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || "");
   }
   function seoPrefix() { return isNestedPage() ? "../" : ""; }
   function loadScriptOnce(src, marker) {
@@ -76,7 +77,7 @@
     document.body.appendChild(script);
   }
   function privateSeoPath() {
-    return /\/(dashboard|searches|leads|lead-detail|settings|quality|checkout-success|checkout-cancelled|checkout-pending)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || "");
+    return /\/(dashboard|searches|leads|lead-detail|settings|quality|onboarding|checkout-success|checkout-cancelled|checkout-pending)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || "");
   }
   function ensureNoindexForPrivatePages() {
     if (!privateSeoPath()) return;
@@ -123,7 +124,7 @@
     localStorage.removeItem(CHECKOUT_INTENT_KEY);
     localStorage.removeItem(CHECKOUT_PLAN_KEY);
   }
-  function resolvePostAuthDestination() {
+  function resolvePostAuthDestination(defaultPath) {
     const params = new URLSearchParams(window.location.search || "");
     const returnTo = safeInternalPath(params.get("returnTo"));
     if (returnTo) return relativeFromRoot(returnTo);
@@ -133,7 +134,7 @@
 
     if (!intent) {
       clearPostAuthIntent();
-      return DASHBOARD_PATH;
+      return defaultPath || DASHBOARD_PATH;
     }
 
     localStorage.setItem(SELECTED_PLAN_KEY, plan);
@@ -239,7 +240,7 @@
     const session = normalizeSession(data.session);
     saveSession(session);
     setStatus("Logged in. Redirecting…", "success");
-    window.location.href = resolvePostAuthDestination();
+    window.location.href = resolvePostAuthDestination(DASHBOARD_PATH);
     return false;
   }
 
@@ -253,14 +254,14 @@
     if (password.length < 6) { setStatus("Please use a stronger password.", "error"); return false; }
     setSubmitting(true, "Creating workspace…");
     setStatus("Creating workspace…", "");
-    const redirectTo = window.location.origin + window.location.pathname.replace(/\/signup\/.*/, "/dashboard/");
+    const redirectTo = window.location.origin + window.location.pathname.replace(/\/signup\/.*/, "/onboarding/");
     const { data, error } = await client.auth.signUp({ email, password, options: { data: { full_name: name || "" }, emailRedirectTo: redirectTo } });
     if (error) { setSubmitting(false); setStatus(friendlyError(error), "error"); return false; }
     const session = normalizeSession(data.session);
     if (session) {
       saveSession(session);
       setStatus("Workspace created. Redirecting…", "success");
-      window.location.href = resolvePostAuthDestination();
+      window.location.href = resolvePostAuthDestination(ONBOARDING_PATH);
     } else {
       setSubmitting(false);
       setStatus("Workspace created. Check your email to confirm your account.", "success");

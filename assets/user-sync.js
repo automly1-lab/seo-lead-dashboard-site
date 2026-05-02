@@ -2,6 +2,7 @@
   'use strict';
   var SYNC_KEY_PREFIX='rankforge-user-sync-sent-v1:';
   var ADMIN_EMAIL='automly1@gmail.com';
+  var PROFILE_KEY='rankforge-user-profile-cache-v1';
   function clean(v){return String(v==null?'':v).trim();}
   function lower(v){return clean(v).toLowerCase();}
   function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(e){return fallback;}}
@@ -11,6 +12,7 @@
       return safeParse(localStorage.getItem('rankforge-auth-session-v1'),null);
     }catch(e){return null;}
   }
+  function profile(){return window.rankforgeUserProfile||safeParse(localStorage.getItem(PROFILE_KEY),null)||{};}
   function rootWebhook(){
     var stored=clean(localStorage.getItem('rankforge-search-submit-webhook-v1'));
     if(stored&&/\/webhook\//.test(stored))return stored.replace(/\/webhook\/[^/?#]+/,'/webhook/rankforge-user-sync');
@@ -26,7 +28,7 @@
   }
   function billingIsActive(value){
     var b=lower(value).replace(/\s+/g,'_').replace(/-/g,'_');
-    return ['active','paid','trialing','complete','checkout_complete','subscription_active'].indexOf(b)>=0;
+    return ['active','paid','trialing','complete','checkout_complete','subscription_active','admin_unlimited'].indexOf(b)>=0;
   }
   function shouldSend(userId){
     if(!userId)return false;
@@ -41,16 +43,20 @@
     var s=session();
     if(!s||!s.userId||!s.email)return;
     if(!force&&!shouldSend(s.userId))return;
+    var p=profile();
     var email=lower(s.email||s.userEmail);
-    var rawPlan=localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free';
+    var managed=String((p&&p.admin_managed)||localStorage.getItem('rankforge-admin-plan-managed-v1')||'').toLowerCase()==='true';
+    var rawPlan=(managed&&p.plan)||localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free';
     var selected=normalizePlan(rawPlan);
-    var billing=clean(localStorage.getItem('rankforge-billing-status-v1'))||'free';
+    var billing=(managed&&p.billing_status)||clean(localStorage.getItem('rankforge-billing-status-v1'))||'free';
 
     if(email===ADMIN_EMAIL){
       selected='admin_unlimited';
       billing='admin_unlimited';
+    }else if(managed){
+      // Admin-managed users must not be downgraded by normal frontend sync.
+      billing=billing||'active';
     }else if(!billingIsActive(billing)){
-      // Do not sync a marketing/signup selection as a paid plan. Pending/free/blank users remain Free until payment is active.
       selected='free';
       billing=billing||'free';
     }
@@ -61,11 +67,17 @@
       full_name:clean(s.name||s.fullName||''),
       plan:selected,
       billing_status:billing,
-      source:'frontend_user_sync',
+      source:managed?'frontend_user_sync_admin_managed':'frontend_user_sync',
       synced_at:new Date().toISOString(),
       created_at:clean(s.createdAt||''),
       user_agent:navigator.userAgent||''
     };
+    if(managed){
+      payload.admin_override=true;
+      payload.monthly_search_limit=p.monthly_search_limit||localStorage.getItem('rankforge-monthly-search-limit-v1')||'';
+      payload.monthly_qualified_lead_credit_limit=p.monthly_qualified_lead_credit_limit||localStorage.getItem('rankforge-monthly-qualified-credit-limit-v1')||'';
+      payload.max_leads_per_batch=p.max_leads_per_batch||localStorage.getItem('rankforge-max-leads-per-batch-v1')||'';
+    }
     try{
       await fetch(rootWebhook(),{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
     }catch(error){
@@ -73,7 +85,7 @@
     }
   }
   window.rankforgeUserSync={sync:sync};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){sync(false);},700);});
-  else setTimeout(function(){sync(false);},700);
-  setTimeout(function(){sync(false);},2500);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){sync(false);},1200);});
+  else setTimeout(function(){sync(false);},1200);
+  setTimeout(function(){sync(false);},3500);
 })();

@@ -5,6 +5,7 @@
   var STATE_KEY='rankforge-clean-app-state-v1';
   var USER_KEY='rankforge-current-user-id-v1';
   var PLAN_KEY='rankforge-plan-v1';
+  var PROFILE_KEY='rankforge-user-profile-cache-v1';
 
   function text(v){return String(v==null?'':v).trim();}
   function lower(v){return text(v).toLowerCase();}
@@ -15,18 +16,32 @@
   function bool(v){var t=lower(v);return ['true','yes','1','qualified','counted'].indexOf(t)>=0;}
   function num(v){var n=Number(String(v||0).replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}
   function escapeHtml(v){return text(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
+  function profile(){return window.rankforgeUserProfile||parse(localStorage.getItem(PROFILE_KEY),null)||{};}
+  function limitValue(v,fallback){var raw=text(v);if(!raw)return fallback;if(/infinity|unlimited|∞/i.test(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):fallback;}
   function getRows(){var s=state();return {lists:[].concat(s.localLists||[],s.remoteCache&&s.remoteCache.lists||[]).filter(Boolean),leads:[].concat(s.localLeads||[],s.remoteCache&&s.remoteCache.leads||[]).filter(Boolean)};}
   function owner(row){return text(row&& (row.userId||row.user_id||row.owner_user_id));}
   function owned(row){var u=currentUserId();var o=owner(row);return !u||!o||u===o;}
-  function isAdmin(user,profile){var s=session()||{};var email=lower((user&&user.email)||(profile&&profile.email)||s.email||s.userEmail);var plan=lower((profile&&profile.plan)||(profile&&profile.plan_name)||localStorage.getItem(PLAN_KEY));var billing=lower(profile&&profile.billing_status);return email===ADMIN_EMAIL||plan==='admin_unlimited'||plan==='admin unlimited'||plan==='admin'||plan==='unlimited'||billing==='admin_unlimited';}
-  function planInfo(){
-    if(isAdmin())return {key:'admin',name:'Admin Unlimited',searchLimit:Infinity,creditLimit:Infinity,previewLimit:Infinity,maxBatch:50,csv:true,cta:'',ctaHref:'../quality/'};
-    var raw=lower(localStorage.getItem(PLAN_KEY)||localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'Free');
-    var billing=lower(localStorage.getItem('rankforge-billing-status-v1')||'');
-    if(billing==='pending'||billing==='pending_payment'||billing==='free'||billing==='') raw = /starter|growth/.test(raw)&&billing==='' ? raw : 'free';
-    if(/growth/.test(raw)&&billing!=='pending_payment')return {key:'growth',name:'Growth',searchLimit:150,creditLimit:250,previewLimit:Infinity,maxBatch:50,csv:true,cta:'Join Agency Intelligence waitlist',ctaHref:'../pricing/#plans'};
-    if(/starter/.test(raw)&&billing!=='pending_payment')return {key:'starter',name:'Starter',searchLimit:50,creditLimit:50,previewLimit:Infinity,maxBatch:25,csv:true,cta:'Upgrade to Growth',ctaHref:'../pricing/'};
+  function isAdmin(user,prof){var s=session()||{};prof=prof||profile();var email=lower((user&&user.email)||(prof&&prof.email)||s.email||s.userEmail);var plan=lower((prof&&prof.plan)||(prof&&prof.plan_name)||localStorage.getItem(PLAN_KEY));var billing=lower(prof&&prof.billing_status);return email===ADMIN_EMAIL||plan==='admin_unlimited'||plan==='admin unlimited'||plan==='admin'||plan==='unlimited'||billing==='admin_unlimited';}
+  function planDefaults(key){
+    if(key==='admin'||key==='admin_unlimited')return {key:'admin',name:'Admin Unlimited',searchLimit:Infinity,creditLimit:Infinity,previewLimit:Infinity,maxBatch:50,csv:true,cta:'',ctaHref:'../quality/'};
+    if(key==='growth')return {key:'growth',name:'Growth',searchLimit:150,creditLimit:250,previewLimit:Infinity,maxBatch:50,csv:true,cta:'Join Agency Intelligence waitlist',ctaHref:'../pricing/#plans'};
+    if(key==='starter')return {key:'starter',name:'Starter',searchLimit:50,creditLimit:50,previewLimit:Infinity,maxBatch:25,csv:true,cta:'Upgrade to Growth',ctaHref:'../pricing/'};
     return {key:'free',name:'Free',searchLimit:2,creditLimit:10,previewLimit:10,maxBatch:10,csv:false,cta:'Upgrade to Starter',ctaHref:'../pricing/'};
+  }
+  function planInfo(){
+    var prof=profile();
+    if(isAdmin(null,prof))return planDefaults('admin');
+    var raw=lower((prof&&prof.plan)||localStorage.getItem(PLAN_KEY)||localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free').replace(/\s+/g,'_').replace(/-/g,'_');
+    var billing=lower((prof&&prof.billing_status)||localStorage.getItem('rankforge-billing-status-v1')||'');
+    var managed=String((prof&&prof.admin_managed)||localStorage.getItem('rankforge-admin-plan-managed-v1')||'').toLowerCase()==='true';
+    if(!managed&&(billing==='pending'||billing==='pending_payment'||billing==='free'||billing===''))raw='free';
+    var key=/growth/.test(raw)?'growth':/starter/.test(raw)?'starter':/admin|unlimited/.test(raw)?'admin':'free';
+    var p=planDefaults(key);
+    p.searchLimit=limitValue(prof.monthly_search_limit||localStorage.getItem('rankforge-monthly-search-limit-v1'),p.searchLimit);
+    p.creditLimit=limitValue(prof.monthly_qualified_lead_credit_limit||localStorage.getItem('rankforge-monthly-qualified-credit-limit-v1'),p.creditLimit);
+    p.maxBatch=limitValue(prof.max_leads_per_batch||localStorage.getItem('rankforge-max-leads-per-batch-v1'),p.maxBatch);
+    if(prof.csv_export!==undefined)p.csv=(prof.csv_export===true||String(prof.csv_export).toLowerCase()==='true');
+    return p;
   }
   function status(row){var s=lower(row&&(row.qualification_status||row.status||row.decision));if(s==='qualified')return 'qualified';if(s==='qualified_locked'||s==='locked_qualified'||s==='qualified locked')return 'qualified_locked';if(s==='rejected'||s==='filtered_out'||s==='filtered out')return 'rejected';return 'review_needed';}
   function creditCounted(row){if(status(row)!=='qualified')return false;if(row&&row.lead_credit_counted!==undefined)return bool(row.lead_credit_counted);return true;}
@@ -40,13 +55,14 @@
   function renderUsageCard(){var main=document.querySelector('.rf-dashboard-main');if(!main)return;var header=document.querySelector('.rf-dashboard-header');var card=document.getElementById('rfMvpUsageCard');if(!card){card=document.createElement('section');card.id='rfMvpUsageCard';card.className='rf-mvp-usage-card';if(header&&header.parentNode)header.parentNode.insertBefore(card,header.nextSibling);else main.prepend(card);}var u=usage(),p=u.plan;var creditLabel='Qualified lead credits';var creditLimit=p.creditLimit;var creditUsed=u.creditUsed;var creditSub='1 credit = 1 qualified lead. Needs Review and Rejected prospects use 0 credits.';var csvSub=p.csv?'CSV export enabled.':'No CSV export on Free.';var action=p.cta?'<a class="button primary" href="'+escapeHtml(p.ctaHref)+'">'+escapeHtml(p.cta)+'</a>':'';var remainingText=p.key==='admin'?'Unlimited access':escapeHtml(remaining(u.creditUsed,p.creditLimit))+' credits remaining';card.innerHTML='<div class="rf-mvp-usage-head"><div><p class="rf-eyebrow">Plan & Usage</p><h2>'+escapeHtml(p.name)+' Plan</h2><p>1 credit = 1 qualified lead. Only qualified leads consume credits. Needs Review and Rejected prospects use 0 credits.</p></div><span class="rf-mvp-pill">'+remainingText+'</span></div><div class="rf-mvp-usage-grid">'+meter('Search batches',u.searchUsed,p.searchLimit,p.key==='free'?'2 free test searches.':'Search batches help you test markets.')+meter(creditLabel,creditUsed,creditLimit,creditSub)+meter('CSV export',p.csv?1:0,1,csvSub)+'</div><div class="rf-mvp-actions">'+action+'</div>';
   }
   function updateHeaderAndExistingUsage(){var u=usage(),p=u.plan;var planBadge=document.getElementById('rfPlanBadge')||document.getElementById('rfProspectPlanBadge');if(planBadge)planBadge.textContent=p.name+' Plan';var creditBadge=document.getElementById('rfCreditBadge')||document.getElementById('rfProspectCreditBadge');if(creditBadge)creditBadge.textContent=p.key==='admin'?'Unlimited qualified lead credits':remaining(u.creditUsed,p.creditLimit)+' credits remaining';var kpi=document.getElementById('rfKpiCredits');if(kpi)kpi.textContent=p.key==='admin'?'Unlimited':u.creditUsed+' / '+p.creditLimit;}
-  function guardReason(){var u=usage(),p=u.plan;if(p.key==='admin')return null;if(p.key==='free'&&u.searchUsed>=2)return {title:'Your free test searches have been used',body:'Free includes 2 test searches and 10 qualified lead credits. Upgrade to Starter to run more search batches, unlock more qualified lead credits, and export CSV.',cta:'Upgrade to Starter',href:'../pricing/'};if(p.searchLimit!==Infinity&&u.searchUsed>=p.searchLimit)return {title:'Search batch limit reached',body:p.key==='starter'?'You’ve used your 50 Starter search batches this month. Upgrade to Growth for 150 search batches/month.':'You’ve reached your 150 Growth search batches this month. Join the Agency Intelligence waitlist for custom volume.',cta:p.key==='starter'?'Upgrade to Growth':'Join Agency Intelligence waitlist',href:'../pricing/'};if(p.creditLimit!==Infinity&&u.creditUsed>=p.creditLimit)return {title:'Qualified lead credits used',body:'You’ve used your monthly qualified lead credits. Upgrade to unlock more qualified leads.',cta:p.key==='starter'||p.key==='free'?'Upgrade to Starter':'Join Agency Intelligence waitlist',href:'../pricing/'};return null;}
+  function guardReason(){var u=usage(),p=u.plan;if(p.key==='admin')return null;if(p.searchLimit!==Infinity&&u.searchUsed>=p.searchLimit)return {title:'Search batch limit reached',body:p.key==='starter'?'You’ve used your Starter search batches this month. Upgrade to Growth for more search batches.':p.key==='growth'?'You’ve reached your Growth search batches this month. Join the Agency Intelligence waitlist for custom volume.':'Your free test searches have been used. Upgrade to Starter to run more search batches.',cta:p.key==='growth'?'Join Agency Intelligence waitlist':p.key==='starter'?'Upgrade to Growth':'Upgrade to Starter',href:'../pricing/'};if(p.creditLimit!==Infinity&&u.creditUsed>=p.creditLimit)return {title:'Qualified lead credits used',body:'You’ve used your monthly qualified lead credits. Upgrade to unlock more qualified leads.',cta:p.key==='growth'?'Join Agency Intelligence waitlist':p.key==='starter'?'Upgrade to Growth':'Upgrade to Starter',href:'../pricing/'};return null;}
   function patchSearchGuard(){if(!window.rankforgeApp||typeof window.rankforgeApp.createSearch!=='function'||window.rankforgeApp.__mvpCreditGuard)return;var original=window.rankforgeApp.createSearch;window.rankforgeApp.createSearch=function(event){var block=guardReason();if(block){if(event)event.preventDefault();modal(block.title,block.body,block.cta,block.href,'Close');return false;}return original.apply(this,arguments);};window.rankforgeApp.__mvpCreditGuard=true;}
   function patchExportGuard(){document.addEventListener('click',function(e){var target=e.target.closest('#rfExportCsvButton,#rfBulkExport,.rf-export-one');if(!target)return;var p=planInfo();if(p.csv||p.key==='admin')return;e.preventDefault();e.stopPropagation();modal('CSV export is available on paid plans','Upgrade to Starter to export contact-ready qualified leads.','Upgrade to Starter','../pricing/','Maybe later');},true);}
   function patchWarnings(){var u=usage(),p=u.plan;if(percent(u.creditUsed,p.creditLimit)>=80&&u.creditUsed<p.creditLimit){var b=document.getElementById('rfCreditBadge');if(b)b.textContent='80% of credits used';}}
   function hideBuyCredits(){Array.from(document.querySelectorAll('a,button')).forEach(function(el){if(/buy credits|credit pack|purchase credits/i.test(el.textContent||'')){el.classList.add('rf-mvp-hidden');}});}
   function labelCreditBadges(){Array.from(document.querySelectorAll('[data-status],.status-pill,.rf-pill')).forEach(function(el){var s=lower(el.textContent);if(s==='qualified locked'||s==='qualified_locked')el.textContent='Qualified — locked';});}
-  function init(){renderUsageCard();updateHeaderAndExistingUsage();patchExportGuard();patchSearchGuard();patchWarnings();hideBuyCredits();labelCreditBadges();setTimeout(function(){renderUsageCard();updateHeaderAndExistingUsage();patchSearchGuard();patchWarnings();hideBuyCredits();labelCreditBadges();},800);setTimeout(function(){renderUsageCard();updateHeaderAndExistingUsage();patchSearchGuard();patchWarnings();hideBuyCredits();labelCreditBadges();},2200);}
+  function refresh(){renderUsageCard();updateHeaderAndExistingUsage();patchSearchGuard();patchWarnings();hideBuyCredits();labelCreditBadges();}
+  function init(){renderUsageCard();updateHeaderAndExistingUsage();patchExportGuard();patchSearchGuard();patchWarnings();hideBuyCredits();labelCreditBadges();setTimeout(refresh,800);setTimeout(refresh,2200);window.addEventListener('rankforge:user-profile-resolved',refresh);}
   window.rankforgeMvpCredits={planInfo:planInfo,usage:usage,isAdmin:isAdmin,showUpgradeModal:modal,status:status};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

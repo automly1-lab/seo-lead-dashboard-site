@@ -54,13 +54,12 @@
   function ensureControls(row){
     if(!row||!row.cells||row.cells.length<9)return;
     const userId=rowUserId(row);
-    if(!row.querySelector('[data-search-adjust]')||!row.querySelector('[data-lead-adjust]')){
-      row.cells[6].innerHTML=`<div class="rf-adjust-stack"><label><span>Search +/-</span><input data-search-adjust="${esc(userId)}" type="number" step="1" placeholder="0"></label><label><span>Credit +/-</span><input data-lead-adjust="${esc(userId)}" type="number" step="1" placeholder="0"></label></div>`;
-    }
-    if(!row.querySelector('[data-note]')){
-      row.cells[7].innerHTML=`<textarea data-note="${esc(userId)}" rows="3" placeholder="Reason / note"></textarea>`;
-    }
-    row.cells[8].innerHTML=`<div class="rf-billing-actions"><button class="button small primary" type="button" data-save-override="${esc(userId)}">Save Override</button><button class="button small ghost" type="button" data-copy-override="${esc(userId)}">Copy JSON</button></div>`;
+    const searchVal=clean(row.querySelector('[data-search-adjust]')?.value||'');
+    const leadVal=clean(row.querySelector('[data-lead-adjust]')?.value||'');
+    const noteVal=clean(row.querySelector('[data-note]')?.value||'');
+    row.cells[6].innerHTML=`<div class="rf-adjust-stack"><label><span>Search +/-</span><input data-search-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(searchVal)}"></label><label><span>Credit +/-</span><input data-lead-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(leadVal)}"></label><div class="rf-billing-actions rf-billing-actions-inline"><button class="button small primary" type="button" data-save-override="${esc(userId)}">Save Override</button><button class="button small ghost" type="button" data-copy-override="${esc(userId)}">Copy JSON</button></div></div>`;
+    row.cells[7].innerHTML=`<textarea data-note="${esc(userId)}" rows="3" placeholder="Reason / note">${esc(noteVal)}</textarea>`;
+    row.cells[8].innerHTML=`<div class="rf-muted" style="font-size:12px;line-height:18px">Use buttons in Manual Adjustment.</div>`;
   }
   function hydrateRows(){
     $$('#billingTable tbody tr').forEach(row=>{
@@ -78,7 +77,6 @@
   function updateRow(row){
     if(!row||!row.cells||row.cells.length<9)return;
     if(row.dataset.rfBillingReady!=='1')hydrateRows();
-    ensureControls(row);
     renderUsageCell(row,'search');
     renderUsageCell(row,'credit');
   }

@@ -27,8 +27,7 @@
   <meta name="twitter:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <link rel="stylesheet" href="../assets/admin-quality-premium.css?v=admin-quality-premium-1">
-  <link rel="stylesheet" href="../assets/admin-quality-table-polish.css?v=admin-quality-polish-1">
+  <link rel="stylesheet" href="../assets/admin-quality-premium.css?v=admin-quality-premium-3">
   <link rel="stylesheet" href="../assets/site-type-polish.css?v=site-type-1">
 </head>
 <body class="dashboard-body app-page-quality" data-auth="protected" data-page="quality">
@@ -46,191 +45,29 @@
         <a href="../settings/">Settings</a>
       </nav>
     </aside>
-
     <main class="dashboard-main rf-admin-main">
-      <section class="rf-access-shell" id="rfAdminSignin" hidden>
-        <article class="rf-card rf-access-card">
-          <p class="rf-eyebrow">Admin access required</p>
-          <h1>Admin access required</h1>
-          <p>Sign in with the admin account to view quality controls.</p>
-          <a class="button primary" href="../index.html">Sign in</a>
-        </article>
-      </section>
-
-      <section class="rf-access-shell" id="rfAccessDenied" hidden>
-        <article class="rf-card rf-access-card">
-          <p class="rf-eyebrow">Admin-only page</p>
-          <h1>Admin-only page</h1>
-          <p>This workspace is restricted to the RankForge admin account.</p>
-          <a class="button primary" href="../dashboard/">Back to Dashboard</a>
-        </article>
-      </section>
-
-      <section id="rfAdminLoading" class="rf-section">
-        <header class="rf-admin-header">
-          <div>
-            <h1>Admin Quality</h1>
-            <p>Checking admin access…</p>
-          </div>
-        </header>
-        <div class="rf-loading"><article class="rf-skeleton"></article><article class="rf-skeleton"></article><article class="rf-skeleton"></article><article class="rf-skeleton"></article></div>
-      </section>
-
+      <section class="rf-access-shell" id="rfAdminSignin" hidden><article class="rf-card rf-access-card"><p class="rf-eyebrow">Admin access required</p><h1>Admin access required</h1><p>Sign in with the admin account to view quality controls.</p><a class="button primary" href="../index.html">Sign in</a></article></section>
+      <section class="rf-access-shell" id="rfAccessDenied" hidden><article class="rf-card rf-access-card"><p class="rf-eyebrow">Admin-only page</p><h1>Admin-only page</h1><p>This workspace is restricted to the RankForge admin account.</p><a class="button primary" href="../dashboard/">Back to Dashboard</a></article></section>
+      <section id="rfAdminLoading" class="rf-section"><header class="rf-admin-header"><div><h1>Admin Quality</h1><p>Checking admin access…</p></div></header><div class="rf-loading"><article class="rf-skeleton"></article><article class="rf-skeleton"></article><article class="rf-skeleton"></article><article class="rf-skeleton"></article></div></section>
       <div id="rfAdminContent" hidden>
-        <header class="rf-admin-header">
-          <div>
-            <h1>Admin Quality</h1>
-            <p>Monitor crawl health, evidence quality, user activity, feedback signals, and credit integrity.</p>
-          </div>
-          <div class="rf-admin-actions">
-            <span class="rf-pill rf-pill-admin">Admin · automly1@gmail.com</span>
-            <span class="rf-pill" id="rfAdminStatus">Loading admin quality data…</span>
-            <button class="button ghost" type="button" id="refreshAdminData">Refresh</button>
-            <button class="button ghost" type="button" id="exportDiagnostics">Export Diagnostics</button>
-            <button class="button ghost" type="button" id="copyOverrides">Copy Overrides JSON</button>
-          </div>
-        </header>
-
-        <nav class="rf-admin-tabs" aria-label="Admin quality sections">
-          <a class="active" href="#command-center">Command Center</a>
-          <a href="#users">Users</a>
-          <a href="#billing">Billing &amp; Credits</a>
-          <a href="#crawl">Crawl Health</a>
-          <a href="#evidence">Evidence Health</a>
-          <a href="#feedback">Feedback</a>
-          <a href="#integrity">Integrity Audit</a>
-        </nav>
-
-        <section class="rf-section" id="command-center">
-          <div class="rf-admin-kpis">
-            <article class="rf-kpi"><span>Users</span><strong id="kpiUsers">—</strong><p>Workspace users</p></article>
-            <article class="rf-kpi"><span>Searches</span><strong id="kpiSearches">—</strong><p>All search batches</p></article>
-            <article class="rf-kpi"><span>Final Leads</span><strong id="kpiFinalLeads">—</strong><p>Qualified/review/rejected outputs</p></article>
-            <article class="rf-kpi"><span>Feedback</span><strong id="kpiFeedback">—</strong><p>Submitted quality signals</p></article>
-            <article class="rf-kpi"><span>Verified Evidence Rate</span><strong id="kpiEvidenceRate">—</strong><p>Leads with crawl-backed evidence</p></article>
-            <article class="rf-kpi"><span>Credit Integrity</span><strong id="kpiCreditIntegrity">—</strong><p>Qualified-only credit counting</p></article>
-          </div>
-        </section>
-
-        <section class="rf-section rf-panel" id="quality-health">
-          <div class="rf-section-head">
-            <div>
-              <h2>Quality Health</h2>
-              <p>No evidence should prevent strong SEO claims. Review Needed and Rejected should not consume lead credits.</p>
-            </div>
-          </div>
-          <div class="rf-health-grid" id="qualityHealthGrid"></div>
-        </section>
-
-        <section class="rf-section rf-panel" id="crawl">
-          <div class="rf-section-head">
-            <div>
-              <h2>Crawl &amp; Evidence Diagnostics</h2>
-              <p>Find whether evidence failures come from the crawler, compact response, analyzer, or qualification gate.</p>
-            </div>
-          </div>
-          <div class="rf-diagnostic-cards" id="diagnosticCards"></div>
-          <div class="rf-table-wrap">
-            <table class="rf-table" id="diagnosticTable">
-              <thead><tr><th>Lead / Company</th><th>User</th><th>Search</th><th>Status</th><th>crawl_source_field</th><th>HTML bytes</th><th>Text words</th><th>HTTP status</th><th>Issues</th><th>Signals</th><th>Claims verified</th><th>Warning</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="rf-section rf-panel" id="users">
-          <div class="rf-section-head">
-            <div>
-              <h2>Users</h2>
-              <p>View workspace users, plans, activity, and access status.</p>
-            </div>
-            <div class="rf-tools">
-              <label><span>Search</span><input id="userSearch" type="search" placeholder="Email or user ID"></label>
-              <label><span>Plan</span><select id="userPlanFilter"><option value="all">All plans</option><option value="free">Free</option><option value="starter">Starter</option><option value="growth">Growth</option><option value="launch">Launch Plan</option><option value="admin">Admin Unlimited</option></select></label>
-              <label><span>Billing</span><select id="userBillingFilter"><option value="all">All billing</option><option value="free">free</option><option value="active">active</option><option value="pending">pending</option><option value="canceled">canceled</option><option value="past_due">past_due</option><option value="unknown">unknown</option></select></label>
-            </div>
-          </div>
-          <div class="rf-table-wrap">
-            <table class="rf-table" id="usersTable">
-              <thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Billing Status</th><th>Searches</th><th>Qualified Credits</th><th>Review Needed</th><th>Final Leads</th><th>Last Activity</th><th>Actions</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="rf-section rf-panel" id="billing">
-          <div class="rf-section-head">
-            <div>
-              <h2>Billing &amp; Credit Controls</h2>
-              <p>Manage plan overrides, search limits, qualified lead credits, and manual adjustments.</p>
-            </div>
-          </div>
-          <div class="rf-admin-note">This static console saves overrides locally and prepares override JSON. Apply it through the configured admin workflow or Sheets update flow. Qualified leads consume credits; Review Needed and Rejected do not.</div>
-          <div class="rf-table-wrap" style="margin-top:14px">
-            <table class="rf-table rf-edit-table" id="billingTable">
-              <thead><tr><th>User</th><th>Current Plan</th><th>Billing Status</th><th>Search Batches</th><th>Qualified Credits</th><th>Review Needed</th><th>Manual Adjustment</th><th>Notes</th><th>Actions</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="rf-section rf-panel" id="feedback">
-          <div class="rf-section-head">
-            <div>
-              <h2>Feedback Signals</h2>
-              <p>Review quality feedback submitted by users.</p>
-            </div>
-            <div class="rf-tools">
-              <label><span>Type</span><select id="feedbackTypeFilter"><option value="all">All feedback</option><option value="good_lead">Good lead</option><option value="bad_contact">Bad contact</option><option value="wrong_niche">Wrong niche</option><option value="wrong_city">Wrong city</option><option value="no_evidence">No evidence</option><option value="other">Other</option></select></label>
-              <label><span>Search</span><input id="feedbackSearch" type="search" placeholder="Company, search ID, user, note"></label>
-            </div>
-          </div>
-          <div class="rf-feedback-cards" id="feedbackCards"></div>
-          <div class="rf-table-wrap">
-            <table class="rf-table" id="feedbackTable">
-              <thead><tr><th>Feedback</th><th>Company</th><th>User</th><th>Search ID</th><th>Note</th><th>Created</th><th>Action</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="rf-section rf-panel" id="integrity">
-          <div class="rf-section-head">
-            <div>
-              <h2>Credit Integrity Audit</h2>
-              <p>Verify that only qualified leads consume credits.</p>
-            </div>
-          </div>
-          <div class="rf-integrity-grid" id="integrityChecks"></div>
-          <div class="rf-table-wrap">
-            <table class="rf-table" id="integrityTable">
-              <thead><tr><th>Lead</th><th>User</th><th>Status</th><th>Credit counted</th><th>Evidence verified</th><th>Signal count</th><th>Contact path</th><th>Issue</th><th>Recommended fix</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="rf-section rf-panel" id="activity">
-          <div class="rf-section-head"><div><h2>Admin Activity</h2><p>Track manual overrides and notes.</p></div></div>
-          <div class="rf-change-log" id="adminActivity"></div>
-        </section>
+        <header class="rf-admin-header"><div><h1>Admin Quality</h1><p>Monitor crawl health, evidence quality, user activity, feedback signals, and credit integrity.</p></div><div class="rf-admin-actions"><span class="rf-pill rf-pill-admin">Admin · automly1@gmail.com</span><span class="rf-pill" id="rfAdminStatus">Loading admin quality data…</span><button class="button ghost" type="button" id="refreshAdminData">Refresh</button><button class="button ghost" type="button" id="exportDiagnostics">Export Diagnostics</button><button class="button ghost" type="button" id="copyOverrides">Copy Overrides JSON</button></div></header>
+        <nav class="rf-admin-tabs" aria-label="Admin quality sections"><a class="active" href="#command-center">Command Center</a><a href="#users">Users</a><a href="#billing">Billing &amp; Credits</a><a href="#crawl">Crawl Health</a><a href="#evidence">Evidence Health</a><a href="#feedback">Feedback</a><a href="#integrity">Integrity Audit</a></nav>
+        <section class="rf-section" id="command-center"><div class="rf-admin-kpis"><article class="rf-kpi"><span>Users</span><strong id="kpiUsers">—</strong><p>Workspace users</p></article><article class="rf-kpi"><span>Searches</span><strong id="kpiSearches">—</strong><p>All search batches</p></article><article class="rf-kpi"><span>Final Leads</span><strong id="kpiFinalLeads">—</strong><p>Qualified/review/rejected outputs</p></article><article class="rf-kpi"><span>Feedback</span><strong id="kpiFeedback">—</strong><p>Submitted quality signals</p></article><article class="rf-kpi"><span>Verified Evidence Rate</span><strong id="kpiEvidenceRate">—</strong><p>Leads with crawl-backed evidence</p></article><article class="rf-kpi"><span>Credit Integrity</span><strong id="kpiCreditIntegrity">—</strong><p>Qualified-only credit counting</p></article></div></section>
+        <section class="rf-section rf-panel" id="quality-health"><div class="rf-section-head"><div><h2>Quality Health</h2><p>No evidence should prevent strong SEO claims. Review Needed and Rejected should not consume lead credits.</p></div></div><div class="rf-health-grid" id="qualityHealthGrid"></div></section>
+        <section class="rf-section rf-panel" id="crawl"><div class="rf-section-head"><div><h2>Crawl &amp; Evidence Diagnostics</h2><p>Find whether evidence failures come from the crawler, compact response, analyzer, or qualification gate.</p></div></div><div class="rf-diagnostic-cards" id="diagnosticCards"></div><div class="rf-table-wrap"><table class="rf-table" id="diagnosticTable"><thead><tr><th>Lead / Company</th><th>User</th><th>Search</th><th>Status</th><th>crawl_source_field</th><th>HTML bytes</th><th>Text words</th><th>HTTP status</th><th>Issues</th><th>Signals</th><th>Claims verified</th><th>Warning</th></tr></thead><tbody></tbody></table></div></section>
+        <section class="rf-section rf-panel" id="users"><div class="rf-section-head"><div><h2>Users</h2><p>View workspace users, plans, activity, and access status.</p></div><div class="rf-tools"><label><span>Search</span><input id="userSearch" type="search" placeholder="Email or user ID"></label><label><span>Plan</span><select id="userPlanFilter"><option value="all">All plans</option><option value="free">Free</option><option value="starter">Starter</option><option value="growth">Growth</option><option value="launch">Launch Plan</option><option value="admin">Admin Unlimited</option></select></label><label><span>Billing</span><select id="userBillingFilter"><option value="all">All billing</option><option value="free">free</option><option value="active">active</option><option value="pending">pending</option><option value="canceled">canceled</option><option value="past_due">past_due</option><option value="unknown">unknown</option></select></label></div></div><div class="rf-table-wrap"><table class="rf-table" id="usersTable"><thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Billing Status</th><th>Searches</th><th>Qualified Credits</th><th>Review Needed</th><th>Final Leads</th><th>Last Activity</th><th>Actions</th></tr></thead><tbody></tbody></table></div></section>
+        <section class="rf-section rf-panel" id="billing"><div class="rf-section-head"><div><h2>Billing &amp; Credit Controls</h2><p>Manage plan overrides, search limits, qualified lead credits, and manual adjustments.</p></div></div><div class="rf-admin-note">This console prepares local override JSON. Apply it through the configured admin workflow or Sheets update flow. Qualified leads consume credits; Review Needed and Rejected do not.</div><div class="rf-table-wrap" style="margin-top:14px"><table class="rf-table rf-edit-table" id="billingTable"><thead><tr><th>User</th><th>Current Plan</th><th>Billing Status</th><th>Search Batches</th><th>Qualified Credits</th><th>Review Needed</th><th>Manual Adjustment</th><th>Notes</th><th>Actions</th></tr></thead><tbody></tbody></table></div></section>
+        <section class="rf-section rf-panel" id="feedback"><div class="rf-section-head"><div><h2>Feedback Signals</h2><p>Review quality feedback submitted by users.</p></div><div class="rf-tools"><label><span>Type</span><select id="feedbackTypeFilter"><option value="all">All feedback</option><option value="good_lead">Good lead</option><option value="bad_contact">Bad contact</option><option value="wrong_niche">Wrong niche</option><option value="wrong_city">Wrong city</option><option value="no_evidence">No evidence</option><option value="other">Other</option></select></label><label><span>Search</span><input id="feedbackSearch" type="search" placeholder="Company, search ID, user, note"></label></div></div><div class="rf-feedback-cards" id="feedbackCards"></div><div class="rf-table-wrap"><table class="rf-table" id="feedbackTable"><thead><tr><th>Feedback</th><th>Company</th><th>User</th><th>Search ID</th><th>Note</th><th>Created</th><th>Action</th></tr></thead><tbody></tbody></table></div></section>
+        <section class="rf-section rf-panel" id="integrity"><div class="rf-section-head"><div><h2>Credit Integrity Audit</h2><p>Verify that only qualified leads consume credits.</p></div></div><div class="rf-integrity-grid" id="integrityChecks"></div><div class="rf-table-wrap"><table class="rf-table" id="integrityTable"><thead><tr><th>Lead</th><th>User</th><th>Status</th><th>Credit counted</th><th>Evidence verified</th><th>Signal count</th><th>Contact path</th><th>Issue</th><th>Recommended fix</th></tr></thead><tbody></tbody></table></div></section>
+        <section class="rf-section rf-panel" id="activity"><div class="rf-section-head"><div><h2>Admin Activity</h2><p>Track manual overrides and notes.</p></div></div><div class="rf-change-log" id="adminActivity"></div></section>
       </div>
     </main>
   </div>
-
-  <div class="rf-drawer" id="adminDrawer" hidden>
-    <aside class="rf-drawer-panel" role="dialog" aria-modal="true" aria-label="User detail">
-      <div class="rf-drawer-head"><h2>User Detail</h2><button class="rf-close" type="button" id="closeDrawer">×</button></div>
-      <div id="drawerBody"></div>
-    </aside>
-  </div>
-
+  <div class="rf-drawer" id="adminDrawer" hidden><aside class="rf-drawer-panel" role="dialog" aria-modal="true" aria-label="User detail"><div class="rf-drawer-head"><h2>User Detail</h2><button class="rf-close" type="button" id="closeDrawer">×</button></div><div id="drawerBody"></div></aside></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
 <script src="../assets/auth.js?v=user-isolation-1"></script>
 <script src="../assets/brand-consistency.js?v=brand-consistency-1"></script>
-<script src="../assets/admin-quality-premium.js?v=admin-quality-premium-1"></script>
-<script src="../assets/admin-quality-table-polish.js?v=admin-quality-polish-1"></script>
-<script src="../assets/admin-quality-save-fix.js?v=admin-quality-save-fix-1"></script>
+<script src="../assets/admin-quality-premium.js?v=admin-quality-premium-4"></script>
 </body>
 </html>

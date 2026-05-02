@@ -16,7 +16,7 @@
   function loadStylesheetOnce(href, marker) { if (document.querySelector('link[data-' + marker + '="true"]')) return; const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; link.setAttribute('data-' + marker, 'true'); document.head.appendChild(link); }
   function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-3"), "rf-marketing-shell-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-3"), "rf-marketing-shell"); }
   function loadSeo() { loadScriptOnce(urlFromRoot("assets/seo.js?v=seo-1"), "rf-seo"); }
-  function loadCopyPositioning() { loadScriptOnce(urlFromRoot("assets/copy-positioning.js?v=copy-positioning-1"), "rf-copy-positioning"); }
+  function loadCopyPositioning() { loadScriptOnce(urlFromRoot("assets/copy-positioning.js?v=copy-positioning-1"), "rf-copy-positioning"); loadScriptOnce(urlFromRoot("assets/copy-final-cleanup.js?v=copy-final-1"), "rf-copy-final-cleanup"); }
 
   function getSession() { if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") return window.rankforgeAuth.getSession(); return null; }
   async function refreshSession() { if (window.rankforgeAuth && typeof window.rankforgeAuth.refreshSession === "function") return window.rankforgeAuth.refreshSession(); return getSession(); }

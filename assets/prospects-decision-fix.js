@@ -6,35 +6,17 @@
 
   function text(node){return String((node&&node.textContent)||'').replace(/\s+/g,' ').trim();}
   function verified(node){var t=text(node);return /Verified/i.test(t)&&/(signal|evidence)/i.test(t);}
-  function usableContact(node){var t=text(node);return !/Needs enrichment|missing|not found/i.test(t)&&/(Phone|Email|Contact page|CTA|Contact)/i.test(t);}
+  function hasDirectContact(node){var t=text(node);return /(Phone|Email)/i.test(t)&&!/Needs enrichment|missing|not found/i.test(t);}
   function seoNeed(cell){var m=text(cell).match(/\b(\d{1,3})\b/);return m?Math.max(0,Math.min(100,Number(m[1]))):0;}
 
-  function makeQualified(cell){
+  function setDecision(cell,label,cls,reasonText){
     if(!cell) return false;
     var changed=false;
-    var badge=cell.querySelector('.rf-badge-review,.rf-badge-warning,.rf-badge-muted,.rf-badge');
-    if(badge && !/Qualified/i.test(text(badge))){
-      badge.classList.remove('rf-badge-review','rf-badge-warning','rf-badge-muted');
-      badge.classList.add('rf-badge-qualified');
-      badge.textContent='Qualified';
-      changed=true;
-    }
-    var reason=cell.querySelector('.rf-row-reason');
-    if(reason && text(reason)!=='Verified evidence + contact path'){
-      reason.textContent='Verified evidence + contact path';
-      changed=true;
-    }
-    return changed;
-  }
-
-  function makeReview(cell, reasonText){
-    if(!cell) return false;
-    var changed=false;
-    var badge=cell.querySelector('.rf-badge-qualified,.rf-badge');
-    if(badge && /Qualified/i.test(text(badge))){
-      badge.classList.remove('rf-badge-qualified');
-      badge.classList.add('rf-badge-review');
-      badge.textContent='Needs Review';
+    var badge=cell.querySelector('.rf-badge-qualified,.rf-badge-review,.rf-badge-warning,.rf-badge-muted,.rf-badge-rejected,.rf-badge');
+    if(badge && text(badge)!==label){
+      badge.classList.remove('rf-badge-qualified','rf-badge-review','rf-badge-warning','rf-badge-muted','rf-badge-rejected');
+      badge.classList.add(cls);
+      badge.textContent=label;
       changed=true;
     }
     var reason=cell.querySelector('.rf-row-reason');
@@ -44,6 +26,9 @@
     }
     return changed;
   }
+  function makeQualified(cell){return setDecision(cell,'Qualified','rf-badge-qualified','Verified evidence + direct contact');}
+  function makeReview(cell,reason){return setDecision(cell,'Needs Review','rf-badge-review',reason||'Needs manual review');}
+  function makeRejected(cell){return setDecision(cell,'Rejected','rf-badge-rejected','No phone or email found');}
 
   function fixRows(){
     var changed=false;
@@ -55,27 +40,22 @@
       var seo=cells[4];
       var contact=cells[5];
       var need=seoNeed(seo);
-      var decisionText=text(decision);
-      if(need < MIN_SEO_NEED_FOR_QUALIFIED && /Qualified/i.test(decisionText)){
-        changed=makeReview(decision,'SEO need below qualified threshold')||changed;
-        return;
-      }
-      if(/Qualified/i.test(decisionText)) return;
-      if(!/Needs Review|Manual review|required|Review/i.test(decisionText)) return;
-      if(need >= MIN_SEO_NEED_FOR_QUALIFIED && verified(evidence) && usableContact(contact)) changed=makeQualified(decision)||changed;
+      var directContact=hasDirectContact(contact);
+      if(!directContact){changed=makeRejected(decision)||changed;return;}
+      if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(decision,'SEO need below qualified threshold')||changed;return;}
+      if(verified(evidence) && directContact){changed=makeQualified(decision)||changed;return;}
+      changed=makeReview(decision,'Needs manual review')||changed;
     });
 
     document.querySelectorAll('.rf-prospect-card').forEach(function(card){
       var cardText=text(card);
       var scoreMatch=cardText.match(/SEO\s*(\d{1,3})/i) || cardText.match(/\b(\d{1,3})\b/);
       var need=scoreMatch?Number(scoreMatch[1]):0;
-      if(need < MIN_SEO_NEED_FOR_QUALIFIED && /Qualified/i.test(cardText)){
-        changed=makeReview(card,'SEO need below qualified threshold')||changed;
-        return;
-      }
-      if(/Qualified/i.test(cardText)) return;
-      if(!/Needs Review|Manual review|required|Review/i.test(cardText)) return;
-      if(need >= MIN_SEO_NEED_FOR_QUALIFIED && verified(card) && /(Phone|Email|Contact page|CTA)/i.test(cardText)) changed=makeQualified(card)||changed;
+      var directContact=/(Phone|Email)/i.test(cardText)&&!/Needs enrichment|missing|not found/i.test(cardText);
+      if(!directContact){changed=makeRejected(card)||changed;return;}
+      if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(card,'SEO need below qualified threshold')||changed;return;}
+      if(verified(card) && directContact){changed=makeQualified(card)||changed;return;}
+      changed=makeReview(card,'Needs manual review')||changed;
     });
 
     if(changed){

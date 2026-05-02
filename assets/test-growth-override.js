@@ -12,6 +12,7 @@
     if(email!==TEST_EMAIL)return;
     localStorage.setItem('rankforge-current-plan-v1','growth');
     localStorage.setItem('rankforge-selected-plan-v1','growth');
+    localStorage.setItem('rankforge-plan-v1','Growth');
     localStorage.setItem('rankforge-billing-status-v1','active');
     document.documentElement.setAttribute('data-rf-test-plan','growth');
   }

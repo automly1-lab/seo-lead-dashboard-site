@@ -11,15 +11,7 @@
   function lower(v){return text(v).toLowerCase();}
   function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(_){return fallback;}}
   function state(){return parse(localStorage.getItem(STATE_KEY),{})||{};}
-  function session(){
-    try{
-      if(window.rankforgeAuth&&window.rankforgeAuth.getSession){
-        var s=window.rankforgeAuth.getSession();
-        if(s&&(s.userId||s.id||s.email||s.userEmail))return s;
-      }
-      return parse(localStorage.getItem('rankforge-auth-session-v1'),null);
-    }catch(_){return null;}
-  }
+  function session(){try{return window.rankforgeAuth&&window.rankforgeAuth.getSession?window.rankforgeAuth.getSession():parse(localStorage.getItem('rankforge-auth-session-v1'),null);}catch(_){return null;}}
   function currentUserId(){var s=session()||{};return text(s.userId||s.id||localStorage.getItem(USER_KEY));}
   function bool(v){var t=lower(v);return ['true','yes','1','qualified','counted'].indexOf(t)>=0;}
   function num(v){var n=Number(String(v||0).replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}

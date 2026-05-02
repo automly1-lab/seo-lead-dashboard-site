@@ -8,15 +8,7 @@
   function pct(a,b){return b?Math.round((a/b)*100)+'%':'0%';}
   function esc(v){return c(v).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[x];});}
   function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
-  function session(){
-    try{
-      if(window.rankforgeAuth&&window.rankforgeAuth.getSession){
-        var s=window.rankforgeAuth.getSession();
-        if(s&&(s.userId||s.id||s.email||s.userEmail))return s;
-      }
-      return parse(localStorage.getItem('rankforge-auth-session-v1'),null);
-    }catch(e){return null;}
-  }
+  function session(){try{return window.rankforgeAuth&&window.rankforgeAuth.getSession?window.rankforgeAuth.getSession():parse(localStorage.getItem('rankforge-auth-session-v1'),null);}catch(e){return null;}}
   function normalizePlan(value){var raw=lower(value).replace(/\s+/g,'_').replace(/-/g,'_');if(raw==='growth'||raw==='pro')return 'growth';if(raw==='starter'||raw==='start'||raw==='basic')return 'starter';if(raw==='admin'||raw==='admin_unlimited')return 'admin_unlimited';if(raw==='agency'||raw==='agency_intelligence')return 'agency_intelligence';return 'free';}
   function billingIsActive(value){var b=lower(value).replace(/\s+/g,'_').replace(/-/g,'_');return ['active','paid','trialing','complete','checkout_complete','subscription_active','admin_unlimited'].indexOf(b)>=0;}
   function isAdmin(){var s=session();return c(s&&(s.email||s.userEmail)).toLowerCase()===ADMIN_EMAIL;}

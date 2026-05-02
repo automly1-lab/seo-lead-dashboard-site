@@ -35,11 +35,35 @@ function isSupabaseUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || "").trim());
 }
 
+function getSupabaseSessionFromStorage() {
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index) || "";
+      if (!/^sb-.+-auth-token$/.test(key)) continue;
+      const parsed = safeParse(localStorage.getItem(key), null);
+      const user = parsed?.user || parsed?.currentSession?.user || parsed?.session?.user;
+      if (user?.id) {
+        return {
+          userId: normalizeKey(user.id),
+          email: user.email || "",
+          source: "supabase-storage",
+        };
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function getSession() {
   if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === "function") {
     const session = window.rankforgeAuth.getSession();
     if (session && session.userId) return session;
   }
+
+  const supabaseSession = getSupabaseSessionFromStorage();
+  if (supabaseSession && supabaseSession.userId) return supabaseSession;
 
   const legacySession = safeParse(localStorage.getItem("rankforge-auth-session-v1"), null);
   if (legacySession && isSupabaseUuid(legacySession.userId)) return legacySession;

@@ -52,6 +52,13 @@
       }
       var stored = safeParse(localStorage.getItem(AUTH_SESSION_KEY), null);
       if (stored && (stored.userId || stored.id || stored.email || stored.userEmail)) return stored;
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var key = localStorage.key(i) || "";
+        if (!/^sb-.+-auth-token$/.test(key)) continue;
+        var token = safeParse(localStorage.getItem(key), {}) || {};
+        var user = token.user || (token.currentSession && token.currentSession.user) || (token.session && token.session.user);
+        if (user && user.id) return { userId: user.id, id: user.id, email: user.email || "" };
+      }
     } catch (_) {}
     return null;
   }

@@ -1,5 +1,5 @@
 /* Shared RankForge public hero and headline layout normalization.
-   Keeps Homepage, Pricing, and How It Works visually aligned without changing copy or SEO metadata. */
+   Keeps public pages aligned without changing SEO metadata. */
 body.rf-home-page .rf-hero,
 body.rf-pricing-page .rf-hero,
 body.rf-how-page .rf-hero {
@@ -16,12 +16,23 @@ body.rf-how-page .rf-hero-inner {
   text-align: center !important;
 }
 
+body.rf-home-page .rf-hero-grid > div:first-child {
+  max-width: 760px !important;
+  text-align: left !important;
+}
+
+body.rf-home-page .rf-eyebrow,
+body.rf-home-page .rf-hero h1,
+body.rf-home-page .rf-hero-subtitle,
+body.rf-home-page .rf-hero-note {
+  text-align: left !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
 body.rf-home-page .rf-hero h1,
 body.rf-pricing-page .rf-hero h1,
 body.rf-how-page .rf-hero h1 {
-  max-width: 1060px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   font-size: clamp(42px, 4.15vw, 58px) !important;
   font-weight: 710 !important;
@@ -31,16 +42,28 @@ body.rf-how-page .rf-hero h1 {
   text-wrap: balance;
 }
 
+body.rf-home-page .rf-hero h1 {
+  max-width: 760px !important;
+}
+
 body.rf-pricing-page .rf-hero h1 {
   max-width: 1120px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   font-size: clamp(42px, 3.8vw, 56px) !important;
 }
 
 body.rf-how-page .rf-hero h1 {
   max-width: 1080px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
-body.rf-home-page .rf-hero-subtitle,
+body.rf-home-page .rf-hero-subtitle {
+  max-width: 700px !important;
+  text-wrap: pretty;
+}
+
 body.rf-pricing-page .rf-hero-subtitle,
 body.rf-how-page .rf-hero-subtitle {
   max-width: 760px !important;
@@ -51,9 +74,13 @@ body.rf-how-page .rf-hero-subtitle {
 }
 
 body.rf-home-page .rf-hero .rf-hero-actions,
+body.rf-home-page .rf-hero-principles,
+body.rf-home-page .rf-hero-badges {
+  justify-content: flex-start !important;
+}
+
 body.rf-pricing-page .rf-hero .rf-hero-actions,
 body.rf-how-page .rf-hero .rf-hero-actions,
-body.rf-home-page .rf-hero-badges,
 body.rf-pricing-page .rf-hero-badges,
 body.rf-how-page .rf-hero-badges {
   justify-content: center !important;
@@ -95,7 +122,6 @@ body.rf-how-page .rf-section-head p {
   body.rf-home-page .rf-hero h1,
   body.rf-pricing-page .rf-hero h1,
   body.rf-how-page .rf-hero h1 {
-    max-width: 900px !important;
     font-size: 42px !important;
     font-weight: 705 !important;
     line-height: 1.06 !important;
@@ -110,6 +136,19 @@ body.rf-how-page .rf-section-head p {
     padding-bottom: 42px !important;
   }
 
+  body.rf-home-page .rf-hero-grid > div:first-child {
+    max-width: 100% !important;
+  }
+
+  body.rf-home-page .rf-eyebrow,
+  body.rf-home-page .rf-hero h1,
+  body.rf-home-page .rf-hero-subtitle,
+  body.rf-home-page .rf-hero-note {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
   body.rf-home-page .rf-hero h1,
   body.rf-pricing-page .rf-hero h1,
   body.rf-how-page .rf-hero h1 {
@@ -118,6 +157,12 @@ body.rf-how-page .rf-section-head p {
     font-weight: 700 !important;
     line-height: 1.08 !important;
     letter-spacing: -0.04em !important;
+  }
+
+  body.rf-home-page .rf-hero .rf-hero-actions,
+  body.rf-home-page .rf-hero-principles,
+  body.rf-home-page .rf-hero-badges {
+    justify-content: center !important;
   }
 
   body.rf-home-page .rf-section-head,

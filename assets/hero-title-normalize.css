@@ -1,0 +1,41 @@
+/* Shared RankForge public hero title typography.
+   Keeps homepage, Pricing, and How It Works visually aligned without changing copy or SEO metadata. */
+body.rf-home-page .rf-hero h1,
+body.rf-pricing-page .rf-hero h1,
+body.rf-how-page .rf-hero h1 {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: clamp(42px, 5vw, 62px) !important;
+  font-weight: 720 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.055em !important;
+  color: #111827 !important;
+}
+
+@media (max-width: 1120px) and (min-width: 761px) {
+  body.rf-home-page .rf-hero h1,
+  body.rf-pricing-page .rf-hero h1,
+  body.rf-how-page .rf-hero h1 {
+    font-size: 42px !important;
+    font-weight: 710 !important;
+    line-height: 1.06 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.rf-home-page .rf-hero h1,
+  body.rf-pricing-page .rf-hero h1,
+  body.rf-how-page .rf-hero h1 {
+    font-size: 36px !important;
+    font-weight: 700 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.04em !important;
+  }
+}
+
+@media (max-width: 420px) {
+  body.rf-home-page .rf-hero h1,
+  body.rf-pricing-page .rf-hero h1,
+  body.rf-how-page .rf-hero h1 {
+    font-size: 34px !important;
+  }
+}

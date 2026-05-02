@@ -1,7 +1,9 @@
 (function(){
   'use strict';
   var SYNC_KEY_PREFIX='rankforge-user-sync-sent-v1:';
+  var ADMIN_EMAIL='automly1@gmail.com';
   function clean(v){return String(v==null?'':v).trim();}
+  function lower(v){return clean(v).toLowerCase();}
   function safeParse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(e){return fallback;}}
   function session(){
     try{
@@ -22,6 +24,10 @@
     if(raw==='admin'||raw==='admin_unlimited')return 'admin_unlimited';
     return 'free';
   }
+  function billingIsActive(value){
+    var b=lower(value).replace(/\s+/g,'_').replace(/-/g,'_');
+    return ['active','paid','trialing','complete','checkout_complete','subscription_active'].indexOf(b)>=0;
+  }
   function shouldSend(userId){
     if(!userId)return false;
     var key=SYNC_KEY_PREFIX+userId;
@@ -35,9 +41,20 @@
     var s=session();
     if(!s||!s.userId||!s.email)return;
     if(!force&&!shouldSend(s.userId))return;
-    var selected=normalizePlan(localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free');
+    var email=lower(s.email||s.userEmail);
+    var rawPlan=localStorage.getItem('rankforge-current-plan-v1')||localStorage.getItem('rankforge-plan-v1')||localStorage.getItem('rankforge-selected-plan-v1')||'free';
+    var selected=normalizePlan(rawPlan);
     var billing=clean(localStorage.getItem('rankforge-billing-status-v1'))||'free';
-    if(selected==='free')billing='free';
+
+    if(email===ADMIN_EMAIL){
+      selected='admin_unlimited';
+      billing='admin_unlimited';
+    }else if(!billingIsActive(billing)){
+      // Do not sync a marketing/signup selection as a paid plan. Pending/free/blank users remain Free until payment is active.
+      selected='free';
+      billing=billing||'free';
+    }
+
     var payload={
       user_id:s.userId,
       email:s.email,

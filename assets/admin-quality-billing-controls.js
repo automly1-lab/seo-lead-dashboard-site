@@ -44,15 +44,18 @@
   }
   function renderUsageCell(row,type){
     const idx=type==='search'?3:4;
+    if(!row.cells[idx])return;
     const label=type==='search'?'Search batches':'Qualified credits';
     const used=effectiveUsed(row,type);
     const limit=limitFor(row,type);
     const adj=adjustment(row,type);
     const adjLine=adj?`<span class="rf-badge rf-badge-ok">${adj>0?'+':''}${adj} adjustment</span>`:'';
-    row.cells[idx].innerHTML=`<div class="rf-usage-cell"><strong>${esc(used)} / ${esc(formatLimit(limit))}</strong><span>${esc(remaining(used,limit))} remaining</span><small>${esc(label)}</small>${adjLine}</div>`;
+    const html=`<div class="rf-usage-cell"><strong>${esc(used)} / ${esc(formatLimit(limit))}</strong><span>${esc(remaining(used,limit))} remaining</span><small>${esc(label)}</small>${adjLine}</div>`;
+    if(row.cells[idx].innerHTML!==html)row.cells[idx].innerHTML=html;
   }
-  function ensureControls(row){
+  function buildControls(row){
     if(!row||!row.cells||row.cells.length<9)return;
+    if(row.dataset.rfControlsReady==='1')return;
     const userId=rowUserId(row);
     const searchVal=clean(row.querySelector('[data-search-adjust]')?.value||'');
     const leadVal=clean(row.querySelector('[data-lead-adjust]')?.value||'');
@@ -60,6 +63,7 @@
     row.cells[6].innerHTML=`<div class="rf-adjust-stack"><label><span>Search +/-</span><input data-search-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(searchVal)}"></label><label><span>Credit +/-</span><input data-lead-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(leadVal)}"></label><div class="rf-billing-actions rf-billing-actions-inline"><button class="button small primary" type="button" data-save-override="${esc(userId)}">Save Override</button><button class="button small ghost" type="button" data-copy-override="${esc(userId)}">Copy JSON</button></div></div>`;
     row.cells[7].innerHTML=`<textarea data-note="${esc(userId)}" rows="3" placeholder="Reason / note">${esc(noteVal)}</textarea>`;
     row.cells[8].innerHTML=`<div class="rf-muted" style="font-size:12px;line-height:18px">Use buttons in Manual Adjustment.</div>`;
+    row.dataset.rfControlsReady='1';
   }
   function hydrateRows(){
     $$('#billingTable tbody tr').forEach(row=>{
@@ -69,14 +73,19 @@
         row.dataset.baseSearchUsed=String(baseUsed(row,'search'));
         row.dataset.baseCreditUsed=String(baseUsed(row,'credit'));
       }
-      ensureControls(row);
+      buildControls(row);
       renderUsageCell(row,'search');
       renderUsageCell(row,'credit');
     });
   }
   function updateRow(row){
     if(!row||!row.cells||row.cells.length<9)return;
-    if(row.dataset.rfBillingReady!=='1')hydrateRows();
+    if(row.dataset.rfBillingReady!=='1'){
+      row.dataset.rfBillingReady='1';
+      row.dataset.baseSearchUsed=String(baseUsed(row,'search'));
+      row.dataset.baseCreditUsed=String(baseUsed(row,'credit'));
+    }
+    buildControls(row);
     renderUsageCell(row,'search');
     renderUsageCell(row,'credit');
   }
@@ -101,7 +110,16 @@
       source:'rankforge_admin_quality'
     };
   }
+  async function copy(text){try{await navigator.clipboard.writeText(text)}catch{}}
+  function renderActivity(){
+    const box=$('#adminActivity');
+    if(!box)return;
+    const activities=parse(localStorage.getItem(ACTIVITY_KEY),[])||[];
+    if(!activities.length)return;
+    box.innerHTML=activities.slice(0,20).map(a=>`<article><strong>${esc(a.email||a.user_id)}</strong><p class="rf-muted">${esc(a.note||'Admin override')}</p><span class="rf-mono">${esc(a.summary||'')}</span><div class="rf-muted">${esc(new Date(a.timestamp).toLocaleString())}</div></article>`).join('');
+  }
   function saveLocal(row){
+    updateRow(row);
     const payload=overrideJSON(row);
     if(!payload.user_id){status('User ID missing; cannot save override','error');return;}
     const overrides=parse(localStorage.getItem(OVERRIDE_KEY),{})||{};
@@ -110,17 +128,11 @@
     activities.unshift({timestamp:new Date().toISOString(),user_id:payload.user_id,email:payload.email,summary:`${payload.plan_override} · ${payload.billing_status_override} · searches ${payload.search_batches_used_override}/${payload.monthly_search_limit} · credits ${payload.qualified_leads_used_override}/${payload.monthly_qualified_lead_credit_limit}`,note:payload.note});
     localStorage.setItem(OVERRIDE_KEY,JSON.stringify(overrides));
     localStorage.setItem(ACTIVITY_KEY,JSON.stringify(activities.slice(0,100)));
-    status('Override saved locally and copied as JSON','ok');
     copy(JSON.stringify(payload,null,2));
+    const btn=row.querySelector('[data-save-override]');
+    if(btn){const original=btn.textContent;btn.textContent='Saved ✓';btn.disabled=true;setTimeout(()=>{btn.textContent=original;btn.disabled=false},1200)}
+    status('Override saved locally and copied as JSON','ok');
     renderActivity();
-  }
-  async function copy(text){try{await navigator.clipboard.writeText(text)}catch{}}
-  function renderActivity(){
-    const box=$('#adminActivity');
-    if(!box)return;
-    const activities=parse(localStorage.getItem(ACTIVITY_KEY),[])||[];
-    if(!activities.length)return;
-    box.innerHTML=activities.slice(0,20).map(a=>`<article><strong>${esc(a.email||a.user_id)}</strong><p class="rf-muted">${esc(a.note||'Admin override')}</p><span class="rf-mono">${esc(a.summary||'')}</span><div class="rf-muted">${esc(new Date(a.timestamp).toLocaleString())}</div></article>`).join('');
   }
   document.addEventListener('change',e=>{
     const input=e.target.closest('#billingTable select,#billingTable input,#billingTable textarea');
@@ -130,15 +142,18 @@
   document.addEventListener('input',e=>{
     const input=e.target.closest('#billingTable [data-search-adjust],#billingTable [data-lead-adjust]');
     if(!input)return;
-    updateRow(input.closest('tr'));
+    renderUsageCell(input.closest('tr'),input.matches('[data-search-adjust]')?'search':'credit');
   });
   document.addEventListener('click',e=>{
-    const copyBtn=e.target.closest('#billingTable [data-copy-override]');
-    if(copyBtn){e.preventDefault();const row=copyBtn.closest('tr');updateRow(row);copy(JSON.stringify(overrideJSON(row),null,2));status('Override JSON copied','ok');return;}
     const saveBtn=e.target.closest('#billingTable [data-save-override]');
-    if(saveBtn){e.preventDefault();const row=saveBtn.closest('tr');updateRow(row);saveLocal(row);}
+    if(saveBtn){e.preventDefault();e.stopPropagation();saveLocal(saveBtn.closest('tr'));return;}
+    const copyBtn=e.target.closest('#billingTable [data-copy-override]');
+    if(copyBtn){e.preventDefault();e.stopPropagation();const row=copyBtn.closest('tr');updateRow(row);copy(JSON.stringify(overrideJSON(row),null,2));status('Override JSON copied','ok');return;}
+  },true);
+  const observer=new MutationObserver(mutations=>{
+    const shouldHydrate=mutations.some(m=>Array.from(m.addedNodes||[]).some(n=>n.nodeType===1&&(n.matches?.('#billingTable tbody tr')||n.querySelector?.('#billingTable tbody tr'))));
+    if(shouldHydrate){clearTimeout(window.__rfSafeBillingTimer);window.__rfSafeBillingTimer=setTimeout(hydrateRows,100)}
   });
-  const observer=new MutationObserver(()=>{clearTimeout(window.__rfSafeBillingTimer);window.__rfSafeBillingTimer=setTimeout(hydrateRows,80)});
   function init(){observer.observe(document.body,{childList:true,subtree:true});hydrateRows();renderActivity();}
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
 })();

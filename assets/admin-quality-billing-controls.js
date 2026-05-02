@@ -16,7 +16,9 @@
     el.textContent=msg;
     el.className='rf-pill '+(type==='error'?'rf-badge-error':type==='warn'?'rf-badge-warning':'rf-badge-ok');
   }
+  function overrides(){return parse(localStorage.getItem(OVERRIDE_KEY),{})||{}}
   function rowUserId(row){return clean(row?.querySelector('.rf-user-id')?.textContent||row?.querySelector('.rf-mono')?.textContent||'')}
+  function savedOverride(row){const id=rowUserId(row);return id?overrides()[id]:null}
   function baseUsed(row,type){
     const attr=type==='search'?'baseSearchUsed':'baseCreditUsed';
     if(row?.dataset&&row.dataset[attr]!==undefined)return num(row.dataset[attr]);
@@ -25,21 +27,29 @@
     const match=text.match(/^\s*(-?\d+)/);
     return match?num(match[1]):0;
   }
-  function selectedPlan(row){return clean(row?.querySelector('[data-plan]')?.value||'free')||'free'}
-  function selectedBilling(row){return clean(row?.querySelector('[data-billing]')?.value||'free')||'free'}
+  function selectedPlan(row){return clean(row?.querySelector('[data-plan]')?.value||savedOverride(row)?.plan_override||'free')||'free'}
+  function selectedBilling(row){return clean(row?.querySelector('[data-billing]')?.value||savedOverride(row)?.billing_status_override||'free')||'free'}
   function adjustment(row,type){
     const selector=type==='search'?'[data-search-adjust]':'[data-lead-adjust]';
     return num(row?.querySelector(selector)?.value||0);
   }
-  function effectiveUsed(row,type){return Math.max(0,baseUsed(row,type)+adjustment(row,type))}
+  function effectiveUsed(row,type){
+    const ov=savedOverride(row);
+    if(type==='search'&&ov?.search_batches_used_override!==undefined&&!row.querySelector('[data-search-adjust]')?.value)return num(ov.search_batches_used_override);
+    if(type==='credit'&&ov?.qualified_leads_used_override!==undefined&&!row.querySelector('[data-lead-adjust]')?.value)return num(ov.qualified_leads_used_override);
+    return Math.max(0,baseUsed(row,type)+adjustment(row,type));
+  }
   function limitFor(row,type){
+    const ov=savedOverride(row);
+    if(type==='search'&&ov?.monthly_search_limit!==undefined)return ov.monthly_search_limit;
+    if(type==='credit'&&ov?.monthly_qualified_lead_credit_limit!==undefined)return ov.monthly_qualified_lead_credit_limit;
     const rule=planRules[selectedPlan(row)]||planRules.free;
     return type==='search'?rule.searches:rule.credits;
   }
   function formatLimit(limit){return limit==='Unlimited'?'∞':String(limit)}
   function remaining(used,limit){
     if(typeof limit==='number')return String(Math.max(0,limit-used));
-    if(limit==='Unlimited')return 'Unlimited';
+    if(String(limit)==='Unlimited')return 'Unlimited';
     return 'custom';
   }
   function rootWebhook(path){
@@ -53,25 +63,35 @@
     return res;
   }
   async function persistRemote(payload){
-    const adminPayload={...payload,plan:payload.plan_override,billing_status:payload.billing_status_override,admin_override:true,source:'rankforge_admin_quality_override'};
+    const plan=payload.plan_override, billing=payload.billing_status_override;
+    const adminPayload={
+      action:'admin_user_override',
+      target_user_id:payload.user_id,
+      user_id:payload.user_id,
+      email:payload.email,
+      plan,
+      billing_status:billing,
+      plan_override:plan,
+      billing_status_override:billing,
+      search_batches_used:payload.search_batches_used_override,
+      qualified_leads_used:payload.qualified_leads_used_override,
+      monthly_search_limit:payload.monthly_search_limit,
+      monthly_qualified_lead_credit_limit:payload.monthly_qualified_lead_credit_limit,
+      search_batches_limit:payload.monthly_search_limit,
+      qualified_lead_credits_limit:payload.monthly_qualified_lead_credit_limit,
+      search_credit_adjustment:payload.search_credit_adjustment,
+      lead_credit_adjustment:payload.lead_credit_adjustment,
+      note:payload.note,
+      admin_override:true,
+      source:'rankforge_admin_quality_override',
+      updated_at:new Date().toISOString(),
+      synced_at:new Date().toISOString()
+    };
     try{
       await postJson(rootWebhook('rankforge-admin-user-override'),adminPayload);
       return {ok:true,endpoint:'rankforge-admin-user-override'};
     }catch(firstError){
-      await postJson(rootWebhook('rankforge-user-sync'),{
-        user_id:payload.user_id,
-        email:payload.email,
-        plan:payload.plan_override,
-        billing_status:payload.billing_status_override,
-        monthly_search_limit:payload.monthly_search_limit,
-        monthly_qualified_lead_credit_limit:payload.monthly_qualified_lead_credit_limit,
-        search_batches_used:payload.search_batches_used_override,
-        qualified_leads_used:payload.qualified_leads_used_override,
-        admin_override:true,
-        override_note:payload.note,
-        source:'rankforge_admin_quality_override',
-        synced_at:new Date().toISOString()
-      });
+      await postJson(rootWebhook('rankforge-user-sync'),adminPayload);
       return {ok:true,endpoint:'rankforge-user-sync'};
     }
   }
@@ -82,7 +102,8 @@
     const used=effectiveUsed(row,type);
     const limit=limitFor(row,type);
     const adj=adjustment(row,type);
-    const adjLine=adj?`<span class="rf-badge rf-badge-ok">${adj>0?'+':''}${adj} adjustment</span>`:'';
+    const ov=savedOverride(row);
+    const adjLine=adj?`<span class="rf-badge rf-badge-ok">${adj>0?'+':''}${adj} adjustment</span>`:(ov?'<span class="rf-badge rf-badge-ok">saved override</span>':'');
     const html=`<div class="rf-usage-cell"><strong>${esc(used)} / ${esc(formatLimit(limit))}</strong><span>${esc(remaining(used,limit))} remaining</span><small>${esc(label)}</small>${adjLine}</div>`;
     if(row.cells[idx].innerHTML!==html)row.cells[idx].innerHTML=html;
   }
@@ -90,12 +111,17 @@
     if(!row||!row.cells||row.cells.length<9)return;
     if(row.dataset.rfControlsReady==='1')return;
     const userId=rowUserId(row);
-    const searchVal=clean(row.querySelector('[data-search-adjust]')?.value||'');
-    const leadVal=clean(row.querySelector('[data-lead-adjust]')?.value||'');
-    const noteVal=clean(row.querySelector('[data-note]')?.value||'');
-    row.cells[6].innerHTML=`<div class="rf-adjust-stack"><label><span>Search +/-</span><input data-search-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(searchVal)}"></label><label><span>Credit +/-</span><input data-lead-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(leadVal)}"></label><div class="rf-billing-actions rf-billing-actions-inline"><button class="button small primary" type="button" data-save-override="${esc(userId)}">Save Override</button><button class="button small ghost" type="button" data-copy-override="${esc(userId)}">Copy JSON</button></div></div>`;
+    const ov=savedOverride(row);
+    const planSel=row.querySelector('[data-plan]');
+    const billSel=row.querySelector('[data-billing]');
+    if(ov?.plan_override&&planSel)planSel.value=ov.plan_override;
+    if(ov?.billing_status_override&&billSel)billSel.value=ov.billing_status_override;
+    const searchVal=clean(ov?.search_credit_adjustment??row.querySelector('[data-search-adjust]')?.value??'');
+    const leadVal=clean(ov?.lead_credit_adjustment??row.querySelector('[data-lead-adjust]')?.value??'');
+    const noteVal=clean(ov?.note??row.querySelector('[data-note]')?.value??'');
+    row.cells[6].innerHTML=`<div class="rf-adjust-stack"><label><span>Search +/-</span><input data-search-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(searchVal)}"></label><label><span>Credit +/-</span><input data-lead-adjust="${esc(userId)}" type="number" step="1" placeholder="0" value="${esc(leadVal)}"></label><div class="rf-billing-actions rf-billing-actions-inline"><button class="button small primary" type="button" data-save-override="${esc(userId)}">Save Override</button><button class="button small ghost" type="button" data-copy-override="${esc(userId)}">Copy JSON</button></div>${ov?'<span class="rf-badge rf-badge-ok">Local override active</span>':''}</div>`;
     row.cells[7].innerHTML=`<textarea data-note="${esc(userId)}" rows="3" placeholder="Reason / note">${esc(noteVal)}</textarea>`;
-    row.cells[8].innerHTML=`<div class="rf-muted" style="font-size:12px;line-height:18px">Save writes through admin webhook.</div>`;
+    row.cells[8].innerHTML=`<div class="rf-muted" style="font-size:12px;line-height:18px">Save sends webhook and stores local override.</div>`;
     row.dataset.rfControlsReady='1';
   }
   function hydrateRows(){
@@ -152,11 +178,11 @@
     box.innerHTML=activities.slice(0,20).map(a=>`<article><strong>${esc(a.email||a.user_id)}</strong><p class="rf-muted">${esc(a.note||'Admin override')}</p><span class="rf-mono">${esc(a.summary||'')}</span><div class="rf-muted">${esc(new Date(a.timestamp).toLocaleString())}</div></article>`).join('');
   }
   function saveLocalPayload(payload){
-    const overrides=parse(localStorage.getItem(OVERRIDE_KEY),{})||{};
+    const all=overrides();
     const activities=parse(localStorage.getItem(ACTIVITY_KEY),[])||[];
-    overrides[payload.user_id]=payload;
+    all[payload.user_id]=payload;
     activities.unshift({timestamp:new Date().toISOString(),user_id:payload.user_id,email:payload.email,summary:`${payload.plan_override} · ${payload.billing_status_override} · searches ${payload.search_batches_used_override}/${payload.monthly_search_limit} · credits ${payload.qualified_leads_used_override}/${payload.monthly_qualified_lead_credit_limit}`,note:payload.note});
-    localStorage.setItem(OVERRIDE_KEY,JSON.stringify(overrides));
+    localStorage.setItem(OVERRIDE_KEY,JSON.stringify(all));
     localStorage.setItem(ACTIVITY_KEY,JSON.stringify(activities.slice(0,100)));
     renderActivity();
   }
@@ -170,8 +196,13 @@
     try{
       const remote=await persistRemote(payload);
       await copy(JSON.stringify(payload,null,2));
-      if(btn){btn.textContent='Saved to Sheets ✓';setTimeout(()=>{btn.textContent='Save Override';btn.disabled=false},1600)}
-      status('Override saved through '+remote.endpoint,'ok');
+      row.dataset.rfControlsReady='';
+      buildControls(row);
+      renderUsageCell(row,'search');
+      renderUsageCell(row,'credit');
+      const newBtn=row.querySelector('[data-save-override]');
+      if(newBtn){newBtn.textContent='Sent ✓';setTimeout(()=>{newBtn.textContent='Save Override';newBtn.disabled=false},1600)}
+      status('Override sent through '+remote.endpoint+'. If Sheet still shows old values, update that n8n endpoint to write admin override fields.','warn');
     }catch(error){
       await copy(JSON.stringify(payload,null,2));
       if(btn){btn.textContent='Local only';setTimeout(()=>{btn.textContent='Save Override';btn.disabled=false},1800)}

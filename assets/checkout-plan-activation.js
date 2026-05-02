@@ -1,25 +1,37 @@
 (function(){
   'use strict';
+
   var SELECTED_PLAN_KEY='rankforge-selected-plan-v1';
   var BILLING_STATUS_KEY='rankforge-billing-status-v1';
   var CHECKOUT_PLAN_KEY='rankforge-post-auth-plan-v1';
-  var ACTIVATION_KEY='rankforge-checkout-activation-v1';
+  var CHECKOUT_INTENT_KEY='rankforge-post-auth-intent-v1';
+  var CHECKOUT_STARTED_KEY='rankforge-checkout-started-v1';
+  var PROFILE_KEY='rankforge-user-profile-cache-v1';
+
   function clean(v){return String(v==null?'':v).trim();}
   function low(v){return clean(v).toLowerCase();}
   function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback;}catch(e){return fallback;}}
-  function session(){try{if(window.rankforgeAuth&&window.rankforgeAuth.getSession){var s=window.rankforgeAuth.getSession();if(s&&(s.userId||s.id||s.email||s.userEmail))return s;}var stored=parse(localStorage.getItem('rankforge-auth-session-v1'),{});if(stored&&(stored.userId||stored.id||stored.email||stored.userEmail))return stored;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||'';if(!/^sb-.+-auth-token$/.test(k))continue;var p=parse(localStorage.getItem(k),{});var u=p.user||p.currentSession&&p.currentSession.user||p.session&&p.session.user;if(u)return{userId:u.id,id:u.id,email:u.email||''};}}catch(e){}return{};}
-  function planFromUrl(){return clean(new URLSearchParams(location.search).get('plan')||new URLSearchParams(location.search).get('rf_plan')||'');}
-  function normalizePlan(v){v=low(v||'').replace(/\s+/g,'_').replace(/-/g,'_');if(v==='growth'||v==='pro')return'growth';if(v==='starter'||v==='basic')return'starter';if(v==='agency'||v==='agency_intelligence')return'agency_intelligence';return'';}
-  function selectedPlan(){return normalizePlan(planFromUrl()||localStorage.getItem(CHECKOUT_PLAN_KEY)||localStorage.getItem(SELECTED_PLAN_KEY)||localStorage.getItem('rankforge-current-plan-v1'));}
-  function limits(plan){if(plan==='growth')return{baseSearch:150,baseCredits:250,maxBatch:50,csv:true};if(plan==='starter')return{baseSearch:50,baseCredits:50,maxBatch:25,csv:true};return{baseSearch:2,baseCredits:10,maxBatch:10,csv:false};}
-  function webhook(path){var stored=clean(localStorage.getItem('rankforge-search-submit-webhook-v1'));if(stored&&/\/webhook\//.test(stored))return stored.replace(/\/webhook\/[^/?#]+/,'/webhook/'+path);return 'https://lastaccount1907.app.n8n.cloud/webhook/'+path;}
-  async function post(url,payload){var res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});if(!res.ok)throw new Error('HTTP '+res.status);return res;}
-  function applyLocal(payload){localStorage.setItem(SELECTED_PLAN_KEY,payload.plan);localStorage.setItem('rankforge-current-plan-v1',payload.plan);localStorage.setItem('rankforge-plan-v1',payload.plan);localStorage.setItem(BILLING_STATUS_KEY,'active');localStorage.setItem('rankforge-monthly-search-limit-v1',String(payload.effective_search_limit));localStorage.setItem('rankforge-monthly-qualified-credit-limit-v1',String(payload.effective_qualified_lead_limit));localStorage.setItem('rankforge-max-leads-per-batch-v1',String(payload.max_leads_per_batch));localStorage.setItem('rankforge-admin-plan-managed-v1','false');localStorage.setItem('rankforge-user-profile-cache-v1',JSON.stringify({user_id:payload.user_id,email:payload.email,plan:payload.plan,billing_status:'active',monthly_search_limit:payload.effective_search_limit,monthly_qualified_lead_credit_limit:payload.effective_qualified_lead_limit,max_leads_per_batch:payload.max_leads_per_batch,csv_export:true,profile_source:'checkout_success',resolved_at:new Date().toISOString()}));}
+  function session(){try{if(window.rankforgeAuth&&window.rankforgeAuth.getSession){var s=window.rankforgeAuth.getSession();if(s&&(s.userId||s.id||s.email||s.userEmail))return s;}return parse(localStorage.getItem('rankforge-auth-session-v1'),{})||{};}catch(e){return{};}}
+  function normalizePlan(v){v=low(v||'').replace(/\s+/g,'_').replace(/-/g,'_');if(v==='growth'||v==='pro')return'growth';if(v==='starter'||v==='basic')return'starter';return v||'starter';}
+  function selectedPlan(){var params=new URLSearchParams(location.search||'');var started=parse(localStorage.getItem(CHECKOUT_STARTED_KEY),{})||{};return normalizePlan(params.get('plan')||params.get('rf_plan')||started.plan||localStorage.getItem(CHECKOUT_PLAN_KEY)||localStorage.getItem(SELECTED_PLAN_KEY)||'starter');}
   function note(msg,type){var el=document.querySelector('.rf-checkout-note');if(el){el.textContent=msg;el.style.borderColor=type==='error'?'#fecaca':'#bbf7d0';el.style.background=type==='error'?'#fef2f2':'#ecfdf5';}}
-  async function activate(){var s=session();var plan=selectedPlan();if(!plan||plan==='agency_intelligence'){note('Checkout completed. Your plan is being confirmed.','ok');return false;}if(!s||(!s.email&&!s.userEmail)){note('Checkout completed. Log in with the same email to activate your plan.','error');return false;}var userId=clean(s.userId||s.id||s.user_id);var email=clean(s.email||s.userEmail||s.user_email);var key=email+':'+plan;var previous=parse(localStorage.getItem(ACTIVATION_KEY),{});if(previous[key]&&Date.now()-Number(previous[key])<30000){return true;}var l=limits(plan);var payload={action:'checkout_success_activate_subscription',user_id:userId,email:email,user_email:email,plan:plan,current_plan:plan,plan_name:plan,billing_status:'active',subscription_status:'active',base_search_limit:l.baseSearch,base_qualified_lead_limit:l.baseCredits,extra_search_credits:0,extra_qualified_lead_credits:0,effective_search_limit:l.baseSearch,effective_qualified_lead_limit:l.baseCredits,max_leads_per_batch:l.maxBatch,csv_export:l.csv,status:'active',source:'checkout_success',synced_at:new Date().toISOString(),updated_at:new Date().toISOString(),user_agent:navigator.userAgent||''};applyLocal(payload);previous[key]=Date.now();localStorage.setItem(ACTIVATION_KEY,JSON.stringify(previous));try{await post(webhook('rankforge-billing-activation'),payload);note('Payment confirmed. Your '+plan+' plan has been activated.','ok');}catch(e1){try{await post(webhook('rankforge-user-sync'),payload);note('Payment confirmed. Your '+plan+' plan has been activated.','ok');}catch(e2){console.warn('RankForge checkout activation sync failed',e1,e2);note('Payment completed. Local access was updated, but billing sync failed. Refresh Settings in a moment.','error');}}
-    window.dispatchEvent(new CustomEvent('rankforge:user-profile-resolved',{detail:parse(localStorage.getItem('rankforge-user-profile-cache-v1'),{})}));return true;}
-  window.rankforgeActivateCheckoutPlan=activate;
-  function start(){setTimeout(activate,300);setTimeout(activate,1500);setTimeout(activate,4000);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
-  window.addEventListener('rankforge:session-ready',start);
+  function hint(plan){var el=document.querySelector('[data-plan-hint]');if(el)el.textContent='Selected plan: '+(plan==='growth'?'Growth':'Starter');}
+  function paidActive(plan){var p=window.rankforgeUserProfile||parse(localStorage.getItem(PROFILE_KEY),{})||{};var billing=low(p.billing_status);var resolved=normalizePlan(p.plan);return (billing==='active'||billing==='admin_unlimited')&&(resolved===plan||resolved==='admin_unlimited');}
+  async function waitForWebhookAndRedirect(){
+    var s=session();var plan=selectedPlan();hint(plan);
+    localStorage.setItem(SELECTED_PLAN_KEY,plan);localStorage.setItem(CHECKOUT_PLAN_KEY,plan);localStorage.setItem(CHECKOUT_INTENT_KEY,'checkout_success');localStorage.setItem(BILLING_STATUS_KEY,'pending_payment');
+    if(!s||(!s.email&&!s.userEmail)){note('Payment completed. Log in with the same email to open your dashboard.','error');return false;}
+    note('Payment completed. Waiting for Stripe webhook to update your RankForge plan...','ok');
+    var delays=[0,1200,2500,4500,7000];
+    for(var i=0;i<delays.length;i++){
+      if(delays[i])await new Promise(function(resolve){setTimeout(resolve,delays[i]);});
+      if(window.rankforgeResolveEffectiveUserProfile){try{await window.rankforgeResolveEffectiveUserProfile({force:true,reason:'checkout_success'});}catch(e){}}
+      if(paidActive(plan)){note('Your plan is active. Opening dashboard...','ok');setTimeout(function(){window.location.replace('../dashboard/?checkout=success');},700);return true;}
+    }
+    note('Payment completed. Opening dashboard now; billing status will keep syncing from the users sheet.','ok');
+    setTimeout(function(){window.location.replace('../dashboard/?checkout=success');},1300);
+    return false;
+  }
+  window.rankforgeActivateCheckoutPlan=waitForWebhookAndRedirect;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',waitForWebhookAndRedirect);else waitForWebhookAndRedirect();
 })();

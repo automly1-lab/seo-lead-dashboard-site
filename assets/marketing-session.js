@@ -5,6 +5,7 @@
   const BILLING_STATUS_KEY = "rankforge-billing-status-v1";
   const CHECKOUT_INTENT_KEY = "rankforge-post-auth-intent-v1";
   const CHECKOUT_PLAN_KEY = "rankforge-post-auth-plan-v1";
+  const CHECKOUT_STARTED_KEY = "rankforge-checkout-started-v1";
 
   function clean(value) { return String(value == null ? "" : value).trim(); }
   function normalizePlan(value) { const raw = clean(value).toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_"); if (raw === "growth" || raw === "pro") return "growth"; if (raw === "agency" || raw === "agency_intelligence") return "agency_intelligence"; return "starter"; }
@@ -25,18 +26,47 @@
   function getBillingConfig() { return window.RANKFORGE_BILLING || {}; }
   function paymentLinkForPlan(planKey) { const config = getBillingConfig(); if (planKey === "starter") return clean(config.starterPaymentLink); if (planKey === "growth") return clean(config.growthPaymentLink); return ""; }
   function setCheckoutIntent(planKey) { const normalizedPlan = normalizePlan(planKey); localStorage.setItem(SELECTED_PLAN_KEY, normalizedPlan); localStorage.setItem(BILLING_STATUS_KEY, normalizedPlan === "agency_intelligence" ? "waitlist" : "pending_payment"); localStorage.setItem(CHECKOUT_PLAN_KEY, normalizedPlan); localStorage.setItem(CHECKOUT_INTENT_KEY, normalizedPlan === "agency_intelligence" ? "waitlist" : "checkout"); }
+  function markCheckoutStarted(planKey, session) { localStorage.setItem(CHECKOUT_STARTED_KEY, JSON.stringify({ plan: normalizePlan(planKey), email: clean(session && session.email), user_id: clean(session && session.userId), started_at: new Date().toISOString() })); }
+  function checkoutUrl(paymentLink, planKey, session) {
+    try {
+      const url = new URL(paymentLink);
+      if (session && session.email) url.searchParams.set("prefilled_email", session.email);
+      if (session && session.userId) url.searchParams.set("client_reference_id", session.userId);
+      url.searchParams.set("rf_plan", normalizePlan(planKey));
+      return url.toString();
+    } catch {
+      return paymentLink;
+    }
+  }
 
   function bindPricingLinks(session) {
     document.querySelectorAll("[data-plan-key]").forEach(function (node) {
       if (node.dataset.checkoutBound === "true") return;
       node.dataset.checkoutBound = "true";
       node.addEventListener("click", function (event) {
-        const planKey = normalizePlan(node.dataset.planKey); setCheckoutIntent(planKey);
-        if (planKey === "agency_intelligence") { event.preventDefault(); window.location.href = session && session.userId ? urlFromRoot("settings/") : urlFromRoot("signup/?plan=agency_intelligence&intent=waitlist"); return; }
+        const planKey = normalizePlan(node.dataset.planKey);
+        setCheckoutIntent(planKey);
+        if (planKey === "agency_intelligence") {
+          event.preventDefault();
+          window.location.href = session && session.userId ? urlFromRoot("settings/") : urlFromRoot("signup/?plan=agency_intelligence&intent=waitlist");
+          return;
+        }
         const paymentLink = paymentLinkForPlan(planKey);
-        if (session && session.userId && paymentLink) { event.preventDefault(); window.location.href = paymentLink; return; }
-        if (!(session && session.userId)) { event.preventDefault(); window.location.href = urlFromRoot("login/?intent=checkout&plan=" + encodeURIComponent(planKey)); return; }
-        if (!paymentLink) { event.preventDefault(); window.location.href = urlFromRoot("settings/"); }
+        if (session && session.userId && paymentLink) {
+          event.preventDefault();
+          markCheckoutStarted(planKey, session);
+          window.location.href = checkoutUrl(paymentLink, planKey, session);
+          return;
+        }
+        if (!(session && session.userId)) {
+          event.preventDefault();
+          window.location.href = urlFromRoot("login/?intent=checkout&plan=" + encodeURIComponent(planKey));
+          return;
+        }
+        if (!paymentLink) {
+          event.preventDefault();
+          window.location.href = urlFromRoot("settings/");
+        }
       });
     });
   }

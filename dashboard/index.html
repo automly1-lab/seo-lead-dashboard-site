@@ -23,62 +23,25 @@
       <button class="nav admin" data-view="admin">Admin</button>
       <button class="nav" data-view="settings">Settings</button>
     </nav>
-    <div class="usage">
-      <small>Credits Used</small>
-      <strong><span id="creditsUsed">0</span><em id="creditsLimit"> / 0</em></strong>
-      <div class="bar"><i id="creditsBar"></i></div>
-      <button>Upgrade Plan</button>
-    </div>
+    <div class="usage"><small>Credits Used</small><strong><span id="creditsUsed">0</span><em id="creditsLimit"> / 0</em></strong><div class="bar"><i id="creditsBar"></i></div><button>Upgrade Plan</button></div>
     <div class="account"><span>CO</span><div><strong>Crestline Ops</strong><small>Admin</small></div></div>
   </aside>
-
   <main>
-    <header class="top">
-      <input id="search" placeholder="Search business, keyword, city, or domain...">
-      <button>Filters</button>
-      <select id="statusFilter"><option value="all">All Statuses</option><option>Qualified</option><option>Needs Review</option><option>Rejected</option></select>
-      <select><option>Last 30 days</option><option>All time</option></select>
-      <button class="avatar">CO</button>
-    </header>
-
+    <header class="top"><input id="search" placeholder="Search business, keyword, city, or domain..."><button>Filters</button><select id="statusFilter"><option value="all">All Statuses</option><option>Qualified</option><option>Needs Review</option><option>Rejected</option></select><select><option>Last 30 days</option><option>All time</option></select><button class="avatar">CO</button></header>
     <section id="overview" class="view active">
-      <div class="metrics">
-        <article><small>Qualified Leads</small><strong id="mQualified">0</strong><span class="good">Credits spent only here</span></article>
-        <article><small>Needs Review</small><strong id="mReview">0</strong><span class="warn">Free to review</span></article>
-        <article><small>Rejected</small><strong id="mRejected">0</strong><span class="bad">No credit spent</span></article>
-        <article><small>Evidence Coverage</small><strong id="mEvidence">0%</strong><span class="good">Verified signals</span></article>
-        <article><small>Active Batches</small><strong id="mBatches">0</strong><span>Search workflow</span></article>
-      </div>
-
-      <div class="workspace">
-        <section class="panel table-panel">
-          <div class="panel-head">
-            <div><h2>Top Prospects</h2><p>Is this business worth outreach, and can we prove why?</p></div>
-            <div><button class="primary" id="newBatchBtn">New Search Batch</button><button id="exportSelectedBtn">Export Selected</button></div>
-          </div>
-          <div class="segments">
-            <button class="seg active" data-tab="all">All</button><button class="seg" data-tab="Qualified">Qualified</button><button class="seg" data-tab="Needs Review">Needs Review</button><button class="seg" data-tab="Rejected">Rejected</button>
-          </div>
-          <table>
-            <thead><tr><th></th><th>Business</th><th>Location</th><th>SEO Score</th><th>Commercial Fit</th><th>Evidence</th><th>Status</th><th>Added</th></tr></thead>
-            <tbody id="leadRows"></tbody>
-          </table>
-        </section>
-        <aside class="panel detail" id="detail"></aside>
-      </div>
+      <div class="metrics"><article><small>Qualified Leads</small><strong id="mQualified">0</strong><span class="good">Credits spent only here</span></article><article><small>Needs Review</small><strong id="mReview">0</strong><span class="warn">Free to review</span></article><article><small>Rejected</small><strong id="mRejected">0</strong><span class="bad">No credit spent</span></article><article><small>Evidence Coverage</small><strong id="mEvidence">0%</strong><span class="good">Verified signals</span></article><article><small>Active Batches</small><strong id="mBatches">0</strong><span>Search workflow</span></article></div>
+      <div class="workspace"><section class="panel table-panel"><div class="panel-head"><div><h2>Top Prospects</h2><p>Is this business worth outreach, and can we prove why?</p></div><div><button class="primary" id="newBatchBtn">New Search Batch</button><button id="exportSelectedBtn">Export Selected</button></div></div><div class="segments"><button class="seg active" data-tab="all">All</button><button class="seg" data-tab="Qualified">Qualified</button><button class="seg" data-tab="Needs Review">Needs Review</button><button class="seg" data-tab="Rejected">Rejected</button></div><table><thead><tr><th></th><th>Business</th><th>Location</th><th>SEO Score</th><th>Commercial Fit</th><th>Evidence</th><th>Status</th><th>Added</th></tr></thead><tbody id="leadRows"></tbody></table></section><aside class="panel detail" id="detail"></aside></div>
     </section>
-
     <section id="searches" class="view"><div class="title"><h1>Search Batches</h1><p>Create and monitor batches by niche, city, country, and limits.</p><button class="primary" id="newBatchBtn2">Create Batch</button></div><div class="cards" id="batchCards"></div></section>
     <section id="prospects" class="view"><div class="title"><h1>Raw Prospects</h1><p>Discovered businesses before final evidence review.</p></div><div class="panel"><table><thead><tr><th>Business</th><th>Source</th><th>Location</th><th>Domain</th><th>State</th></tr></thead><tbody id="rawRows"></tbody></table></div></section>
     <section id="evidence" class="view"><div class="title"><h1>Evidence Review</h1><p>Review Needs Review leads before qualifying or rejecting them.</p></div><div class="cards" id="reviewCards"></div></section>
     <section id="exports" class="view"><div class="title"><h1>Export Queue</h1><p>Qualified contact-ready opportunities selected for outreach.</p><button class="primary" id="downloadCsv">Download CSV</button></div><div class="panel"><table><thead><tr><th>Business</th><th>Email</th><th>Phone</th><th>Score</th><th>Outreach Angle</th><th></th></tr></thead><tbody id="exportRows"></tbody></table></div></section>
-    <section id="final" class="view"><div class="title"><h1>Final Leads</h1><p>Final classified leads generated from evidence review.</p></div><div class="cards" id="finalCards"></div></section>
+    <section id="final" class="view"><div class="title"><div><h1>Final Leads CRM</h1><p>Manage qualified opportunities after evidence review. Track owner, pipeline stage, next action, notes, and export readiness.</p></div><div><button class="primary" id="finalExportBtn">Export CRM CSV</button></div></div><div class="crm-metrics"><article><small>Qualified Pipeline</small><strong id="crmQualified">0</strong><span>ready for outreach</span></article><article><small>Follow-ups Due</small><strong id="crmFollowups">0</strong><span>next actions</span></article><article><small>Avg SEO Score</small><strong id="crmAvgSeo">0</strong><span>qualified leads</span></article><article><small>Export Ready</small><strong id="crmExportReady">0</strong><span>selected records</span></article></div><div class="crm-layout"><section class="panel crm-table-panel"><div class="panel-head"><div><h2>Opportunity Pipeline</h2><p>CRM-style workspace for evidence-backed outreach.</p></div><div><select id="crmStageFilter"><option value="all">All stages</option><option>New</option><option>Reviewed</option><option>Contacted</option><option>Follow-up</option><option>Won</option></select></div></div><table class="crm-table"><thead><tr><th>Business</th><th>Stage</th><th>Owner</th><th>Next Action</th><th>Priority</th><th>Last Note</th></tr></thead><tbody id="crmRows"></tbody></table></section><aside class="panel crm-detail" id="crmDetail"></aside></div></section>
     <section id="activity" class="view"><div class="title"><h1>Activity Logs</h1><p>Workspace changes, classifications, and credit events.</p></div><div id="activityList"></div></section>
     <section id="admin" class="view"><div class="title"><h1>Admin Console</h1><p>Visible for automly1@gmail.com. Manage users, credits, and plans.</p></div><div class="panel"><table><thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Batches</th><th>Lead Credits</th><th>Actions</th></tr></thead><tbody id="adminRows"></tbody></table></div></section>
     <section id="settings" class="view"><div class="title"><h1>Settings</h1><p>Workspace profile and evidence policy.</p></div><div class="settings"><div class="panel form"><h3>Workspace</h3><label>Agency Name<input value="Crestline Ops"></label><label>Admin Email<input value="automly1@gmail.com"></label><button class="primary">Save</button></div><div class="panel form"><h3>Evidence Policy</h3><label><input type="checkbox" checked> No evidence = no strong SEO claim</label><label><input type="checkbox" checked> Only Qualified leads consume credits</label><label><input type="checkbox" checked> Needs Review requires human review</label></div></div></section>
   </main>
 </div>
-
 <div class="modal" id="modal"><div class="modal-card"><button class="close" id="closeModal">×</button><h2>Create Search Batch</h2><p>Blocked if batch allowance or qualified lead credits are exhausted.</p><div class="form-grid"><label>Niche<input id="niche" placeholder="landscaping"></label><label>City<input id="city" placeholder="Austin"></label><label>Country<input id="country" value="US"></label><label>Limit<input id="limit" type="number" value="50"></label></div><button class="primary" id="createBatch">Start Batch</button></div></div>
 <script src="./app.js"></script>
 </body>

@@ -8,151 +8,17 @@
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://automly1-lab.github.io/seo-lead-dashboard-site/leads/">
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
-  <link rel="manifest" href="../site.webmanifest">
-  <meta name="theme-color" content="#0E1726">
-  <meta property="og:site_name" content="RankForge by CrestlineOps">
-  <meta property="og:title" content="RankForge Prospects">
-  <meta property="og:description" content="Private RankForge prospect workspace.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://automly1-lab.github.io/seo-lead-dashboard-site/leads/">
-  <meta property="og:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <meta property="og:image:secure_url" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="RankForge evidence-based SEO lead intelligence">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="RankForge Prospects">
-  <meta name="twitter:description" content="Private RankForge prospect workspace.">
-  <meta name="twitter:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/app-shell.css?v=app-shell-1">
-  <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-8">
-  <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <link rel="stylesheet" href="../assets/prospects-premium.css?v=prospects-premium-7">
-  <link rel="stylesheet" href="../assets/prospects-search-selector.css?v=search-selector-1">
-  <link rel="stylesheet" href="../assets/search-processing-ux.css?v=search-processing-1">
-  <link rel="stylesheet" href="../assets/site-type-polish.css?v=site-type-1">
+  <link rel="stylesheet" href="../assets/dashboard.css"><link rel="stylesheet" href="../assets/app-shell.css?v=app-shell-1"><link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-8"><link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1"><link rel="stylesheet" href="../assets/prospects-premium.css?v=prospects-premium-7"><link rel="stylesheet" href="../assets/prospects-search-selector.css?v=search-selector-1"><link rel="stylesheet" href="../assets/search-processing-ux.css?v=search-processing-2"><link rel="stylesheet" href="../assets/site-type-polish.css?v=site-type-1">
 </head>
 <body class="dashboard-body app-page-leads" data-auth="protected" data-page="leads">
-  <div class="dashboard-shell">
-    <aside class="sidebar">
-      <a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
-      <nav class="sidebar-nav">
-        <a href="../dashboard/">Dashboard</a>
-        <a href="../lists/">Searches</a>
-        <a class="active" href="../leads/">Prospects</a>
-        <a href="../lead-detail/">Lead Detail</a>
-        <a href="../opportunities/">Opportunities</a>
-        <a href="../competitors/">Competitors</a>
-        <a href="../settings/">Settings</a>
-      </nav>
-    </aside>
-
-    <main class="dashboard-main rf-prospects-main">
-      <header class="rf-prospects-header">
-        <div>
-          <p class="rf-eyebrow">Prospect Review</p>
-          <h1>Prospects</h1>
-          <p>Review qualified SEO opportunities, evidence status, and contact readiness.</p>
-        </div>
-        <div class="rf-header-actions">
-          <span class="rf-badge rf-badge-plan" id="rfProspectPlanBadge">Plan loading</span>
-          <span class="rf-badge rf-badge-credit" id="rfProspectCreditBadge">Credits loading</span>
-          <a class="button primary" href="../dashboard/#rfNewSearchCard">New Search</a>
-          <button class="button ghost" type="button" id="rfExportCsvButton">Export CSV</button>
-        </div>
-      </header>
-
-      <section class="rf-prospect-kpis">
-        <article class="rf-kpi-card accent-success"><span>Qualified</span><strong id="rfKpiQualified">—</strong><p>Evidence-backed and contact-ready</p></article>
-        <article class="rf-kpi-card accent-warning"><span>Needs Review</span><strong id="rfKpiReview">—</strong><p>Partial or missing evidence</p></article>
-        <article class="rf-kpi-card accent-primary"><span>Verified Evidence</span><strong id="rfKpiEvidence">—</strong><p>Prospects with crawl-backed SEO signals</p></article>
-        <article class="rf-kpi-card accent-purple"><span>Contact Ready</span><strong id="rfKpiContact">—</strong><p>Phone, email, or contact path found</p></article>
-      </section>
-
-      <section class="rf-filter-card">
-        <div class="rf-filter-search"><label><span>Search</span><input id="rfProspectSearch" type="search" placeholder="Search business, domain, city, or niche…"></label></div>
-        <div class="rf-filter-grid">
-          <label><span>Status</span><select id="rfStatusFilter"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review">Needs Review</option></select></label>
-          <label><span>Evidence</span><select id="rfEvidenceFilter"><option value="all">All evidence</option><option value="verified">Verified evidence</option><option value="partial">Partial evidence</option><option value="none">No verified evidence</option><option value="failed">Crawl failed</option></select></label>
-          <label><span>Contact</span><select id="rfContactFilter"><option value="all">Any contact</option><option value="ready">Contact-ready</option><option value="phone">Phone found</option><option value="email">Email found</option><option value="page">Contact page found</option><option value="missing">Needs enrichment</option></select></label>
-          <label><span>SEO Need</span><select id="rfSeoNeedFilter"><option value="all">Any score</option><option value="high">High SEO need</option><option value="medium">Medium SEO need</option><option value="low">Low SEO need</option></select></label>
-          <label><span>Search Batch</span><select id="rfBatchFilter"><option value="all">All searches</option></select></label>
-          <label><span>Sort</span><select id="rfSortFilter"><option value="best">Best opportunities first</option><option value="seo">Highest SEO need</option><option value="signals">Most evidence signals</option><option value="contact">Contact-ready first</option><option value="newest">Newest first</option></select></label>
-          <div class="rf-view-toggle"><button type="button" class="active" data-view="table">Table</button><button type="button" data-view="cards">Cards</button></div>
-        </div>
-      </section>
-
-      <section class="rf-batch-context" id="rfBatchContext">Showing all visible prospects.</section>
-
-      <section class="rf-prospects-panel">
-        <div class="rf-card-head">
-          <div><p class="rf-eyebrow">Prospect Table</p><h2>Best opportunities first</h2><p>Qualified leads require verified evidence, 3+ signals, and a usable contact path.</p></div>
-        </div>
-        <div class="rf-table-wrap" id="rfTableWrap">
-          <table class="rf-prospects-table" id="rfProspectsTable">
-            <thead><tr><th><input type="checkbox" id="rfSelectAll"></th><th>Business</th><th>Decision</th><th>Evidence</th><th>SEO Need</th><th>Contact</th><th>Search Context</th><th>Actions</th></tr></thead>
-            <tbody><tr><td colspan="8"><div class="rf-table-loading">Loading prospects…</div></td></tr></tbody>
-          </table>
-        </div>
-        <div class="rf-card-grid" id="rfProspectCards" hidden></div>
-      </section>
-
-      <section class="rf-empty-state" id="rfProspectEmpty" hidden>
-        <div class="rf-empty-mark">RF</div>
-        <h2>No prospects yet</h2>
-        <p>Start a search batch to find local businesses, verify SEO evidence, and identify contact-ready opportunities.</p>
-        <div class="rf-empty-actions"><a class="button primary" href="../dashboard/#rfNewSearchCard">Start New Search</a><a class="button ghost" href="../dashboard/">View dashboard</a></div>
-      </section>
-
-      <section class="rf-bulk-bar" id="rfBulkBar" hidden>
-        <strong><span id="rfBulkCount">0</span> prospects selected</strong>
-        <button class="button primary" type="button" id="rfBulkExport">Export selected</button>
-        <button class="button ghost" type="button" id="rfBulkReview">Mark Needs Review</button>
-        <button class="button ghost rf-danger-action" type="button" id="rfBulkReject">Reject selected</button>
-        <button class="button ghost" type="button" id="rfBulkClear">Clear selection</button>
-      </section>
-
-      <section class="rf-admin-diagnostics" id="rfAdminDiagnostics" hidden>
-        <details>
-          <summary>Prospect Diagnostics</summary>
-          <div class="rf-admin-metrics" id="rfAdminMetrics"></div>
-          <div class="rf-admin-warning" id="rfAdminWarning" hidden></div>
-          <div class="rf-table-wrap"><table class="rf-prospects-table rf-debug-table" id="rfAdminTable"><thead><tr><th>Lead</th><th>Status</th><th>Crawl source</th><th>HTML bytes</th><th>Text words</th><th>Issues</th><th>Signals</th><th>Claims verified</th><th>Credit counted</th></tr></thead><tbody></tbody></table></div>
-        </details>
-      </section>
-
-      <div class="rf-hidden-legacy" aria-hidden="true">
-        <section class="workspace-strip"><strong id="workspaceUserBadge"></strong><strong id="workspaceDataSource"></strong><small id="workspaceLastSync"></small><strong id="workspaceSelectedListHealth"></strong><small id="workspaceSelectedListMeta"></small></section>
-        <strong id="visibleLeadCount">0 leads</strong><strong id="activeLeadSummary"></strong>
-        <select id="qualificationFilter"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review_needed">Needs Review</option></select>
-        <input id="scoreFilter" type="range" min="0" max="100" value="0"><span id="scoreFilterValue">0</span><input id="contactReadyFilter" type="checkbox"><input id="paidAdsFilter" type="checkbox">
-        <table id="leadsTable"><tbody></tbody></table>
-        <span id="rfQueueQualified">0</span><span id="rfQueueReview">0</span><span id="rfQueueContact">0</span><span id="rfQueueVisible">0</span>
-        <span id="exportTargetList"></span><span id="exportTargetListMirror"></span><span id="exportTargetMeta"></span><span id="exportStatus"></span>
-      </div>
-    </main>
-  </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
-<script src="../assets/auth.js?v=user-isolation-1"></script>
-<script src="../assets/user-plan-resolver.js?v=effective-users-sheet-8-entitlement"></script>
-<script src="../assets/app-plan-stabilizer.js?v=stable-plan-2"></script>
-<script src="../assets/user-sync.js?v=no-refresh-loop-2"></script>
-<script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
-<script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
-<script src="../assets/export-professional.js?v=professional-export-3"></script>
-<script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
-<script src="../assets/app-polish.js?v=final-intelligence-8"></script>
-<script src="../assets/auto-sync.js?v=auto-sync-2-stable"></script>
-<script src="../assets/search-processing-state.js?v=search-processing-state-1"></script>
-<script src="../assets/prospects-premium.js?v=prospects-premium-7"></script>
-<script src="../assets/prospects-search-selector.js?v=search-selector-1"></script>
-<script src="../assets/prospects-decision-fix.js?v=prospects-decision-fix-2"></script>
-<script src="../assets/prospects-decision-force.js?v=prospects-decision-force-1"></script>
-<script src="../assets/prospects-open-fix.js?v=prospects-open-fix-1"></script>
-<script src="../assets/mvp-credit-system.js?v=shared-credit-prospects-1"></script>
-<script src="../assets/search-processing-ux.js?v=search-processing-1"></script>
-</body>
-</html>
+  <div class="dashboard-shell"><aside class="sidebar"><a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a><nav class="sidebar-nav"><a href="../dashboard/">Dashboard</a><a href="../lists/">Searches</a><a class="active" href="../leads/">Prospects</a><a href="../lead-detail/">Lead Detail</a><a href="../opportunities/">Opportunities</a><a href="../competitors/">Competitors</a><a href="../settings/">Settings</a></nav></aside>
+    <main class="dashboard-main rf-prospects-main"><header class="rf-prospects-header"><div><p class="rf-eyebrow">Prospect Review</p><h1>Prospects</h1><p>Review qualified SEO opportunities, evidence status, and contact readiness.</p></div><div class="rf-header-actions"><span class="rf-badge rf-badge-plan" id="rfProspectPlanBadge">Plan loading</span><span class="rf-badge rf-badge-credit" id="rfProspectCreditBadge">Credits loading</span><a class="button primary" href="../dashboard/#rfNewSearchCard">New Search</a><button class="button ghost" type="button" id="rfExportCsvButton">Export CSV</button></div></header>
+      <section class="rf-prospect-kpis"><article class="rf-kpi-card accent-success"><span>Qualified</span><strong id="rfKpiQualified">—</strong><p>Evidence-backed and contact-ready</p></article><article class="rf-kpi-card accent-warning"><span>Needs Review</span><strong id="rfKpiReview">—</strong><p>Partial or missing evidence</p></article><article class="rf-kpi-card accent-primary"><span>Verified Evidence</span><strong id="rfKpiEvidence">—</strong><p>Prospects with crawl-backed SEO signals</p></article><article class="rf-kpi-card accent-purple"><span>Contact Ready</span><strong id="rfKpiContact">—</strong><p>Phone, email, or contact path found</p></article></section>
+      <section class="rf-filter-card"><div class="rf-filter-search"><label><span>Search</span><input id="rfProspectSearch" type="search" placeholder="Search business, domain, city, or niche…"></label></div><div class="rf-filter-grid"><label><span>Status</span><select id="rfStatusFilter"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review">Needs Review</option></select></label><label><span>Evidence</span><select id="rfEvidenceFilter"><option value="all">All evidence</option><option value="verified">Verified evidence</option><option value="partial">Partial evidence</option><option value="none">No verified evidence</option><option value="failed">Crawl failed</option></select></label><label><span>Contact</span><select id="rfContactFilter"><option value="all">Any contact</option><option value="ready">Contact-ready</option><option value="phone">Phone found</option><option value="email">Email found</option><option value="page">Contact page found</option><option value="missing">Needs enrichment</option></select></label><label><span>SEO Need</span><select id="rfSeoNeedFilter"><option value="all">Any score</option><option value="high">High SEO need</option><option value="medium">Medium SEO need</option><option value="low">Low SEO need</option></select></label><label><span>Search Batch</span><select id="rfBatchFilter"><option value="all">All searches</option></select></label><label><span>Sort</span><select id="rfSortFilter"><option value="best">Best opportunities first</option><option value="seo">Highest SEO need</option><option value="signals">Most evidence signals</option><option value="contact">Contact-ready first</option><option value="newest">Newest first</option></select></label><div class="rf-view-toggle"><button type="button" class="active" data-view="table">Table</button><button type="button" data-view="cards">Cards</button></div></div></section>
+      <section class="rf-batch-context" id="rfBatchContext">Showing all visible prospects.</section><section class="rf-prospects-panel"><div class="rf-card-head"><div><p class="rf-eyebrow">Prospect Table</p><h2>Best opportunities first</h2><p>Qualified leads require verified evidence, 3+ signals, and a usable contact path.</p></div></div><div class="rf-table-wrap" id="rfTableWrap"><table class="rf-prospects-table" id="rfProspectsTable"><thead><tr><th><input type="checkbox" id="rfSelectAll"></th><th>Business</th><th>Decision</th><th>Evidence</th><th>SEO Need</th><th>Contact</th><th>Search Context</th><th>Actions</th></tr></thead><tbody><tr><td colspan="8"><div class="rf-table-loading">Loading prospects…</div></td></tr></tbody></table></div><div class="rf-card-grid" id="rfProspectCards" hidden></div></section>
+      <section class="rf-empty-state" id="rfProspectEmpty" hidden><div class="rf-empty-mark">RF</div><h2>No prospects yet</h2><p>Start a search batch to find local businesses, verify SEO evidence, and identify contact-ready opportunities.</p><div class="rf-empty-actions"><a class="button primary" href="../dashboard/#rfNewSearchCard">Start New Search</a><a class="button ghost" href="../dashboard/">View dashboard</a></div></section><section class="rf-bulk-bar" id="rfBulkBar" hidden><strong><span id="rfBulkCount">0</span> prospects selected</strong><button class="button primary" type="button" id="rfBulkExport">Export selected</button><button class="button ghost" type="button" id="rfBulkReview">Mark Needs Review</button><button class="button ghost rf-danger-action" type="button" id="rfBulkReject">Reject selected</button><button class="button ghost" type="button" id="rfBulkClear">Clear selection</button></section>
+      <section class="rf-admin-diagnostics" id="rfAdminDiagnostics" hidden><details><summary>Prospect Diagnostics</summary><div class="rf-admin-metrics" id="rfAdminMetrics"></div><div class="rf-admin-warning" id="rfAdminWarning" hidden></div><div class="rf-table-wrap"><table class="rf-prospects-table rf-debug-table" id="rfAdminTable"><thead><tr><th>Lead</th><th>Status</th><th>Crawl source</th><th>HTML bytes</th><th>Text words</th><th>Issues</th><th>Signals</th><th>Claims verified</th><th>Credit counted</th></tr></thead><tbody></tbody></table></div></details></section>
+      <div class="rf-hidden-legacy" aria-hidden="true"><section class="workspace-strip"><strong id="workspaceUserBadge"></strong><strong id="workspaceDataSource"></strong><small id="workspaceLastSync"></small><strong id="workspaceSelectedListHealth"></strong><small id="workspaceSelectedListMeta"></small></section><strong id="visibleLeadCount">0 leads</strong><strong id="activeLeadSummary"></strong><select id="qualificationFilter"><option value="all">All visible</option><option value="qualified">Qualified</option><option value="review_needed">Needs Review</option></select><input id="scoreFilter" type="range" min="0" max="100" value="0"><span id="scoreFilterValue">0</span><input id="contactReadyFilter" type="checkbox"><input id="paidAdsFilter" type="checkbox"><table id="leadsTable"><tbody></tbody></table><span id="rfQueueQualified">0</span><span id="rfQueueReview">0</span><span id="rfQueueContact">0</span><span id="rfQueueVisible">0</span><span id="exportTargetList"></span><span id="exportTargetListMirror"></span><span id="exportTargetMeta"></span><span id="exportStatus"></span></div>
+    </main></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../assets/supabase-config.js?v=supabase-auth-2"></script><script src="../assets/auth.js?v=user-isolation-1"></script><script src="../assets/user-plan-resolver.js?v=user-current-state-v1"></script><script src="../assets/app-plan-stabilizer.js?v=current-state-remaining-1"></script><script src="../assets/user-sync.js?v=no-refresh-loop-2"></script><script src="../assets/app.js?v=selected-lead-true-fix-1"></script><script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script><script src="../assets/export-professional.js?v=professional-export-3"></script><script src="../assets/brand-consistency.js?v=brand-consistency-2"></script><script src="../assets/app-polish.js?v=final-intelligence-8"></script><script src="../assets/auto-sync.js?v=auto-sync-2-stable"></script><script src="../assets/search-processing-state.js?v=processing-finished-2"></script><script src="../assets/prospects-premium.js?v=prospects-premium-7"></script><script src="../assets/prospects-search-selector.js?v=search-selector-1"></script><script src="../assets/prospects-decision-fix.js?v=prospects-decision-fix-2"></script><script src="../assets/prospects-decision-force.js?v=prospects-decision-force-1"></script><script src="../assets/prospects-open-fix.js?v=prospects-open-fix-1"></script><script src="../assets/mvp-credit-system.js?v=current-state-remaining-1"></script><script src="../assets/search-processing-ux.js?v=processing-hide-results-2"></script>
+</body></html>

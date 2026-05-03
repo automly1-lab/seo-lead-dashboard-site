@@ -7,7 +7,7 @@
   var scheduled = false;
 
   function text(node){return String((node&&node.textContent)||'').replace(/\s+/g,' ').trim();}
-  function verified(node){var t=text(node);return /Verified/i.test(t)&&/(signal|evidence)/i.test(t);}
+  function verified(node){var t=text(node);return /Verified/i.test(t)&&(/qualified|signal|evidence/i.test(t));}
   function hasDirectContact(node){var t=text(node);return /(Phone|Email)/i.test(t)&&!/Needs enrichment|missing|not found/i.test(t);}
   function seoNeed(cell){
     var t=text(cell);
@@ -57,8 +57,8 @@
       var need=seoNeed(seo);
       var directContact=hasDirectContact(contact);
       if(!directContact){changed=makeRejected(decision)||changed;return;}
-      if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(decision,'SEO need below qualified threshold')||changed;return;}
       if(verified(evidence) && directContact){changed=makeQualified(decision)||changed;return;}
+      if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(decision,'SEO need below qualified threshold')||changed;return;}
       changed=makeReview(decision,'Needs manual review')||changed;
     });
 
@@ -70,8 +70,8 @@
       if(/Good need/i.test(cardText)) need=Math.max(need,65);
       var directContact=/(Phone|Email)/i.test(cardText)&&!/Needs enrichment|missing|not found/i.test(cardText);
       if(!directContact){changed=makeRejected(card)||changed;return;}
-      if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(card,'SEO need below qualified threshold')||changed;return;}
       if(verified(card) && directContact){changed=makeQualified(card)||changed;return;}
+      if(need < MIN_SEO_NEED_FOR_QUALIFIED){changed=makeReview(card,'SEO need below qualified threshold')||changed;return;}
       changed=makeReview(card,'Needs manual review')||changed;
     });
 

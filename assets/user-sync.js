@@ -39,13 +39,26 @@
     localStorage.setItem(key,String(now));
     return true;
   }
+  async function waitForProfile(maxMs){
+    var started=Date.now();
+    return new Promise(function(resolve){
+      (function tick(){
+        var p=profile();
+        if(p&&p.resolved_at)return resolve(p);
+        if(Date.now()-started>=maxMs)return resolve(p||{});
+        setTimeout(tick,200);
+      })();
+    });
+  }
   async function sync(force){
     var s=session();
     if(!s||!s.userId||!s.email)return;
-    if(window.rankforgeResolveEffectiveUserProfile){
-      try{await window.rankforgeResolveEffectiveUserProfile({force:true,session:s});}catch(e){}
-    }
     if(!force&&!shouldSend(s.userId))return;
+
+    // Do not force profile resolution here. Forced resolver calls caused dashboard/profile redraws
+    // and appended sync rows during page load. The dedicated resolver owns profile refresh.
+    await waitForProfile(3500);
+
     var p=profile();
     var email=lower(s.email||s.userEmail);
     var managed=String((p&&p.admin_managed)||localStorage.getItem('rankforge-admin-plan-managed-v1')||'').toLowerCase()==='true';
@@ -60,7 +73,6 @@
     }else if(managed){
       billing=billing||'active';
     }else if(paidManaged){
-      // Stripe/checkout/billing rows already proved paid access. Do not emit a free downgrade row.
       if(selected==='free')selected=normalizePlan(p.plan||'free');
       billing=billingIsActive(billing)?billing:'active';
     }else if(!billingIsActive(billing)){
@@ -94,7 +106,6 @@
     }
   }
   window.rankforgeUserSync={sync:sync};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){sync(false);},1600);});
-  else setTimeout(function(){sync(false);},1600);
-  setTimeout(function(){sync(false);},4200);
+  function boot(){setTimeout(function(){sync(false);},5000);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

@@ -1,0 +1,22 @@
+(function(){
+  'use strict';
+  var PROFILE_KEY='rankforge-user-profile-cache-v1';
+  var ADMIN_EMAIL='automly1@gmail.com';
+  function clean(v){return String(v==null?'':v).trim();}
+  function low(v){return clean(v).toLowerCase();}
+  function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
+  function session(){try{if(window.rankforgeAuth&&window.rankforgeAuth.getSession)return window.rankforgeAuth.getSession();return parse(localStorage.getItem('rankforge-auth-session-v1'),{})||{};}catch(e){return{};}}
+  function profile(){return window.rankforgeUserProfile||parse(localStorage.getItem(PROFILE_KEY),{})||{};}
+  function normPlan(v){v=low(v).replace(/\s+/g,'_').replace(/-/g,'_');if(/admin|unlimited/.test(v))return'admin_unlimited';if(/stack|bundle|combined|multi/.test(v))return'stacked';if(v==='growth'||v==='pro')return'growth';if(v==='starter'||v==='basic'||v==='start')return'starter';return'free';}
+  function normBilling(v){v=low(v).replace(/\s+/g,'_').replace(/-/g,'_');if(/admin|unlimited/.test(v))return'admin_unlimited';if(['active','paid','trialing','complete','checkout_complete','subscription_active'].indexOf(v)>=0)return'active';if(/pending|incomplete|unpaid|past_due/.test(v))return'pending';return v||'free';}
+  function finite(v,f){var raw=clean(v);if(/^(infinity|unlimited|∞)$/i.test(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):f;}
+  function defaults(plan){if(plan==='admin_unlimited')return{search:Infinity,credits:Infinity,batch:50,csv:true,name:'Admin Unlimited'};if(plan==='growth')return{search:150,credits:250,batch:50,csv:true,name:'Growth'};if(plan==='starter')return{search:50,credits:50,batch:25,csv:true,name:'Starter'};if(plan==='stacked')return{search:0,credits:0,batch:50,csv:true,name:'Stacked Paid'};return{search:2,credits:10,batch:10,csv:false,name:'Free'};}
+  function effective(){var s=session(),p=profile(),email=low((p&&p.email)||(s&&s.email)||(s&&s.userEmail));var plan=normPlan(p&&p.plan);var billing=normBilling(p&&p.billing_status);if(email===ADMIN_EMAIL){plan='admin_unlimited';billing='admin_unlimited';}if(!p||!p.resolved_at){return{ready:false,plan:'loading',name:'Plan loading',billing_status:'loading',searchLimit:null,creditLimit:null,maxBatch:null,csv:false,isAdmin:false};}if(billing!=='active'&&billing!=='admin_unlimited')plan='free';var d=defaults(plan);return{ready:true,plan:plan,name:d.name,billing_status:billing,searchLimit:finite(p.monthly_search_limit,d.search),creditLimit:finite(p.monthly_qualified_lead_credit_limit,d.credits),maxBatch:finite(p.max_leads_per_batch,d.batch),csv:p.csv_export!==undefined?(p.csv_export===true||String(p.csv_export).toLowerCase()==='true'):d.csv,isAdmin:plan==='admin_unlimited'};}
+  function fmtLimit(v,suffix){if(v===Infinity)return'Unlimited '+(suffix||'');if(v==null)return'Loading';return String(v)+(suffix?' '+suffix:'');}
+  function render(){var e=effective();window.rankforgeEffectivePlan=e;var planText=e.ready?e.name+' Plan':'Plan loading';var creditText=e.ready?(e.creditLimit===Infinity?'Unlimited qualified lead credits':e.creditLimit+' credits remaining'):'Credits loading';[['rfPlanBadge',planText],['rfProspectPlanBadge',planText],['rfSearchPlanBadge',planText],['rfCreditBadge',creditText],['rfProspectCreditBadge',creditText],['rfSearchUsageBadge',e.ready?(e.searchLimit===Infinity?'Unlimited batches':fmtLimit(e.searchLimit,'batches')):'Batch usage loading']].forEach(function(pair){var el=document.getElementById(pair[0]);if(el)el.textContent=pair[1];});var sidePlan=document.querySelector('.sidebar [data-plan-badge], .sidebar .plan-badge, .sidebar .user-plan');if(sidePlan&&e.ready)sidePlan.textContent=e.name;}
+  window.rankforgeGetEffectivePlan=effective;
+  window.rankforgeRenderStablePlan=render;
+  function start(){render();if(window.rankforgeResolveEffectiveUserProfile){window.rankforgeResolveEffectiveUserProfile({force:true,reason:'app_plan_stabilizer'}).then(render).catch(render);}setTimeout(render,800);setTimeout(render,2200);}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+  window.addEventListener('rankforge:user-profile-resolved',render);
+})();

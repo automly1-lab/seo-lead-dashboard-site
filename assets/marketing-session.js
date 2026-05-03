@@ -9,13 +9,14 @@
 
   function clean(value) { return String(value == null ? "" : value).trim(); }
   function normalizePlan(value) { const raw = clean(value).toLowerCase().replace(/\s+/g, "_").replace(/-/g, "_"); if (raw === "growth" || raw === "pro") return "growth"; if (raw === "agency" || raw === "agency_intelligence") return "agency_intelligence"; return "starter"; }
-  function isNested() { return /\/(how-it-works|pricing|status|privacy|terms|refund-policy|login|signup|checkout-success|checkout-cancelled|checkout-pending)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || ""); }
+  function isNested() { return /\/(product|features|resources|company|contact|pricing|status|privacy|terms|refund-policy|login|signup|checkout-success|checkout-cancelled|checkout-pending)\//.test(location.pathname || "") || /\/404\.html$/.test(location.pathname || ""); }
   function rootPrefix() { return isNested() ? "../" : ""; }
   function urlFromRoot(path) { return rootPrefix() + path; }
+  function usesRefreshedMarketingShell() { return !!(document.querySelector('link[href*="marketing-refresh.css"]') || document.querySelector('.page-shell > header.nav')); }
 
   function loadScriptOnce(src, marker) { if (document.querySelector('script[data-' + marker + '="true"]')) return; const script = document.createElement("script"); script.src = src; script.defer = true; script.setAttribute('data-' + marker, 'true'); document.body.appendChild(script); }
   function loadStylesheetOnce(href, marker) { if (document.querySelector('link[data-' + marker + '="true"]')) return; const link = document.createElement("link"); link.rel = "stylesheet"; link.href = href; link.setAttribute('data-' + marker, 'true'); document.head.appendChild(link); }
-  function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-5"), "rf-marketing-shell-css"); loadStylesheetOnce(urlFromRoot("assets/hero-title-normalize.css?v=hero-title-1"), "rf-hero-title-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-5"), "rf-marketing-shell"); }
+  function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-6"), "rf-marketing-shell-css"); loadStylesheetOnce(urlFromRoot("assets/hero-title-normalize.css?v=hero-title-1"), "rf-hero-title-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-6"), "rf-marketing-shell"); }
   function loadPageReset() { loadScriptOnce(urlFromRoot("assets/page-reset.js?v=page-reset-1"), "rf-page-reset"); }
   function loadSeo() { loadScriptOnce(urlFromRoot("assets/seo.js?v=seo-1"), "rf-seo"); }
   function loadCopyPositioning() { loadScriptOnce(urlFromRoot("assets/copy-positioning.js?v=copy-positioning-1"), "rf-copy-positioning"); loadScriptOnce(urlFromRoot("assets/copy-final-cleanup.js?v=copy-final-2"), "rf-copy-final-cleanup"); }
@@ -71,6 +72,18 @@
     });
   }
 
-  async function boot() { loadPageReset(); loadSeo(); loadMarketingShell(); loadCopyPositioning(); loadPricingCreditCopy(); const session = await refreshSession(); bindPricingLinks(session); setTimeout(function(){ window.dispatchEvent(new CustomEvent('rankforge:session-ready', { detail: session || null })); }, 0); }
+  async function boot() {
+    const refreshedMarketing = usesRefreshedMarketingShell();
+    if (!refreshedMarketing) {
+      loadPageReset();
+      loadMarketingShell();
+      loadCopyPositioning();
+      loadPricingCreditCopy();
+    }
+    loadSeo();
+    const session = await refreshSession();
+    bindPricingLinks(session);
+    setTimeout(function(){ window.dispatchEvent(new CustomEvent('rankforge:session-ready', { detail: session || null })); }, 0);
+  }
   boot();
 })();

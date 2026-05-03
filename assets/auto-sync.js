@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var AUTO_SYNC_VERSION = "auto-sync-1";
+  var AUTO_SYNC_VERSION = "auto-sync-2-stable";
   var APP_PAGES = ["dashboard", "lists", "leads", "lead-detail", "settings"];
   var pageName = document.body && document.body.dataset ? document.body.dataset.page : "";
   var shouldRun = APP_PAGES.indexOf(pageName) >= 0;
@@ -9,10 +9,9 @@
 
   var isSyncing = false;
   var lastSyncAt = 0;
-  var MIN_GAP_MS = 12000;
-  var NORMAL_POLL_MS = 60000;
-  var ACTIVE_POLL_MS = 15000;
-  var ACTIVE_POLL_DURATION_MS = 6 * 60 * 1000;
+  var MIN_GAP_MS = 45000;
+  var ACTIVE_POLL_MS = 30000;
+  var ACTIVE_POLL_DURATION_MS = 3 * 60 * 1000;
   var activePollingUntil = 0;
 
   function status(message) {
@@ -31,7 +30,7 @@
     isSyncing = true;
     lastSyncAt = now;
     try {
-      if (reason === "auto") status("Auto syncing sheets...");
+      if (reason === "manual") status("Syncing sheets...");
       await window.rankforgeApp.sync();
       return true;
     } catch (error) {
@@ -44,7 +43,7 @@
 
   function startActivePolling() {
     activePollingUntil = Date.now() + ACTIVE_POLL_DURATION_MS;
-    status("Search sent. Auto-refreshing results...");
+    status("Search sent. Refreshing results in the background...");
   }
 
   function wrapCreateSearch() {
@@ -55,9 +54,8 @@
     var wrapped = async function () {
       var result = await originalCreateSearch.apply(this, arguments);
       startActivePolling();
-      window.setTimeout(function () { runSync("after-create"); }, 8000);
-      window.setTimeout(function () { runSync("after-create"); }, 25000);
-      window.setTimeout(function () { runSync("after-create"); }, 60000);
+      window.setTimeout(function () { runSync("after-create"); }, 12000);
+      window.setTimeout(function () { runSync("after-create"); }, 45000);
       return result;
     };
     wrapped.__rankforgeAutoSyncWrapped = true;
@@ -67,20 +65,15 @@
 
   function boot() {
     wrapCreateSearch();
-    window.setTimeout(function () { runSync("auto"); }, 900);
 
+    // Do not auto-sync immediately on page load. The initial app bootstrap already reads data.
+    // Extra load-time sync calls were causing multiple redraws and inconsistent intermediate states.
     window.setInterval(function () {
-      var active = Date.now() < activePollingUntil;
-      if (!active) return;
-      runSync("active-poll");
+      if (Date.now() < activePollingUntil) runSync("active-poll");
     }, ACTIVE_POLL_MS);
 
-    window.setInterval(function () {
-      runSync("normal-poll");
-    }, NORMAL_POLL_MS);
-
     document.addEventListener("visibilitychange", function () {
-      if (!document.hidden) runSync("visible");
+      if (!document.hidden && Date.now() < activePollingUntil) runSync("visible-active");
     });
 
     window.rankforgeAutoSync = {

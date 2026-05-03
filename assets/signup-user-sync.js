@@ -2,15 +2,17 @@
   var STORAGE_KEY = 'rankforge-pending-user-sync-v1';
   var SENT_KEY = 'rankforge-user-sync-sent-v1';
   var HOOK_KEY = 'rankforge-user-sync-webhook-v1';
-  var DEFAULT_HOOK = 'https://lastaccount1907.app.n8n.cloud/webhook/rankforge-create-user';
+  var DEFAULT_HOOK = 'https://lastaccount1907.app.n8n.cloud/webhook/rankforge-user-sync';
 
   function clean(v){ return String(v == null ? '' : v).trim(); }
   function el(id){ return document.getElementById(id); }
   function hook(){
     var saved = clean(localStorage.getItem(HOOK_KEY));
-    if (saved) return saved;
-    localStorage.setItem(HOOK_KEY, DEFAULT_HOOK);
-    return DEFAULT_HOOK;
+    if (!saved || saved.indexOf('rankforge-create-user') !== -1) {
+      localStorage.setItem(HOOK_KEY, DEFAULT_HOOK);
+      return DEFAULT_HOOK;
+    }
+    return saved;
   }
   function readSignupMeta(){
     return {
@@ -26,11 +28,11 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
   }
   function pendingMeta(){
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
   }
   function sessionFromLocal(){
     if (window.rankforgeAuth && typeof window.rankforgeAuth.getSession === 'function') return window.rankforgeAuth.getSession();
-    try { return JSON.parse(localStorage.getItem('rankforge-auth-session-v1') || 'null'); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem('rankforge-auth-session-v1') || 'null'); } catch(e) { return null; }
   }
   function payloadFromSession(session){
     var meta = pendingMeta();
@@ -39,7 +41,7 @@
     var now = new Date().toISOString();
     return {
       event: 'user_created',
-      source: 'rankforge_signup',
+      source: 'rankforge_signup_ui',
       user_id: userId,
       user_email: email,
       email: email,
@@ -60,9 +62,9 @@
     };
   }
   function postToN8n(payload){
-    if (!payload.email) return Promise.resolve();
+    if (!payload.email) return Promise.resolve(false);
     var sentKey = payload.user_id || payload.email;
-    if (localStorage.getItem(SENT_KEY) === sentKey) return Promise.resolve();
+    if (localStorage.getItem(SENT_KEY) === sentKey) return Promise.resolve(false);
     var body = new URLSearchParams();
     Object.keys(payload).forEach(function(key){ body.set(key, payload[key]); });
     localStorage.setItem('rankforge-selected-plan-v1', 'free');
@@ -71,18 +73,20 @@
     return fetch(hook(), { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body: body.toString() }).then(function(){
       localStorage.setItem(SENT_KEY, sentKey);
       localStorage.removeItem(STORAGE_KEY);
+      return true;
     });
   }
-  function trySync(){
-    var session = sessionFromLocal();
-    if (!session || !(session.userId || session.id || session.email)) return;
-    postToN8n(payloadFromSession(session));
+  function trySync(sessionOverride){
+    var session = sessionOverride || sessionFromLocal();
+    if (!session || !(session.userId || session.id || session.email)) return Promise.resolve(false);
+    return postToN8n(payloadFromSession(session));
   }
   function bind(){
     var form = el('signupForm');
     if (form) form.addEventListener('submit', rememberSignupMeta, true);
-    setTimeout(trySync, 800);
-    setTimeout(trySync, 2000);
+    setTimeout(function(){ trySync(); }, 800);
+    setTimeout(function(){ trySync(); }, 2000);
   }
+  window.rankforgeUserSync = { rememberSignupMeta: rememberSignupMeta, trySync: trySync, webhookUrl: hook };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind();
 })();

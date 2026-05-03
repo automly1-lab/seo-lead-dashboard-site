@@ -11,20 +11,6 @@
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="manifest" href="../site.webmanifest">
   <meta name="theme-color" content="#0E1726">
-  <meta property="og:site_name" content="RankForge by CrestlineOps">
-  <meta property="og:title" content="RankForge Dashboard">
-  <meta property="og:description" content="Private RankForge workspace.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://automly1-lab.github.io/seo-lead-dashboard-site/dashboard/">
-  <meta property="og:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <meta property="og:image:secure_url" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="RankForge evidence-based SEO lead intelligence">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="RankForge Dashboard">
-  <meta name="twitter:description" content="Private RankForge workspace.">
-  <meta name="twitter:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
   <link rel="stylesheet" href="../assets/dashboard.css">
   <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-8">
   <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
@@ -34,18 +20,7 @@
 </head>
 <body class="dashboard-body app-page-dashboard" data-auth="protected" data-page="dashboard">
   <div class="dashboard-shell">
-    <aside class="sidebar">
-      <a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a>
-      <nav class="sidebar-nav" aria-label="Primary">
-        <a class="active" href="../dashboard/">Dashboard</a>
-        <a href="../lists/">Searches</a>
-        <a href="../leads/">Prospects</a>
-        <a href="../lead-detail/">Lead Detail</a>
-        <a href="../opportunities/">Opportunities</a>
-        <a href="../competitors/">Competitors</a>
-        <a href="../settings/">Settings</a>
-      </nav>
-    </aside>
+    <aside class="sidebar"><a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a><nav class="sidebar-nav" aria-label="Primary"><a class="active" href="../dashboard/">Dashboard</a><a href="../lists/">Searches</a><a href="../leads/">Prospects</a><a href="../lead-detail/">Lead Detail</a><a href="../opportunities/">Opportunities</a><a href="../competitors/">Competitors</a><a href="../settings/">Settings</a></nav></aside>
     <main class="dashboard-main rf-dashboard-main">
       <header class="rf-dashboard-header"><div><p class="rf-eyebrow">Command Center</p><h1>Lead Intelligence Dashboard</h1><p>Track qualified SEO opportunities, evidence coverage, and monthly usage.</p></div><div class="rf-header-actions"><span class="rf-badge rf-badge-plan" id="rfPlanBadge">Plan loading</span><span class="rf-badge rf-badge-credit" id="rfCreditBadge">Credits loading</span><a class="button primary" href="#rfNewSearchCard">New Search</a><a class="button ghost" href="../leads/">View Leads</a></div></header>
       <section class="rf-search-card" id="rfNewSearchCard"><div class="rf-card-head"><div><p class="rf-eyebrow">New Search</p><h2>Find local SEO opportunities</h2><p>Build a focused search using niche, market, and keyword intent.</p></div></div><form id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)" class="rf-search-form"><label><span>Market name</span><input id="searchNameInput" type="text" placeholder="Phoenix Plumbing Companies"></label><label><span>Niche</span><input id="nicheInput" type="text" placeholder="plumber"></label><label><span>City</span><input id="cityInput" type="text" placeholder="Phoenix"></label><label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label><label><span>Primary keyword</span><input id="keywordSeedInput" type="text" placeholder="emergency plumber"></label><label><span>Include terms</span><input id="includeTermsInput" type="text" placeholder="drain cleaning, water heater, sewer repair"></label><label><span>Exclude terms</span><input id="excludeTermsInput" type="text" placeholder="yelp, angi, homeadvisor, directory"></label><label><span>Search depth</span><select id="searchDepthInput"><option value="10">10 previews</option><option value="25" selected>25 leads</option><option value="50">50 leads</option></select></label><label><span>Strictness</span><select id="qualificationModeInput"><option value="strict" selected>Strict evidence</option><option value="balanced">Balanced pool</option></select></label><button class="button primary" type="submit">Create Search</button><input id="businessTypeInput" type="hidden" value="local service business"><input id="seoThresholdInput" type="hidden" value="60"><input id="leadThresholdInput" type="hidden" value="70"><p class="rf-search-status" id="createSearchStatus">Qualified leads require verified evidence and a usable contact path.</p></form><div class="rf-preset-row" aria-label="Ready-made search examples"><button type="button" data-name="Phoenix Plumbers" data-niche="plumber" data-city="Phoenix" data-country="United States" data-keyword="emergency plumber" data-include="drain cleaning, water heater, sewer repair" data-exclude="yelp, angi, homeadvisor, directory">Phoenix plumbers</button><button type="button" data-name="Austin Dentists" data-niche="dentist" data-city="Austin" data-country="United States" data-keyword="family dentist" data-include="cosmetic dentistry, dental implants, emergency dentist" data-exclude="zocdoc, healthgrades, directory">Austin dentists</button><button type="button" data-name="Miami Roofers" data-niche="roofer" data-city="Miami" data-country="United States" data-keyword="roof repair" data-include="storm damage, metal roofing, roof replacement" data-exclude="yelp, angi, homeadvisor, directory">Miami roofers</button><button type="button" data-name="Denver HVAC Companies" data-niche="hvac contractor" data-city="Denver" data-country="United States" data-keyword="ac repair" data-include="furnace repair, air conditioning, heat pump" data-exclude="yelp, angi, homeadvisor, directory">Denver HVAC</button><button type="button" data-name="Chicago Personal Injury Lawyers" data-niche="personal injury lawyer" data-city="Chicago" data-country="United States" data-keyword="car accident lawyer" data-include="injury attorney, accident lawyer, workers comp" data-exclude="avvo, justia, findlaw, directory">Chicago PI lawyers</button><button type="button" data-name="London Estate Agents" data-niche="estate agent" data-city="London" data-country="United Kingdom" data-keyword="estate agent" data-include="lettings, property management, valuation" data-exclude="rightmove, zoopla, directory">London estate agents</button></div></section>
@@ -59,17 +34,16 @@
 <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
 <script src="../assets/auth.js?v=user-isolation-1"></script>
 <script src="../assets/admin-unlimited.js?v=admin-unlimited-1"></script>
-<script src="../assets/user-plan-resolver.js?v=effective-users-sheet-8-entitlement"></script>
+<script src="../assets/user-plan-resolver.js?v=user-current-state-v1"></script>
 <script src="../assets/user-sync.js?v=no-refresh-loop-2"></script>
 <script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
 <script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
 <script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
 <script src="../assets/app-polish.js?v=final-intelligence-8"></script>
-<script src="../assets/auto-sync.js?v=auto-sync-2-stable"></script>
 <script src="../assets/dashboard-premium.js?v=premium-dashboard-stable-4"></script>
-<script src="../assets/mvp-credit-system.js?v=dashboard-no-plan-card-1"></script>
+<script src="../assets/mvp-credit-system.js?v=current-state-remaining-1"></script>
+<script src="../assets/dashboard-authoritative-kpis.js?v=dashboard-authoritative-kpis-1"></script>
 <script src="../assets/user-profile-webhook-config.js?v=user-profile-webhook-1"></script>
 <script src="../assets/dashboard-first-run.js?v=dashboard-first-run-2"></script>
-<script src="../assets/force-user-plan-apply.js?v=force-effective-users-sheet-3"></script>
 </body>
 </html>

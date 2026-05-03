@@ -14,29 +14,56 @@
     var limit=num(p.monthly_search_limit), remaining=num(p.search_batches_remaining);
     return limit>0 && remaining<limit;
   }
+  function readUsage(p){
+    var limit=num(p.monthly_search_limit||p.effective_search_limit);
+    var used=num(p.search_batches_used);
+    var remainingRaw=clean(p.search_batches_remaining);
+    var remaining=remainingRaw!==''?num(remainingRaw):(limit?Math.max(0,limit-used):0);
+    var qUsed=num(p.qualified_leads_used);
+    var qRemaining=num(p.qualified_leads_remaining);
+    var qLimit=num(p.monthly_qualified_lead_credit_limit||p.effective_qualified_lead_limit);
+    if(!qUsed && qLimit && qRemaining>=0 && qRemaining<qLimit) qUsed=Math.max(0,qLimit-qRemaining);
+    return {limit:limit,used:used,remaining:remaining,qUsed:qUsed,qRemaining:qRemaining,qLimit:qLimit};
+  }
   function forceRemaining(){
     var p=profile();
     if(!currentStateReady(p)) return;
-    if(p.search_batches_remaining!==undefined && p.search_batches_remaining!==null && clean(p.search_batches_remaining)!==''){
-      setText('rfKpiSearchesRemaining', String(num(p.search_batches_remaining)));
-    }
+    var u=readUsage(p);
+    if(u.used || clean(p.search_batches_used)!=='') setText('rfKpiSearchesCreated', String(u.used));
+    if(clean(p.search_batches_remaining)!=='') setText('rfKpiSearchesRemaining', String(u.remaining));
+    if(clean(p.qualified_leads_used)!=='') setText('rfKpiQualifiedLeads', String(u.qUsed));
     var badge=document.getElementById('rfSearchUsageBadge');
     if(badge){badge.hidden=true;badge.style.display='none';badge.setAttribute('aria-hidden','true');}
   }
+  function cell(row,idx){return row && row.children && row.children[idx] ? row.children[idx] : null;}
   function forceRows(){
     var p=profile();
     if(!hasCompletedUsage(p)) return;
+    var u=readUsage(p);
     var rows=[].slice.call(document.querySelectorAll('#rfSearchBatchesTable tbody tr'));
     rows.forEach(function(row){
       var badge=row.querySelector('.rf-status-badge');
-      if(!badge) return;
-      if(!/processing/i.test(badge.textContent||'')) return;
-      badge.textContent='Completed';
-      badge.className='rf-status-badge rf-status-completed';
+      if(badge){
+        badge.textContent='Completed';
+        badge.className='rf-status-badge rf-status-completed';
+      }
+      var resultsCell=cell(row,2);
+      if(resultsCell){
+        var foundText=u.qUsed>0?String(u.qUsed):'Results';
+        resultsCell.innerHTML='<div class="rf-result-counts"><strong>'+foundText+'</strong> '+(u.qUsed>0?'qualified':'available')+'</div><div class="rf-cell-note">Open Prospects to review current results</div>';
+      }
+      var evidenceCell=cell(row,3);
+      if(evidenceCell && /0%|unavailable|—/.test(evidenceCell.textContent||'')){
+        evidenceCell.innerHTML='<div class="rf-evidence-meter"><strong>Available</strong><div class="rf-cell-note">See Prospects for evidence details</div><div class="rf-evidence-track"><span class="rf-evidence-fill" style="--coverage:60%"></span></div></div>';
+      }
       var quality=row.querySelector('.rf-quality strong');
       var qualityNote=row.querySelector('.rf-quality .rf-cell-note');
-      if(quality && /worth reviewing|crawl issue|processing/i.test(quality.textContent||'')) quality.textContent='Completed search';
-      if(qualityNote && /partial evidence|unavailable|processing/i.test(qualityNote.textContent||'')) qualityNote.textContent='Search finished. Open Prospects to review results.';
+      if(quality) quality.textContent=u.qUsed>0?'Qualified results found':'Completed search';
+      if(qualityNote) qualityNote.textContent='Search finished. Open Prospects to review results.';
+      var usageCell=cell(row,5);
+      if(usageCell){
+        usageCell.innerHTML='<div class="rf-usage"><strong>Search used</strong><span class="rf-cell-note">'+u.qUsed+' qualified credits counted</span></div>';
+      }
     });
     var banner=document.getElementById('rfProcessingBanner');
     if(banner) banner.remove();

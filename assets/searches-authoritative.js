@@ -13,6 +13,8 @@
   function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
   function isInf(v){return /^(infinity|unlimited|∞)$/i.test(clean(v));}
   function num(v){var raw=clean(v);if(isInf(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}
+  function truthy(v){var t=low(v);return ['true','yes','1','found','verified','present','available','pass','passed','partial'].indexOf(t)>=0;}
+  function meaningful(v){var t=clean(v);return !!t&&!/^(false|no|0|null|undefined|none|n\/a|\[\]|\{\})$/i.test(t);}
   function dateMs(v){var t=Date.parse(clean(v));return Number.isFinite(t)?t:0;}
   function fmtDate(v){var d=new Date(clean(v));return Number.isNaN(d.getTime())?'—':new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(d);}
   function tc(v){return clean(v).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
@@ -46,6 +48,10 @@
     return m[0]||{};
   }
   function leadStatus(l){var s=low(l.qualification_status||l.status||l.decision).replace(/[\s-]+/g,'_');if(s==='qualified')return'qualified';if(s==='qualified_locked'||s==='locked_qualified')return'qualified_locked';if(s==='rejected'||s==='filtered_out'||s==='filtered')return'rejected';return'review_needed';}
+  function directEvidenceCount(l){return num(l.direct_evidence_count)+num(l.crawl_based_evidence_count)+num(l.seo_verified_issue_count)+num(l.seo_verified_signal_count);}
+  function weakEvidenceCount(l){return num(l.weak_evidence_count)+num(l.seo_issue_count)+num(l.seo_evidence_signal_count);}
+  function hasEvidence(l){return leadStatus(l)==='qualified'||leadStatus(l)==='qualified_locked'||truthy(l.seo_claims_verified)||truthy(l.verified_seo_evidence)||truthy(l.evidence_status)||truthy(l.crawl_accessible)||directEvidenceCount(l)>0||num(l.seo_evidence_signal_count)>0||meaningful(l.seo_verified_claims)||meaningful(l.seo_evidence_summary)||meaningful(l.seo_evidence_json)||meaningful(l.technical_facts_json)||num(l.crawl_confidence)>0.35;}
+  function partialEvidence(l){return !hasEvidence(l)&&(leadStatus(l)==='review_needed'||weakEvidenceCount(l)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||truthy(l.contact_cta_found)||truthy(l.target_city_found)||truthy(l.target_service_found)||truthy(l.local_business_schema_found)||truthy(l.reviews_signal_found)||truthy(l.blog_found)||meaningful(l.title_tag)||num(l.meta_description_length)>0);}
   function leadSearchId(l){return clean(l.search_id||l.list_id||l.search_batch_id||l.batch_id||l.saved_list_id);}
   function searchId(s){return clean(s.search_id||s.id||s.list_id||s.search_batch_id||s.batch_id||s.saved_list_id);}
   function searchName(s){return clean(s.name||s.search_name||s.batch_name||s.description);}
@@ -53,7 +59,6 @@
   function searchCity(s){return clean(s.city||s.target_city||s.market);}
   function leadKey(l){return [l.search_name,l.list_name,l.niche,l.target_service,l.business_type,l.businessType,l.city,l.target_city].map(low).filter(Boolean).join('|');}
   function searchKey(s){return [searchName(s),searchNiche(s),searchCity(s)].map(low).filter(Boolean).join('|');}
-  function hasEvidence(l){return ['true','yes','verified','partial'].indexOf(low(l.seo_claims_verified||l.verified_seo_evidence||l.evidence_status))>=0||num(l.seo_evidence_signal_count)>0||low(l.crawl_accessible)==='true';}
   function isThisMonth(v){var d=new Date(clean(v)),n=new Date();return !Number.isNaN(d.getTime())&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}
   function last30(v){var t=dateMs(v);return t && Date.now()-t<=2592e6;}
   function unique(arr,fn){var seen={};return arr.filter(function(x){var k=fn(x);if(!k||seen[k])return false;seen[k]=true;return true;});}
@@ -80,13 +85,14 @@
     var found=Math.max(leads.length,q+locked+review+rejected,num(search.found||search.discovered||search.total_found||search.final_leads_count));
     if(!found && num(current.qualified_leads_used)>0) found=num(current.qualified_leads_used);
     var evidenceCount=leads.filter(hasEvidence).length;
-    var coverage=found?Math.round((evidenceCount||q||0)/found*100):0;
+    var partialCount=leads.filter(partialEvidence).length;
+    var coverage=found?Math.round(((evidenceCount||q||0)/found)*100):0;
     var credits=num(current.qualified_leads_used)||q;
     var status=found>0||credits>0||/complete|done|finished|success/i.test(clean(search.status||search.workflow_status))?'completed':'processing';
     var created=clean(search.created_at||search.started_at||search.completed_at||search.updated_at||current.updated_at);
     var primary=(tc(searchNiche(search)||'Search')+(searchCity(search)?' · '+tc(searchCity(search)):''));
     var sub=searchName(search)||'Search batch';
-    return {id:searchId(search)||'current-search',search:search,leads:leads,qualified:q||credits,locked:locked,review:review,rejected:rejected,found:found,evidenceCount:evidenceCount,coverage:coverage,credits:credits,status:status,created:created,primary:primary,sub:sub};
+    return {id:searchId(search)||'current-search',search:search,leads:leads,qualified:q||credits,locked:locked,review:review,rejected:rejected,found:found,evidenceCount:evidenceCount,partialCount:partialCount,coverage:coverage,credits:credits,status:status,created:created,primary:primary,sub:sub};
   }
 
   function getFilters(rows){
@@ -119,7 +125,7 @@
     var tbody=document.querySelector('#rfSearchBatchesTable tbody');if(!tbody)return;
     tbody.innerHTML=rows.map(function(r){
       var results='<div class="rf-result-counts"><strong>'+esc(r.found||r.qualified)+'</strong> found</div><div class="rf-cell-note">'+esc(r.qualified)+' qualified · '+esc(r.review)+' review · '+esc(r.rejected)+' filtered out</div>';
-      var evidence='<div class="rf-evidence-meter"><strong>'+esc(evidenceLabel(r))+'</strong><div class="rf-cell-note">'+(r.evidenceCount?'Evidence signals found':'Open Prospects for evidence details')+'</div><div class="rf-evidence-track"><span class="rf-evidence-fill" style="--coverage:'+Math.max(5,r.coverage)+'%"></span></div></div>';
+      var evidence='<div class="rf-evidence-meter"><strong>'+esc(evidenceLabel(r))+'</strong><div class="rf-cell-note">'+(r.evidenceCount?'Verified evidence found':(r.partialCount?'Partial evidence found':'Open Prospects for evidence details'))+'</div><div class="rf-evidence-track"><span class="rf-evidence-fill" style="--coverage:'+Math.max(5,r.coverage)+'%"></span></div></div>';
       var qualityTitle=r.qualified>0?'Qualified results found':(r.status==='completed'?'Completed search':'Still processing');
       var qualityNote=r.qualified>0?'Open Prospects to review qualified leads.':'Open Prospects to review results.';
       return '<tr data-search-id="'+esc(r.id)+'"><td><div class="rf-search-title">'+esc(r.primary)+'</div><div class="rf-search-subtitle">'+esc(r.sub)+'</div></td><td>'+statusBadge(r.status)+'</td><td>'+results+'</td><td>'+evidence+'</td><td><div class="rf-quality"><strong>'+esc(qualityTitle)+'</strong><span class="rf-cell-note">'+esc(qualityNote)+'</span></div></td><td><div class="rf-usage"><strong>Search used</strong><span class="rf-cell-note">'+esc(r.credits)+' qualified credits counted</span></div></td><td>'+esc(fmtDate(r.created))+'</td><td><div class="rf-row-actions"><button class="button ghost" data-open-prospects="'+esc(r.id)+'">Open Prospects</button><button class="button ghost" data-archive-search="'+esc(r.id)+'">Archive</button></div></td></tr>';
@@ -172,7 +178,7 @@
     if(!searches.length && leads.length) searches=[buildFallbackSearch(leads,current)];
     searches=unique(searches,searchId).sort(function(a,b){return dateMs(b.created_at||b.started_at||b.updated_at)-dateMs(a.created_at||a.started_at||a.updated_at);});
     var rows=searches.map(function(s){return summarize(s,searches,leads,current);});
-    var sig=JSON.stringify({c:current.updated_at||'',used:effectiveSearchUsed(current,rows),rem:effectiveSearchRemaining(current,rows),q:current.qualified_leads_used||profile().qualified_leads_used,rows:rows.map(function(r){return [r.id,r.found,r.qualified,r.status].join(':');})});
+    var sig=JSON.stringify({c:current.updated_at||'',used:effectiveSearchUsed(current,rows),rem:effectiveSearchRemaining(current,rows),q:current.qualified_leads_used||profile().qualified_leads_used,rows:rows.map(function(r){return [r.id,r.found,r.qualified,r.status,r.evidenceCount,r.coverage].join(':');})});
     if(sig===lastSig){return;}lastSig=sig;
     getFilters(rows);
     var filtered=filterRows(rows);

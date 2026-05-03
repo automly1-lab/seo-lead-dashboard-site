@@ -3,75 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Log In — RankForge</title>
-  <meta name="description" content="Log in to your RankForge workspace to review SEO prospects, search batches, verified evidence, and qualified lead opportunities.">
+  <title>Log in | RankForge</title>
+  <meta name="description" content="Log in to your RankForge workspace to review SEO prospects, search batches and qualified lead opportunities.">
   <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://automly1-lab.github.io/seo-lead-dashboard-site/login/">
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
   <link rel="manifest" href="../site.webmanifest">
   <meta name="theme-color" content="#0E1726">
-  <meta property="og:site_name" content="RankForge by CrestlineOps">
-  <meta property="og:title" content="Log In — RankForge">
-  <meta property="og:description" content="Log in to your RankForge workspace to review SEO prospects, search batches, verified evidence, and qualified lead opportunities.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://automly1-lab.github.io/seo-lead-dashboard-site/login/">
-  <meta property="og:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <meta property="og:image:secure_url" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="RankForge evidence-based SEO lead intelligence">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Log In — RankForge">
-  <meta name="twitter:description" content="Log in to your RankForge workspace to review SEO prospects, search batches, verified evidence, and qualified lead opportunities.">
-  <meta name="twitter:image" content="https://automly1-lab.github.io/seo-lead-dashboard-site/assets/og/rankforge-og.png">
-  <link rel="stylesheet" href="../assets/auth-pages.css?v=auth-pages-2">
-  <link rel="stylesheet" href="../assets/site-type-polish.css?v=site-type-1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/auth-refresh.css?v=auth-refresh-1">
 </head>
-<body class="rf-auth-page rf-auth-login" data-auth-page="true">
-  <main class="rf-auth-main">
-    <section class="rf-auth-layout" aria-label="Log in to RankForge">
-      <div class="rf-auth-card">
-        <p class="rf-auth-eyebrow">Welcome back</p>
-        <h1>Welcome back</h1>
-        <p class="rf-auth-subtitle">Log in to continue to your RankForge workspace.</p>
+<body class="auth-page login-page" data-auth-page="true">
+  <main class="auth-shell">
+    <section class="auth-frame" aria-label="Log in to RankForge">
+      <div class="auth-card">
+        <a class="brand" href="../"><span class="brand-mark">RF</span><span>Rank<span>Forge</span></span></a>
+        <p class="eyebrow">Welcome back</p>
+        <h1>Log in to your workspace.</h1>
+        <p>Continue to your RankForge dashboard, review search batches and manage evidence backed SEO opportunities.</p>
 
-        <form id="loginForm" class="rf-auth-form" novalidate>
-          <div class="rf-field">
+        <form id="loginForm" class="auth-form" novalidate>
+          <div class="field">
             <label for="loginEmail">Work email</label>
             <input id="loginEmail" type="email" name="email" placeholder="founder@agency.com" autocomplete="email" required>
           </div>
-          <div class="rf-field">
+          <div class="field">
             <label for="loginPassword">Password</label>
-            <div class="rf-input-wrap">
-              <input id="loginPassword" class="rf-password-input" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
-              <button class="rf-password-toggle" type="button" data-toggle-password="loginPassword" aria-label="Show password">Show</button>
+            <div class="input-wrap">
+              <input id="loginPassword" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+              <button class="password-toggle" type="button" data-toggle-password="loginPassword" aria-label="Show password">Show</button>
             </div>
           </div>
-          <p id="authFormStatus" class="auth-form-status">Log in to continue to your workspace.</p>
-          <button id="authSubmitButton" class="rf-auth-button" type="submit" data-default-text="Log in" data-loading-text="Logging in…">Log in</button>
+          <p id="authFormStatus" class="form-status">Log in to continue to your workspace.</p>
+          <button id="authSubmitButton" class="auth-button" type="submit" data-default-text="Log in" data-loading-text="Logging in…">Log in</button>
         </form>
 
-        <p class="rf-auth-switch">New to RankForge? <a href="../signup/">Start free</a></p>
-        <p class="rf-terms-note">Protected by RankForge authentication.</p>
+        <p class="switch">New to RankForge? <a href="../signup/">Start free</a></p>
+        <a class="home-link" href="../">Back to home</a>
       </div>
 
-      <aside class="rf-auth-panel">
-        <div>
-          <p class="rf-panel-eyebrow">Evidence-backed prospect intelligence</p>
-          <h2>Evidence-backed prospect intelligence</h2>
-          <p>RankForge helps SEO agencies review local businesses with verified crawl signals, contact readiness, and qualification gates.</p>
-          <ul class="rf-trust-list">
-            <li>No verified evidence = no strong claim</li>
+      <aside class="auth-side">
+        <div class="side-content">
+          <p class="eyebrow">Evidence based lead intelligence</p>
+          <h2>Prospecting with proof before outreach.</h2>
+          <p>RankForge helps SEO agencies review local businesses with visible SEO signals, contact readiness and qualification gates.</p>
+          <div class="proof-grid">
+            <div><small>Qualified</small><strong>Credits only</strong></div>
+            <div><small>Review leads</small><strong>0 credits</strong></div>
+            <div><small>Evidence</small><strong>Required</strong></div>
+            <div><small>Export</small><strong>Paid plans</strong></div>
+          </div>
+          <ul class="check-list">
+            <li>No verified evidence means no strong claim</li>
             <li>Qualified leads consume credits</li>
-            <li>Review-needed leads stay out of billing</li>
-            <li>Export contact-ready prospects on paid plans</li>
+            <li>Review needed leads stay out of billing</li>
+            <li>Contact ready prospects can move to export</li>
           </ul>
         </div>
-        <div class="rf-mini-proof">
-          <span>Qualified Lead</span>
-          <strong>Verified evidence · 6 signals</strong>
-          <p>Contact path found. Ready for review before outreach.</p>
+        <div class="mini-card">
+          <span>Workspace preview</span>
+          <strong>Search batches, evidence review and final leads in one place.</strong>
+          <p>Pick up where your last market search left off.</p>
         </div>
       </aside>
     </section>
@@ -80,7 +75,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
   <script src="../assets/billing-config.js?v=billing-config-2"></script>
-  <script src="../assets/auth.js?v=user-isolation-6"></script>
-  <script src="../assets/marketing-session.js?v=marketing-session-2"></script>
+  <script src="../assets/auth.js?v=auth-refresh-1"></script>
 </body>
 </html>

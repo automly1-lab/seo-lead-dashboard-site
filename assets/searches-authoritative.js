@@ -4,7 +4,6 @@
 
   var SHEET_ID='1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco';
   var PROFILE_KEY='rankforge-user-profile-cache-v1';
-  var STATE_KEY='rankforge-clean-app-state-v1';
   var ADMIN_EMAIL='automly1@gmail.com';
   var lastSig='';
 
@@ -12,7 +11,8 @@
   function low(v){return clean(v).toLowerCase();}
   function esc(v){return clean(v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
-  function num(v){var raw=clean(v);if(/^(infinity|unlimited|∞)$/i.test(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}
+  function isInf(v){return /^(infinity|unlimited|∞)$/i.test(clean(v));}
+  function num(v){var raw=clean(v);if(isInf(raw))return Infinity;var n=Number(raw.replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}
   function dateMs(v){var t=Date.parse(clean(v));return Number.isFinite(t)?t:0;}
   function fmtDate(v){var d=new Date(clean(v));return Number.isNaN(d.getTime())?'—':new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(d);}
   function tc(v){return clean(v).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
@@ -23,7 +23,6 @@
   function isAdmin(){return userEmail()===ADMIN_EMAIL || low(profile().plan)==='admin_unlimited' || low(profile().billing_status)==='admin_unlimited';}
   function setText(id,val){var el=document.getElementById(id);if(el)el.textContent=val;}
   function hide(id){var el=document.getElementById(id);if(el){el.hidden=true;el.style.display='none';el.setAttribute('aria-hidden','true');}}
-  function show(id){var el=document.getElementById(id);if(el){el.hidden=false;el.style.display='';el.removeAttribute('aria-hidden');}}
 
   function fetchSheet(sheet){
     return new Promise(function(resolve){
@@ -55,7 +54,6 @@
   function leadKey(l){return [l.search_name,l.list_name,l.niche,l.target_service,l.business_type,l.businessType,l.city,l.target_city].map(low).filter(Boolean).join('|');}
   function searchKey(s){return [searchName(s),searchNiche(s),searchCity(s)].map(low).filter(Boolean).join('|');}
   function hasEvidence(l){return ['true','yes','verified','partial'].indexOf(low(l.seo_claims_verified||l.verified_seo_evidence||l.evidence_status))>=0||num(l.seo_evidence_signal_count)>0||low(l.crawl_accessible)==='true';}
-  function hasContact(l){return !!(clean(l.email||l.decision_maker_email||l.phone||l.decision_maker_phone)||low(l.contact_cta_found)==='true'||low(l.contact_page_found)==='true');}
   function isThisMonth(v){var d=new Date(clean(v)),n=new Date();return !Number.isNaN(d.getTime())&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}
   function last30(v){var t=dateMs(v);return t && Date.now()-t<=2592e6;}
   function unique(arr,fn){var seen={};return arr.filter(function(x){var k=fn(x);if(!k||seen[k])return false;seen[k]=true;return true;});}
@@ -82,14 +80,13 @@
     var found=Math.max(leads.length,q+locked+review+rejected,num(search.found||search.discovered||search.total_found||search.final_leads_count));
     if(!found && num(current.qualified_leads_used)>0) found=num(current.qualified_leads_used);
     var evidenceCount=leads.filter(hasEvidence).length;
-    var contactReady=leads.filter(hasContact).length;
     var coverage=found?Math.round((evidenceCount||q||0)/found*100):0;
     var credits=num(current.qualified_leads_used)||q;
     var status=found>0||credits>0||/complete|done|finished|success/i.test(clean(search.status||search.workflow_status))?'completed':'processing';
     var created=clean(search.created_at||search.started_at||search.completed_at||search.updated_at||current.updated_at);
     var primary=(tc(searchNiche(search)||'Search')+(searchCity(search)?' · '+tc(searchCity(search)):''));
     var sub=searchName(search)||'Search batch';
-    return {id:searchId(search)||'current-search',search:search,leads:leads,qualified:q||credits,locked:locked,review:review,rejected:rejected,found:found,evidenceCount:evidenceCount,contactReady:contactReady,coverage:coverage,credits:credits,status:status,created:created,primary:primary,sub:sub};
+    return {id:searchId(search)||'current-search',search:search,leads:leads,qualified:q||credits,locked:locked,review:review,rejected:rejected,found:found,evidenceCount:evidenceCount,coverage:coverage,credits:credits,status:status,created:created,primary:primary,sub:sub};
   }
 
   function getFilters(rows){
@@ -128,12 +125,24 @@
       return '<tr data-search-id="'+esc(r.id)+'"><td><div class="rf-search-title">'+esc(r.primary)+'</div><div class="rf-search-subtitle">'+esc(r.sub)+'</div></td><td>'+statusBadge(r.status)+'</td><td>'+results+'</td><td>'+evidence+'</td><td><div class="rf-quality"><strong>'+esc(qualityTitle)+'</strong><span class="rf-cell-note">'+esc(qualityNote)+'</span></div></td><td><div class="rf-usage"><strong>Search used</strong><span class="rf-cell-note">'+esc(r.credits)+' qualified credits counted</span></div></td><td>'+esc(fmtDate(r.created))+'</td><td><div class="rf-row-actions"><button class="button ghost" data-open-prospects="'+esc(r.id)+'">Open Prospects</button><button class="button ghost" data-archive-search="'+esc(r.id)+'">Archive</button></div></td></tr>';
     }).join('');
   }
+  function effectiveSearchLimit(current){return num(current.effective_search_limit||current.monthly_search_limit||current.base_search_limit||profile().monthly_search_limit||profile().effective_search_limit);}
+  function effectiveSearchUsed(current,rows){return num(current.search_batches_used||profile().search_batches_used)||rows.length;}
+  function effectiveSearchRemaining(current,rows){
+    var limit=effectiveSearchLimit(current);
+    var used=effectiveSearchUsed(current,rows);
+    if(limit===Infinity)return Infinity;
+    var derived=limit?Math.max(0,limit-used):0;
+    var sheetHas=clean(current.search_batches_remaining)!==''||clean(profile().search_batches_remaining)!=='';
+    var sheetRemaining=sheetHas?num(current.search_batches_remaining||profile().search_batches_remaining):derived;
+    if(limit && used>=0 && sheetRemaining!==derived)return derived;
+    return sheetRemaining;
+  }
   function renderKpis(rows,current){
-    var used=num(current.search_batches_used);
-    var remaining=clean(current.search_batches_remaining)!==''?num(current.search_batches_remaining):(num(current.effective_search_limit||current.monthly_search_limit)-used);
-    var qUsed=num(current.qualified_leads_used)||rows.reduce(function(a,r){return a+r.qualified;},0);
-    setText('rfKpiSearchesCreated', String(used||rows.length));
-    setText('rfKpiSearchesRemaining', String(Math.max(0,remaining)));
+    var used=effectiveSearchUsed(current,rows);
+    var remaining=effectiveSearchRemaining(current,rows);
+    var qUsed=num(current.qualified_leads_used)||num(profile().qualified_leads_used)||rows.reduce(function(a,r){return a+r.qualified;},0);
+    setText('rfKpiSearchesCreated', String(used));
+    setText('rfKpiSearchesRemaining', remaining===Infinity?'Unlimited':String(Math.max(0,remaining)));
     setText('rfKpiQualifiedLeads', String(qUsed));
     var covRows=rows.filter(function(r){return r.found||r.coverage;});
     var avg=covRows.length?Math.round(covRows.reduce(function(a,r){return a+r.coverage;},0)/covRows.length):0;
@@ -163,7 +172,7 @@
     if(!searches.length && leads.length) searches=[buildFallbackSearch(leads,current)];
     searches=unique(searches,searchId).sort(function(a,b){return dateMs(b.created_at||b.started_at||b.updated_at)-dateMs(a.created_at||a.started_at||a.updated_at);});
     var rows=searches.map(function(s){return summarize(s,searches,leads,current);});
-    var sig=JSON.stringify({c:current.updated_at||'',used:current.search_batches_used,rem:current.search_batches_remaining,q:current.qualified_leads_used,rows:rows.map(function(r){return [r.id,r.found,r.qualified,r.status].join(':');})});
+    var sig=JSON.stringify({c:current.updated_at||'',used:effectiveSearchUsed(current,rows),rem:effectiveSearchRemaining(current,rows),q:current.qualified_leads_used||profile().qualified_leads_used,rows:rows.map(function(r){return [r.id,r.found,r.qualified,r.status].join(':');})});
     if(sig===lastSig){return;}lastSig=sig;
     getFilters(rows);
     var filtered=filterRows(rows);

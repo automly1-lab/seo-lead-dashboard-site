@@ -1,50 +1,85 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RankForge Dashboard</title>
-  <meta name="description" content="Private RankForge workspace.">
-  <meta name="robots" content="noindex, follow">
-  <link rel="canonical" href="https://automly1-lab.github.io/seo-lead-dashboard-site/dashboard/">
-  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
-  <link rel="manifest" href="../site.webmanifest">
-  <meta name="theme-color" content="#0E1726">
-  <link rel="stylesheet" href="../assets/dashboard.css">
-  <link rel="stylesheet" href="../assets/app-polish.css?v=final-intelligence-8">
-  <link rel="stylesheet" href="../assets/brand-consistency.css?v=brand-consistency-1">
-  <link rel="stylesheet" href="../assets/dashboard-premium.css?v=premium-dashboard-3">
-  <link rel="stylesheet" href="../assets/dashboard-first-run.css?v=dashboard-first-run-1">
-  <link rel="stylesheet" href="../assets/site-type-polish.css?v=site-type-1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
-<body class="dashboard-body app-page-dashboard" data-auth="protected" data-page="dashboard">
-  <div class="dashboard-shell">
-    <aside class="sidebar"><a class="brand" href="../dashboard/"><span class="brand-mark">RF</span><span class="brand-copy"><strong>RankForge</strong><small>SEO Intelligence</small></span></a><nav class="sidebar-nav" aria-label="Primary"><a class="active" href="../dashboard/">Dashboard</a><a href="../lists/">Searches</a><a href="../leads/">Prospects</a><a href="../lead-detail/">Lead Detail</a><a href="../opportunities/">Opportunities</a><a href="../competitors/">Competitors</a><a href="../settings/">Settings</a></nav></aside>
-    <main class="dashboard-main rf-dashboard-main">
-      <header class="rf-dashboard-header"><div><p class="rf-eyebrow">Command Center</p><h1>Lead Intelligence Dashboard</h1><p>Track qualified SEO opportunities, evidence coverage, and monthly usage.</p></div><div class="rf-header-actions"><span class="rf-badge rf-badge-plan" id="rfPlanBadge">Plan loading</span><span class="rf-badge rf-badge-credit" id="rfCreditBadge">Credits loading</span><a class="button primary" href="#rfNewSearchCard">New Search</a><a class="button ghost" href="../leads/">View Leads</a></div></header>
-      <section class="rf-search-card" id="rfNewSearchCard"><div class="rf-card-head"><div><p class="rf-eyebrow">New Search</p><h2>Find local SEO opportunities</h2><p>Build a focused search using niche, market, and keyword intent.</p></div></div><form id="quickCreateForm" onsubmit="return window.rankforgeApp.createSearch(event)" class="rf-search-form"><label><span>Market name</span><input id="searchNameInput" type="text" placeholder="Phoenix Plumbing Companies"></label><label><span>Niche</span><input id="nicheInput" type="text" placeholder="plumber"></label><label><span>City</span><input id="cityInput" type="text" placeholder="Phoenix"></label><label><span>Country</span><input id="countryInput" type="text" placeholder="United States"></label><label><span>Primary keyword</span><input id="keywordSeedInput" type="text" placeholder="emergency plumber"></label><label><span>Include terms</span><input id="includeTermsInput" type="text" placeholder="drain cleaning, water heater, sewer repair"></label><label><span>Exclude terms</span><input id="excludeTermsInput" type="text" placeholder="yelp, angi, homeadvisor, directory"></label><label><span>Search depth</span><select id="searchDepthInput"><option value="10">10 previews</option><option value="25" selected>25 leads</option><option value="50">50 leads</option></select></label><label><span>Strictness</span><select id="qualificationModeInput"><option value="strict" selected>Strict evidence</option><option value="balanced">Balanced pool</option></select></label><button class="button primary" type="submit">Create Search</button><input id="businessTypeInput" type="hidden" value="local service business"><input id="seoThresholdInput" type="hidden" value="60"><input id="leadThresholdInput" type="hidden" value="70"><p class="rf-search-status" id="createSearchStatus">Qualified leads require verified evidence and a usable contact path.</p></form><div class="rf-preset-row" aria-label="Ready-made search examples"><button type="button" data-name="Phoenix Plumbers" data-niche="plumber" data-city="Phoenix" data-country="United States" data-keyword="emergency plumber" data-include="drain cleaning, water heater, sewer repair" data-exclude="yelp, angi, homeadvisor, directory">Phoenix plumbers</button><button type="button" data-name="Austin Dentists" data-niche="dentist" data-city="Austin" data-country="United States" data-keyword="family dentist" data-include="cosmetic dentistry, dental implants, emergency dentist" data-exclude="zocdoc, healthgrades, directory">Austin dentists</button><button type="button" data-name="Miami Roofers" data-niche="roofer" data-city="Miami" data-country="United States" data-keyword="roof repair" data-include="storm damage, metal roofing, roof replacement" data-exclude="yelp, angi, homeadvisor, directory">Miami roofers</button><button type="button" data-name="Denver HVAC Companies" data-niche="hvac contractor" data-city="Denver" data-country="United States" data-keyword="ac repair" data-include="furnace repair, air conditioning, heat pump" data-exclude="yelp, angi, homeadvisor, directory">Denver HVAC</button><button type="button" data-name="Chicago Personal Injury Lawyers" data-niche="personal injury lawyer" data-city="Chicago" data-country="United States" data-keyword="car accident lawyer" data-include="injury attorney, accident lawyer, workers comp" data-exclude="avvo, justia, findlaw, directory">Chicago PI lawyers</button><button type="button" data-name="London Estate Agents" data-niche="estate agent" data-city="London" data-country="United Kingdom" data-keyword="estate agent" data-include="lettings, property management, valuation" data-exclude="rightmove, zoopla, directory">London estate agents</button></div></section>
-      <section class="rf-empty-state" id="rfDashboardEmpty" hidden><div class="rf-empty-mark">RF</div><h2>Start your first lead search</h2><p>Create a search batch to find local businesses, verify SEO evidence, and identify contact-ready opportunities.</p><div class="rf-empty-actions"><a class="button primary" href="#rfNewSearchCard">Start New Search</a><a class="button ghost" href="../pricing/">View pricing limits</a></div></section>
-      <section class="rf-kpi-grid" id="rfKpiGrid"><article class="rf-kpi-card accent-success"><span>Qualified Leads</span><strong id="rfKpiQualified">—</strong><p>Evidence-backed opportunities</p></article><article class="rf-kpi-card accent-warning"><span>Needs Review</span><strong id="rfKpiReview">—</strong><p>Missing or partial evidence</p></article><article class="rf-kpi-card accent-primary"><span>Evidence Coverage</span><strong id="rfKpiEvidence">—</strong><p>Crawl signals available</p></article><article class="rf-kpi-card accent-purple"><span>Credits Used</span><strong id="rfKpiCredits">—</strong><p>Qualified leads only</p></article></section>
-      <section class="rf-dashboard-layout"><div class="rf-dashboard-left"><article class="rf-card rf-funnel-card"><div class="rf-card-head"><div><p class="rf-eyebrow">Lead Quality Funnel</p><h2>From search to qualified opportunity</h2><p>From search batch to evidence-backed qualified opportunity.</p></div></div><div class="rf-funnel-steps" id="rfLeadFunnel"></div></article><article class="rf-card rf-evidence-coverage-card"><div class="rf-card-head"><div><p class="rf-eyebrow">Evidence Coverage</p><h2>Evidence health</h2><p>RankForge only makes SEO claims when crawl evidence supports them.</p></div></div><div class="rf-evidence-rows" id="rfEvidenceRows"></div><div class="rf-trust-note">No evidence is not a failure. It prevents unsupported SEO claims.</div></article><section class="rf-card rf-searches-card"><div class="rf-card-head"><div><p class="rf-eyebrow">Recent Search Batches</p><h2>Review markets and lead quality results</h2></div><a class="button ghost" href="../lists/">Open Searches</a></div><div class="rf-table-wrap"><table class="rf-table" id="rfRecentSearchesTable"><thead><tr><th>Search</th><th>Date</th><th>Found</th><th>Qualified</th><th>Needs Review</th><th>Rejected</th><th>Evidence</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="9"><div class="rf-table-loading">Loading lead intelligence…</div></td></tr></tbody></table></div></section></div><aside class="rf-dashboard-right"><article class="rf-card"><div class="rf-card-head"><div><p class="rf-eyebrow">Recommended Next Actions</p><h2>What to do next</h2></div></div><div class="rf-action-list" id="rfActionList"></div></article><article class="rf-card rf-admin-only" id="rfAdminQualityCard" hidden><div class="rf-card-head"><div><p class="rf-eyebrow">Admin-only</p><h2>Quality Health</h2><p>Crawler, evidence, and qualification gate diagnostics.</p></div></div><div class="rf-admin-metrics" id="rfAdminMetrics"></div></article><section class="rf-card rf-admin-only" id="rfAdminDebugTableCard" hidden><div class="rf-card-head"><div><p class="rf-eyebrow">Admin Diagnostics</p><h2>Crawl diagnostics</h2></div></div><div class="rf-table-wrap"><table class="rf-table rf-debug-table" id="rfAdminDebugTable"><thead><tr><th>Search</th><th>Lead</th><th>Crawl source</th><th>HTML bytes</th><th>Text words</th><th>Issues</th><th>Signals</th><th>Verified</th><th>Status</th></tr></thead><tbody></tbody></table></div></section></aside></section>
-      <div class="rf-hidden-legacy" aria-hidden="true"><section class="metrics-grid"><article><strong id="metricSavedLists">0</strong></article><article><strong id="metricQualified">0</strong></article><article><strong id="metricReviewNeeded">0</strong></article><article><strong id="metricAverageScore">0</strong></article></section><section class="workspace-strip"><strong id="workspaceUserBadge"></strong><strong id="workspaceDataSource"></strong><small id="workspaceLastSync"></small><strong id="workspaceSelectedListHealth"></strong><small id="workspaceSelectedListMeta"></small></section><table id="savedListsTable"><tbody></tbody></table><div id="pipelineListTitle"></div><strong id="pipelineDiscovered">0</strong><strong id="pipelineAudited">0</strong><strong id="pipelineEnriched">0</strong><strong id="pipelineQualified">0</strong><strong id="pipelineRejected">0</strong><strong id="visibleLeadCount">0 leads</strong><strong id="activeLeadSummary"></strong><table id="leadsTable"><tbody></tbody></table></div>
-    </main>
-  </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
-<script src="../assets/auth.js?v=user-isolation-1"></script>
-<script src="../assets/admin-unlimited.js?v=admin-unlimited-1"></script>
-<script src="../assets/user-plan-resolver.js?v=user-current-state-v1"></script>
-<script src="../assets/user-sync.js?v=no-refresh-loop-2"></script>
-<script src="../assets/app.js?v=selected-lead-true-fix-1"></script>
-<script src="../assets/user-isolation-guard.js?v=user-isolation-recovery-1"></script>
-<script src="../assets/brand-consistency.js?v=brand-consistency-2"></script>
-<script src="../assets/app-polish.js?v=final-intelligence-8"></script>
-<script src="../assets/dashboard-premium.js?v=premium-dashboard-stable-4"></script>
-<script src="../assets/mvp-credit-system.js?v=current-state-remaining-1"></script>
-<script src="../assets/dashboard-authoritative-kpis.js?v=dashboard-authoritative-kpis-2"></script>
-<script src="../assets/dashboard-credit-used-fix.js?v=dashboard-credit-used-fix-1"></script>
-<script src="../assets/user-profile-webhook-config.js?v=user-profile-webhook-1"></script>
-<script src="../assets/dashboard-first-run.js?v=dashboard-first-run-2"></script>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand"><span class="mark">RF</span><strong>Rank<span>Forge</span></strong></a>
+    <nav>
+      <button class="nav active" data-view="overview">Overview</button>
+      <button class="nav" data-view="searches">Search Batches</button>
+      <button class="nav" data-view="prospects">Prospects</button>
+      <button class="nav" data-view="evidence">Evidence Review <b id="reviewCount">0</b></button>
+      <button class="nav" data-view="exports">Exports</button>
+      <button class="nav" data-view="final">Final Leads</button>
+      <button class="nav" data-view="activity">Activity Logs</button>
+      <button class="nav admin" data-view="admin">Admin</button>
+      <button class="nav" data-view="settings">Settings</button>
+    </nav>
+    <div class="usage">
+      <small>Credits Used</small>
+      <strong><span id="creditsUsed">0</span><em id="creditsLimit"> / 0</em></strong>
+      <div class="bar"><i id="creditsBar"></i></div>
+      <button>Upgrade Plan</button>
+    </div>
+    <div class="account"><span>CO</span><div><strong>Crestline Ops</strong><small>Admin</small></div></div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <input id="search" placeholder="Search business, keyword, city, or domain...">
+      <button>Filters</button>
+      <select id="statusFilter"><option value="all">All Statuses</option><option>Qualified</option><option>Needs Review</option><option>Rejected</option></select>
+      <select><option>Last 30 days</option><option>All time</option></select>
+      <button class="avatar">CO</button>
+    </header>
+
+    <section id="overview" class="view active">
+      <div class="metrics">
+        <article><small>Qualified Leads</small><strong id="mQualified">0</strong><span class="good">Credits spent only here</span></article>
+        <article><small>Needs Review</small><strong id="mReview">0</strong><span class="warn">Free to review</span></article>
+        <article><small>Rejected</small><strong id="mRejected">0</strong><span class="bad">No credit spent</span></article>
+        <article><small>Evidence Coverage</small><strong id="mEvidence">0%</strong><span class="good">Verified signals</span></article>
+        <article><small>Active Batches</small><strong id="mBatches">0</strong><span>Search workflow</span></article>
+      </div>
+
+      <div class="workspace">
+        <section class="panel table-panel">
+          <div class="panel-head">
+            <div><h2>Top Prospects</h2><p>Is this business worth outreach, and can we prove why?</p></div>
+            <div><button class="primary" id="newBatchBtn">New Search Batch</button><button id="exportSelectedBtn">Export Selected</button></div>
+          </div>
+          <div class="segments">
+            <button class="seg active" data-tab="all">All</button><button class="seg" data-tab="Qualified">Qualified</button><button class="seg" data-tab="Needs Review">Needs Review</button><button class="seg" data-tab="Rejected">Rejected</button>
+          </div>
+          <table>
+            <thead><tr><th></th><th>Business</th><th>Location</th><th>SEO Score</th><th>Commercial Fit</th><th>Evidence</th><th>Status</th><th>Added</th></tr></thead>
+            <tbody id="leadRows"></tbody>
+          </table>
+        </section>
+        <aside class="panel detail" id="detail"></aside>
+      </div>
+    </section>
+
+    <section id="searches" class="view"><div class="title"><h1>Search Batches</h1><p>Create and monitor batches by niche, city, country, and limits.</p><button class="primary" id="newBatchBtn2">Create Batch</button></div><div class="cards" id="batchCards"></div></section>
+    <section id="prospects" class="view"><div class="title"><h1>Raw Prospects</h1><p>Discovered businesses before final evidence review.</p></div><div class="panel"><table><thead><tr><th>Business</th><th>Source</th><th>Location</th><th>Domain</th><th>State</th></tr></thead><tbody id="rawRows"></tbody></table></div></section>
+    <section id="evidence" class="view"><div class="title"><h1>Evidence Review</h1><p>Review Needs Review leads before qualifying or rejecting them.</p></div><div class="cards" id="reviewCards"></div></section>
+    <section id="exports" class="view"><div class="title"><h1>Export Queue</h1><p>Qualified contact-ready opportunities selected for outreach.</p><button class="primary" id="downloadCsv">Download CSV</button></div><div class="panel"><table><thead><tr><th>Business</th><th>Email</th><th>Phone</th><th>Score</th><th>Outreach Angle</th><th></th></tr></thead><tbody id="exportRows"></tbody></table></div></section>
+    <section id="final" class="view"><div class="title"><h1>Final Leads</h1><p>Final classified leads generated from evidence review.</p></div><div class="cards" id="finalCards"></div></section>
+    <section id="activity" class="view"><div class="title"><h1>Activity Logs</h1><p>Workspace changes, classifications, and credit events.</p></div><div id="activityList"></div></section>
+    <section id="admin" class="view"><div class="title"><h1>Admin Console</h1><p>Visible for automly1@gmail.com. Manage users, credits, and plans.</p></div><div class="panel"><table><thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Batches</th><th>Lead Credits</th><th>Actions</th></tr></thead><tbody id="adminRows"></tbody></table></div></section>
+    <section id="settings" class="view"><div class="title"><h1>Settings</h1><p>Workspace profile and evidence policy.</p></div><div class="settings"><div class="panel form"><h3>Workspace</h3><label>Agency Name<input value="Crestline Ops"></label><label>Admin Email<input value="automly1@gmail.com"></label><button class="primary">Save</button></div><div class="panel form"><h3>Evidence Policy</h3><label><input type="checkbox" checked> No evidence = no strong SEO claim</label><label><input type="checkbox" checked> Only Qualified leads consume credits</label><label><input type="checkbox" checked> Needs Review requires human review</label></div></div></section>
+  </main>
+</div>
+
+<div class="modal" id="modal"><div class="modal-card"><button class="close" id="closeModal">×</button><h2>Create Search Batch</h2><p>Blocked if batch allowance or qualified lead credits are exhausted.</p><div class="form-grid"><label>Niche<input id="niche" placeholder="landscaping"></label><label>City<input id="city" placeholder="Austin"></label><label>Country<input id="country" value="US"></label><label>Limit<input id="limit" type="number" value="50"></label></div><button class="primary" id="createBatch">Start Batch</button></div></div>
+<script src="./app.js"></script>
 </body>
 </html>

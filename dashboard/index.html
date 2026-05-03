@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./v3-overrides.css">
+  <link rel="stylesheet" href="./v4-overrides.css">
 </head>
 <body>
 <div class="app">
@@ -17,21 +18,72 @@
       <button class="nav active" data-view="overview">Overview</button>
       <button class="nav" data-view="searches">Search Batches</button>
       <button class="nav" data-view="prospects">Prospects</button>
+      <button class="nav" data-view="leadDetail">Lead Detail</button>
       <button class="nav" data-view="evidence">Evidence Review <b id="reviewCount">0</b></button>
       <button class="nav" data-view="exports">Exports</button>
       <button class="nav" data-view="final">Final Leads</button>
       <button class="nav admin" data-view="admin">Admin</button>
       <button class="nav" data-view="settings">Settings</button>
     </nav>
-    <div class="usage"><small>Credits Used</small><strong><span id="creditsUsed">0</span><em id="creditsLimit"> / 0</em></strong><div class="bar"><i id="creditsBar"></i></div><button>Upgrade Plan</button></div>
+    <div class="usage">
+      <small>Credits Used</small>
+      <strong><span id="creditsUsed">0</span><em id="creditsLimit"> / 0</em></strong>
+      <div class="bar"><i id="creditsBar"></i></div>
+      <button>Upgrade Plan</button>
+    </div>
     <div class="account"><span>CO</span><div><strong>Crestline Ops</strong><small>automly1@gmail.com</small></div></div><button class="logout" id="logoutBtn">Log out</button>
   </aside>
+
   <main>
-    <header class="top"><input id="search" placeholder="Search business, keyword, city, or domain..."><button>Filters</button><select id="statusFilter"><option value="all">All Statuses</option><option>Qualified</option><option>Needs Review</option><option>Rejected</option></select><select><option>Last 30 days</option><option>All time</option></select><button class="avatar">CO</button></header>
+    <header class="top">
+      <input id="search" placeholder="Search business, keyword, city, or domain...">
+      <button>Filters</button>
+      <select id="statusFilter"><option value="all">All Statuses</option><option>Qualified</option><option>Needs Review</option><option>Rejected</option></select>
+      <select><option>Last 30 days</option><option>All time</option></select>
+      <button class="avatar">CO</button>
+    </header>
+
     <section id="overview" class="view active">
-      <div class="metrics"><article><small>Qualified Leads</small><strong id="mQualified">0</strong><span class="good">Credits spent only here</span></article><article><small>Needs Review</small><strong id="mReview">0</strong><span class="warn">Free to review</span></article><article><small>Rejected</small><strong id="mRejected">0</strong><span class="bad">No credit spent</span></article><article><small>Evidence Coverage</small><strong id="mEvidence">0%</strong><span class="good">Verified signals</span></article><article><small>Active Batches</small><strong id="mBatches">0</strong><span>Search workflow</span></article></div>
-      <div class="workspace"><section class="panel table-panel"><div class="panel-head"><div><h2>Top Prospects</h2><p>Is this business worth outreach, and can we prove why?</p></div><div><button class="primary" id="newBatchBtn">New Search Batch</button><button id="exportSelectedBtn">Export Selected</button></div></div><div class="segments"><button class="seg active" data-tab="all">All</button><button class="seg" data-tab="Qualified">Qualified</button><button class="seg" data-tab="Needs Review">Needs Review</button><button class="seg" data-tab="Rejected">Rejected</button></div><table><thead><tr><th></th><th>Business</th><th>Location</th><th>SEO Score</th><th>Commercial Fit</th><th>Evidence</th><th>Status</th><th>Added</th></tr></thead><tbody id="leadRows"></tbody></table></section><aside class="panel detail" id="detail"></aside></div>
+      <div class="metrics">
+        <article><small>Qualified Leads</small><strong id="mQualified">0</strong><span class="good">Credits spent only here</span></article>
+        <article><small>Needs Review</small><strong id="mReview">0</strong><span class="warn">Free to review</span></article>
+        <article><small>Rejected</small><strong id="mRejected">0</strong><span class="bad">No credit spent</span></article>
+        <article><small>Evidence Coverage</small><strong id="mEvidence">0%</strong><span class="good">Verified signals</span></article>
+        <article><small>Active Batches</small><strong id="mBatches">0</strong><span>Search workflow</span></article>
+      </div>
+
+      <div class="workspace">
+        <section class="panel table-panel">
+          <div class="panel-head">
+            <div><h2>Top Prospects</h2><p>Is this business worth outreach, and can we prove why?</p></div>
+            <div><button class="primary" id="newBatchBtn">New Search Batch</button><button id="openLeadDetailBtn">Open Lead Detail</button><button id="exportSelectedBtn">Export Selected</button></div>
+          </div>
+          <div class="segments">
+            <button class="seg active" data-tab="all">All</button><button class="seg" data-tab="Qualified">Qualified</button><button class="seg" data-tab="Needs Review">Needs Review</button><button class="seg" data-tab="Rejected">Rejected</button>
+          </div>
+          <table>
+            <thead><tr><th></th><th>Business</th><th>Location</th><th>SEO Score</th><th>Commercial Fit</th><th>Evidence</th><th>Status</th><th>Added</th></tr></thead>
+            <tbody id="leadRows"></tbody>
+          </table>
+        </section>
+        <aside class="panel detail" id="detail"></aside>
+      </div>
     </section>
+
+    <section id="leadDetail" class="view">
+      <div class="title">
+        <div>
+          <h1>Lead Detail</h1>
+          <p>Deep review page for one selected prospect. Use this before outreach or manual qualification.</p>
+        </div>
+        <div>
+          <button id="backToOverviewBtn">Back to Overview</button>
+          <button class="primary" id="detailAddExportBtn">Add to Export</button>
+        </div>
+      </div>
+      <div id="leadDetailPage"></div>
+    </section>
+
     <section id="searches" class="view"><div class="title"><h1>Search Batches</h1><p>Create and monitor batches by niche, city, country, and limits.</p><button class="primary" id="newBatchBtn2">Create Batch</button></div><div class="cards" id="batchCards"></div></section>
     <section id="prospects" class="view"><div class="title"><h1>Raw Prospects</h1><p>Discovered businesses before final evidence review.</p></div><div class="panel"><table><thead><tr><th>Business</th><th>Source</th><th>Location</th><th>Domain</th><th>State</th></tr></thead><tbody id="rawRows"></tbody></table></div></section>
     <section id="evidence" class="view"><div class="title"><h1>Evidence Review</h1><p>Review Needs Review leads before qualifying or rejecting them.</p></div><div class="cards" id="reviewCards"></div></section>
@@ -41,8 +93,19 @@
     <section id="settings" class="view"><div class="title"><div><h1>Settings</h1><p>Manage workspace preferences, evidence policy, export settings, and activity logs.</p></div><div><button class="primary">Save Settings</button></div></div><div class="settings-hero panel"><div><span class="settings-icon">✓</span><h2>No evidence. No claim.</h2><p>RankForge should never create a strong SEO claim without verified crawl-based evidence.</p></div><div class="settings-stats"><div><strong>92.6%</strong><span>Evidence coverage</span></div><div><strong>18</strong><span>Qualified credits used</span></div><div><strong>5</strong><span>Search batches/month</span></div></div></div><div class="settings-grid"><section class="panel form settings-card"><h3>Workspace Profile</h3><label>Agency Name<input value="Crestline Ops"></label><label>Workspace URL<input value="crestline-ops"></label><label>Admin Email<input value="automly1@gmail.com"></label><label>Timezone<select><option>America/New_York</option><option>Europe/Istanbul</option><option>UTC</option></select></label></section><section class="panel form settings-card"><h3>Evidence Policy</h3><label class="toggle-row"><input type="checkbox" checked> No evidence = no strong SEO claim</label><label class="toggle-row"><input type="checkbox" checked> Only Qualified leads consume credits</label><label class="toggle-row"><input type="checkbox" checked> Needs Review requires human review</label><label class="toggle-row"><input type="checkbox" checked> Rejected leads are excluded from export by default</label></section><section class="panel form settings-card"><h3>Export Preferences</h3><label>Default Export Format<select><option>CSV</option><option>Excel</option><option>CRM-ready CSV</option></select></label><label class="toggle-row"><input type="checkbox" checked> Include outreach angle</label><label class="toggle-row"><input type="checkbox" checked> Include qualification reason</label><label class="toggle-row"><input type="checkbox"> Include rejected leads</label></section><section class="panel form settings-card"><h3>Notifications</h3><label class="toggle-row"><input type="checkbox" checked> Batch completed</label><label class="toggle-row"><input type="checkbox" checked> Credits running low</label><label class="toggle-row"><input type="checkbox" checked> Leads waiting for review</label><label class="toggle-row"><input type="checkbox"> Weekly performance summary</label></section></div><section class="panel activity-panel"><div class="panel-head"><div><h2>Activity Logs</h2><p>Workspace events, classification decisions, admin actions, and credit usage.</p></div><div><button id="clearLogsBtn">Clear Demo Logs</button></div></div><div id="activityList"></div></section></section>
   </main>
 </div>
-<div class="modal" id="modal"><div class="modal-card"><button class="close" id="closeModal">×</button><h2>Create Search Batch</h2><p>Blocked if batch allowance or qualified lead credits are exhausted.</p><div class="form-grid"><label>Niche<input id="niche" placeholder="landscaping"></label><label>City<input id="city" placeholder="Austin"></label><label>Country<input id="country" value="US"></label><label>Limit<input id="limit" type="number" value="50"></label></div><button class="primary" id="createBatch">Start Batch</button></div></div>
+
+<div class="modal" id="modal">
+  <div class="modal-card create-search-card">
+    <button class="close" id="closeModal">×</button>
+    <div class="create-head"><div><h2>Create Search Batch</h2><p>Build a market search using niche, city, keyword seed, include/exclude rules, and qualification strictness.</p></div><span class="create-pill">No credit card required</span></div>
+    <div class="preset-row"><button class="preset" data-preset="phoenix">Phoenix plumbers</button><button class="preset" data-preset="austin">Austin dentists</button><button class="preset" data-preset="miami">Miami roofers</button><button class="preset" data-preset="denver">Denver HVAC</button><button class="preset" data-preset="chicago">Chicago PI lawyers</button><button class="preset" data-preset="london">London estate agents</button></div>
+    <div class="create-grid"><label>Market name<input id="searchNameInput" placeholder="Phoenix Plumbing Companies"></label><label>Niche<input id="nicheInput" placeholder="plumber"></label><label>City<input id="cityInput" placeholder="Phoenix"></label><label>Country<input id="countryInput" placeholder="United States"></label><label>Primary keyword<input id="keywordSeedInput" placeholder="emergency plumber"></label><label>Search depth<select id="searchDepthInput"><option value="10">10 previews</option><option value="25">25 leads</option><option value="50">50 leads</option></select></label><label class="span-2">Include terms<input id="includeTermsInput" placeholder="drain cleaning, water heater, sewer repair"></label><label class="span-2">Exclude terms<input id="excludeTermsInput" placeholder="yelp, angi, homeadvisor, directory"></label><label>Strictness<select id="qualificationModeInput"><option value="Strict evidence">Strict evidence</option><option value="Balanced pool">Balanced pool</option></select></label><label>Hidden rules<div class="hidden-rules"><input id="businessTypeInput" value="local service business" readonly><input id="seoThresholdInput" value="60" readonly><input id="leadThresholdInput" value="70" readonly></div></label></div>
+    <div class="create-summary" id="createSummary"><strong>Workflow preview</strong><span>Searches → raw prospects → SEO audits → contacts → final leads</span></div>
+    <button class="primary create-submit" id="createBatch">Start Search Batch</button>
+  </div>
+</div>
 <script src="./app.js"></script>
 <script src="./v3-patch.js"></script>
+<script src="./v4-patch.js"></script>
 </body>
 </html>

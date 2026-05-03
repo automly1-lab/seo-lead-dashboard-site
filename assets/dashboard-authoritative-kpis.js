@@ -10,6 +10,8 @@
   function parse(raw,f){try{return raw?JSON.parse(raw):f;}catch(e){return f;}}
   function num(v){var n=Number(String(v==null?'':v).replace(/[^0-9.-]/g,''));return Number.isFinite(n)?Math.max(0,Math.round(n)):0;}
   function pct(a,b){return b?Math.round((a/b)*100)+'%':'—';}
+  function truthy(v){var t=low(v);return ['true','yes','1','found','verified','present','available','pass','passed'].indexOf(t)>=0;}
+  function meaningful(v){var t=clean(v);return !!t&&!/^(false|no|0|null|undefined|none|n\/a|\[\]|\{\})$/i.test(t);}
   function session(){try{return window.rankforgeAuth&&window.rankforgeAuth.getSession?window.rankforgeAuth.getSession():parse(localStorage.getItem('rankforge-auth-session-v1'),{})||{};}catch(e){return{};}}
   function profile(){return window.rankforgeUserProfile||parse(localStorage.getItem(PROFILE_KEY),{})||{};}
   function userId(){var s=session(),p=profile();return clean(s.userId||s.id||p.user_id);}
@@ -20,8 +22,11 @@
   function rowEmail(r){return low(r.email||r.user_email||r.owner_email||r.customer_email||r.billing_email);}
   function match(r,u,e,admin){if(admin)return true;var ru=rowUser(r),re=rowEmail(r);return (!!u&&ru===u)||(!!e&&re===e)||(!ru&&!re);}
   function leadStatus(l){var s=low(l.qualification_status||l.status||l.decision).replace(/[\s-]+/g,'_');if(s==='qualified')return'qualified';if(s==='qualified_locked'||s==='locked_qualified')return'qualified_locked';if(s==='rejected'||s==='filtered_out'||s==='filtered')return'rejected';return'review_needed';}
-  function hasEvidence(l){return ['true','yes','verified','partial'].indexOf(low(l.seo_claims_verified||l.verified_seo_evidence||l.evidence_status))>=0||num(l.seo_evidence_signal_count)>0||low(l.crawl_accessible)==='true';}
-  function partialEvidence(l){return !hasEvidence(l)&&(num(l.seo_issue_count)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||low(l.contact_cta_found)==='true'||low(l.target_city_found)==='true'||low(l.target_service_found)==='true');}
+  function directEvidenceCount(l){return num(l.direct_evidence_count)+num(l.crawl_based_evidence_count)+num(l.seo_verified_issue_count)+num(l.seo_verified_signal_count);}
+  function weakEvidenceCount(l){return num(l.weak_evidence_count)+num(l.seo_issue_count)+num(l.seo_evidence_signal_count);}
+  function hasEvidence(l){return truthy(l.seo_claims_verified)||truthy(l.verified_seo_evidence)||truthy(l.evidence_status)||truthy(l.crawl_accessible)||directEvidenceCount(l)>0||num(l.seo_evidence_signal_count)>0||meaningful(l.seo_verified_claims)||meaningful(l.seo_evidence_summary)||meaningful(l.seo_evidence_json)||meaningful(l.technical_facts_json)||num(l.crawl_confidence)>0.35;}
+  function partialEvidence(l){return !hasEvidence(l)&&(weakEvidenceCount(l)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||truthy(l.contact_cta_found)||truthy(l.target_city_found)||truthy(l.target_service_found)||truthy(l.local_business_schema_found)||truthy(l.reviews_signal_found)||truthy(l.blog_found)||meaningful(l.title_tag)||num(l.meta_description_length)>0);}
+  function crawled(l){return truthy(l.crawl_accessible)||num(l.http_status)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||meaningful(l.title_tag)||num(l.meta_description_length)>0||hasEvidence(l)||partialEvidence(l);}
   function searchId(r){return clean(r.search_id||r.id||r.list_id||r.search_batch_id||r.batch_id||r.saved_list_id);}
   function leadSearchId(r){return clean(r.search_id||r.list_id||r.search_batch_id||r.batch_id||r.saved_list_id);}
   function searchName(r){return clean(r.search_name||r.name||r.batch_name||r.description)||'Search batch';}
@@ -35,12 +40,12 @@
   function renderEvidence(leads){
     var verified=leads.filter(hasEvidence).length;
     var partial=leads.filter(partialEvidence).length;
+    var crawledCount=leads.filter(crawled).length;
     var none=Math.max(0,leads.length-verified-partial);
-    var failed=leads.filter(function(l){return low(l.crawl_accessible)==='false'||low(l.crawl_source_field)==='none'||(!hasEvidence(l)&&num(l.homepage_word_count)===0&&num(l.service_page_count)===0);}).length;
     var rows=[
-      ['Crawled Successfully', pct(leads.length-failed,leads.length), 'Sites with usable homepage or page content.'],
+      ['Crawled Successfully', crawledCount+' · '+pct(crawledCount,leads.length), 'Sites with usable homepage, page content, or technical facts.'],
       ['Verified Evidence', verified+' · '+pct(verified,leads.length), 'Leads with enough crawl signals to support SEO claims.'],
-      ['Partial Evidence', partial+' · '+pct(partial,leads.length), 'Some signals exist, but review is still useful.'],
+      ['Partial Evidence', partial+' · '+pct(partial,leads.length), 'Some crawl or SEO signals exist, but review is still useful.'],
       ['No Verified Evidence', none+' · '+pct(none,leads.length), 'Kept in review because no strong SEO claim can be made.']
     ];
     var el=document.getElementById('rfEvidenceRows');

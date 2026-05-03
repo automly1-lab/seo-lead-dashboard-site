@@ -70,157 +70,22 @@
 
           <div class="rf-settings-content">
             <section class="rf-settings-card" id="account">
-              <div class="rf-card-header">
-                <div>
-                  <h2>Account</h2>
-                  <p>Your signed-in RankForge account.</p>
-                </div>
-                <div class="rf-card-actions">
-                  <button class="rf-button danger" type="button" id="settingsSignOut">Sign out</button>
-                  <a class="rf-button secondary" href="../dashboard/">Go to dashboard</a>
-                </div>
-              </div>
-              <div class="rf-settings-grid">
-                <div class="rf-info-tile"><span class="rf-info-label">Email</span><strong class="rf-info-value" id="accountEmail">Loading...</strong></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Status</span><strong class="rf-info-value" id="accountStatus">Checking</strong><div class="rf-info-note">Account access is validated by Supabase Auth.</div></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Role</span><strong class="rf-info-value" id="accountRole">User</strong></div>
-              </div>
-              <details class="rf-advanced">
-                <summary>Advanced account details</summary>
-                <div class="rf-advanced-grid">
-                  <div class="rf-info-tile"><span class="rf-info-label">User ID</span><strong class="rf-info-value" id="advancedUserId">—</strong></div>
-                  <div class="rf-info-tile"><span class="rf-info-label">Created at</span><strong class="rf-info-value" id="advancedCreatedAt">—</strong></div>
-                </div>
-              </details>
+              <div class="rf-card-header"><div><h2>Account</h2><p>Your signed-in RankForge account.</p></div><div class="rf-card-actions"><button class="rf-button danger" type="button" id="settingsSignOut">Sign out</button><a class="rf-button secondary" href="../dashboard/">Go to dashboard</a></div></div>
+              <div class="rf-settings-grid"><div class="rf-info-tile"><span class="rf-info-label">Email</span><strong class="rf-info-value" id="accountEmail">Loading...</strong></div><div class="rf-info-tile"><span class="rf-info-label">Status</span><strong class="rf-info-value" id="accountStatus">Checking</strong><div class="rf-info-note">Account access is validated by Supabase Auth.</div></div><div class="rf-info-tile"><span class="rf-info-label">Role</span><strong class="rf-info-value" id="accountRole">User</strong></div></div>
+              <details class="rf-advanced"><summary>Advanced account details</summary><div class="rf-advanced-grid"><div class="rf-info-tile"><span class="rf-info-label">User ID</span><strong class="rf-info-value" id="advancedUserId">—</strong></div><div class="rf-info-tile"><span class="rf-info-label">Created at</span><strong class="rf-info-value" id="advancedCreatedAt">—</strong></div></div></details>
             </section>
 
-            <section class="rf-settings-card" id="plan-usage">
-              <div class="rf-card-header">
-                <div>
-                  <h2>Plan &amp; Usage</h2>
-                  <p>Understand your current plan, monthly limits, and qualified lead credits.</p>
-                </div>
-                <div id="planBadge"></div>
-              </div>
-              <div class="rf-settings-two">
-                <div class="rf-plan-hero">
-                  <div class="rf-plan-row">
-                    <div>
-                      <h3 class="rf-plan-title" id="planName">Loading...</h3>
-                      <p class="rf-plan-copy" id="planCopy">Checking your plan.</p>
-                    </div>
-                    <a class="rf-button primary" id="planCta" href="../pricing/#plans">Upgrade</a>
-                  </div>
-                  <div class="rf-settings-grid" style="margin-top:16px">
-                    <div class="rf-info-tile"><span class="rf-info-label">Search batches</span><strong class="rf-info-value" id="searchLimitLabel">—</strong></div>
-                    <div class="rf-info-tile"><span class="rf-info-label">Qualified lead credits</span><strong class="rf-info-value" id="creditLimitLabel">—</strong></div>
-                    <div class="rf-info-tile"><span class="rf-info-label">Max batch</span><strong class="rf-info-value" id="maxBatchLabel">—</strong></div>
-                  </div>
-                  <p class="rf-plan-note">1 credit = 1 qualified lead. Needs Review and Rejected prospects use 0 credits.</p>
-                  <div class="rf-warning-callout" id="pendingWarning" hidden>
-                    <strong>Payment pending</strong>
-                    <p>Paid features activate after checkout confirmation. Your account may continue to use Free limits until billing is confirmed.</p>
-                  </div>
-                </div>
-                <div class="rf-usage-stack">
-                  <div id="searchUsageBar"></div>
-                  <div id="creditUsageBar"></div>
-                </div>
-              </div>
-            </section>
+            <section class="rf-settings-card" id="plan-usage"><div class="rf-card-header"><div><h2>Plan &amp; Usage</h2><p>Understand your current plan, monthly limits, and qualified lead credits.</p></div><div id="planBadge"></div></div><div class="rf-settings-two"><div class="rf-plan-hero"><div class="rf-plan-row"><div><h3 class="rf-plan-title" id="planName">Loading...</h3><p class="rf-plan-copy" id="planCopy">Checking your plan.</p></div><a class="rf-button primary" id="planCta" href="../pricing/#plans">Upgrade</a></div><div class="rf-settings-grid" style="margin-top:16px"><div class="rf-info-tile"><span class="rf-info-label">Search batches</span><strong class="rf-info-value" id="searchLimitLabel">—</strong></div><div class="rf-info-tile"><span class="rf-info-label">Qualified lead credits</span><strong class="rf-info-value" id="creditLimitLabel">—</strong></div><div class="rf-info-tile"><span class="rf-info-label">Max batch</span><strong class="rf-info-value" id="maxBatchLabel">—</strong></div></div><p class="rf-plan-note">1 credit = 1 qualified lead. Needs Review and Rejected prospects use 0 credits.</p><div class="rf-warning-callout" id="pendingWarning" hidden><strong>Payment pending</strong><p>Paid features activate after checkout confirmation. Your account may continue to use Free limits until billing is confirmed.</p></div></div><div class="rf-usage-stack"><div id="searchUsageBar"></div><div id="creditUsageBar"></div></div></div></section>
 
-            <section class="rf-settings-card" id="billing">
-              <div class="rf-card-header">
-                <div>
-                  <h2>Billing</h2>
-                  <p>Billing status and subscription state.</p>
-                </div>
-                <div id="billingStatusBadge"></div>
-              </div>
-              <div class="rf-settings-grid">
-                <div class="rf-info-tile"><span class="rf-info-label">Current plan</span><strong class="rf-info-value" id="billingPlan">—</strong></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Payment state</span><strong class="rf-info-value" id="billingState">—</strong></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Billing period</span><strong class="rf-info-value" id="billingPeriod">Monthly</strong></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Next renewal</span><strong class="rf-info-value" id="billingRenewal">—</strong></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Manage plan</span><strong class="rf-info-value">Billing portal coming soon</strong><div class="rf-info-note" id="billingMessage">Contact support for billing changes.</div></div>
-                <div class="rf-info-tile"><span class="rf-info-label">Pricing</span><strong class="rf-info-value"><a href="../pricing/">View plans</a></strong></div>
-              </div>
-              <div class="rf-card-actions" style="margin-top:16px">
-                <a class="rf-button secondary" href="../pricing/">View Pricing</a>
-              </div>
-            </section>
+            <section class="rf-settings-card" id="billing"><div class="rf-card-header"><div><h2>Billing</h2><p>Billing status and subscription state.</p></div><div id="billingStatusBadge"></div></div><div class="rf-settings-grid"><div class="rf-info-tile"><span class="rf-info-label">Current plan</span><strong class="rf-info-value" id="billingPlan">—</strong></div><div class="rf-info-tile"><span class="rf-info-label">Payment state</span><strong class="rf-info-value" id="billingState">—</strong></div><div class="rf-info-tile"><span class="rf-info-label">Billing period</span><strong class="rf-info-value" id="billingPeriod">Monthly</strong></div><div class="rf-info-tile"><span class="rf-info-label">Next renewal</span><strong class="rf-info-value" id="billingRenewal">—</strong></div><div class="rf-info-tile"><span class="rf-info-label">Manage plan</span><strong class="rf-info-value">Billing portal coming soon</strong><div class="rf-info-note" id="billingMessage">Contact support for billing changes.</div></div><div class="rf-info-tile"><span class="rf-info-label">Pricing</span><strong class="rf-info-value"><a href="../pricing/">View plans</a></strong></div></div><div class="rf-card-actions" style="margin-top:16px"><a class="rf-button secondary" href="../pricing/">View Pricing</a></div></section>
 
-            <section class="rf-settings-card" id="export-access">
-              <div class="rf-card-header">
-                <div>
-                  <h2>Export Access</h2>
-                  <p>CSV export availability for your workspace.</p>
-                </div>
-                <div id="exportBadge"></div>
-              </div>
-              <div class="rf-export-state">
-                <div>
-                  <h3 id="exportTitle">Checking CSV access</h3>
-                  <p id="exportCopy">CSV export is available on Starter, Growth, and Admin plans.</p>
-                </div>
-                <a class="rf-button primary" id="exportCta" href="../pricing/#plans">Upgrade to Starter</a>
-              </div>
-              <p class="rf-plan-note">Exports only include user-owned prospects. Exporting does not change credit usage.</p>
-            </section>
+            <section class="rf-settings-card" id="export-access"><div class="rf-card-header"><div><h2>Export Access</h2><p>CSV export availability for your workspace.</p></div><div id="exportBadge"></div></div><div class="rf-export-state"><div><h3 id="exportTitle">Checking CSV access</h3><p id="exportCopy">CSV export is available on Starter, Growth, and Admin plans.</p></div><a class="rf-button primary" id="exportCta" href="../pricing/#plans">Upgrade to Starter</a></div><p class="rf-plan-note">Exports only include user-owned prospects. Exporting does not change credit usage.</p></section>
 
-            <section class="rf-settings-card" id="preferences">
-              <div class="rf-card-header">
-                <div>
-                  <h2>Preferences</h2>
-                  <p>Simple defaults for future searches.</p>
-                </div>
-              </div>
-              <div class="rf-preferences-grid">
-                <div class="rf-pref-field"><label for="prefCountry">Default country</label><input id="prefCountry" type="text" placeholder="United States"></div>
-                <div class="rf-pref-field"><label for="prefNiche">Default niche/service</label><input id="prefNiche" type="text" placeholder="plumber, dentist, roofer"></div>
-                <div class="rf-pref-field"><label for="prefCity">Default city/market</label><input id="prefCity" type="text" placeholder="Phoenix"></div>
-              </div>
-              <div class="rf-card-actions" style="margin-top:16px">
-                <button class="rf-button primary" type="button" id="savePreferences">Save preferences</button>
-                <button class="rf-button secondary" type="button" id="openSetupButton">Open setup</button>
-              </div>
-              <p class="rf-status-text" id="preferencesStatus">Email notifications are coming soon.</p>
-            </section>
+            <section class="rf-settings-card" id="preferences"><div class="rf-card-header"><div><h2>Preferences</h2><p>Simple defaults for future searches.</p></div></div><div class="rf-preferences-grid"><div class="rf-pref-field"><label for="prefCountry">Default country</label><input id="prefCountry" type="text" placeholder="United States"></div><div class="rf-pref-field"><label for="prefNiche">Default niche/service</label><input id="prefNiche" type="text" placeholder="plumber, dentist, roofer"></div><div class="rf-pref-field"><label for="prefCity">Default city/market</label><input id="prefCity" type="text" placeholder="Phoenix"></div></div><div class="rf-card-actions" style="margin-top:16px"><button class="rf-button primary" type="button" id="savePreferences">Save preferences</button><button class="rf-button secondary" type="button" id="openSetupButton">Open setup</button></div><p class="rf-status-text" id="preferencesStatus">Email notifications are coming soon.</p></section>
 
-            <section class="rf-settings-card" id="support">
-              <div class="rf-card-header">
-                <div>
-                  <h2>Support &amp; Legal</h2>
-                  <p>Useful RankForge links.</p>
-                </div>
-              </div>
-              <div class="rf-link-list">
-                <a class="rf-link-card" href="../status/"><strong>System Status</strong><span>Check service availability.</span></a>
-                <a class="rf-link-card" href="../pricing/"><strong>Pricing</strong><span>Review Free, Starter, and Growth.</span></a>
-                <a class="rf-link-card" href="../privacy/"><strong>Privacy Policy</strong><span>How RankForge handles data.</span></a>
-                <a class="rf-link-card" href="../terms/"><strong>Terms of Service</strong><span>Product and usage terms.</span></a>
-                <a class="rf-link-card" href="../refund-policy/"><strong>Refund Policy</strong><span>Billing and refund terms.</span></a>
-              </div>
-              <p class="rf-plan-note">For account or billing questions, contact the RankForge support contact provided by CrestlineOps.</p>
-            </section>
+            <section class="rf-settings-card" id="support"><div class="rf-card-header"><div><h2>Support &amp; Legal</h2><p>Useful RankForge links.</p></div></div><div class="rf-link-list"><a class="rf-link-card" href="../status/"><strong>System Status</strong><span>Check service availability.</span></a><a class="rf-link-card" href="../pricing/"><strong>Pricing</strong><span>Review Free, Starter, and Growth.</span></a><a class="rf-link-card" href="../privacy/"><strong>Privacy Policy</strong><span>How RankForge handles data.</span></a><a class="rf-link-card" href="../terms/"><strong>Terms of Service</strong><span>Product and usage terms.</span></a><a class="rf-link-card" href="../refund-policy/"><strong>Refund Policy</strong><span>Billing and refund terms.</span></a></div><p class="rf-plan-note">For account or billing questions, contact the RankForge support contact provided by CrestlineOps.</p></section>
 
-            <section class="rf-settings-card rf-admin-only" id="admin-tools" hidden>
-              <div class="rf-card-header">
-                <div>
-                  <h2>Admin shortcuts</h2>
-                  <p>Internal tools for RankForge operations.</p>
-                </div>
-              </div>
-              <div class="rf-admin-shortcuts">
-                <a class="rf-link-card" href="../quality/"><strong>Admin Quality</strong><span>Crawl and evidence diagnostics.</span></a>
-                <a class="rf-link-card" href="../settings/"><strong>Billing Admin</strong><span>Billing tools coming soon.</span></a>
-                <a class="rf-link-card" href="../quality/"><strong>Credit Integrity</strong><span>Review qualification and credit rules.</span></a>
-              </div>
-              <details class="rf-advanced" id="adminDiagnostics" hidden>
-                <summary>Advanced diagnostics</summary>
-                <p class="rf-status-text">Diagnostics are intentionally kept out of normal user settings.</p>
-              </details>
-            </section>
+            <section class="rf-settings-card rf-admin-only" id="admin-tools" hidden><div class="rf-card-header"><div><h2>Admin shortcuts</h2><p>Internal tools for RankForge operations.</p></div></div><div class="rf-admin-shortcuts"><a class="rf-link-card" href="../quality/"><strong>Admin Quality</strong><span>Crawl and evidence diagnostics.</span></a><a class="rf-link-card" href="../settings/"><strong>Billing Admin</strong><span>Billing tools coming soon.</span></a><a class="rf-link-card" href="../quality/"><strong>Credit Integrity</strong><span>Review qualification and credit rules.</span></a></div><details class="rf-advanced" id="adminDiagnostics" hidden><summary>Advanced diagnostics</summary><p class="rf-status-text">Diagnostics are intentionally kept out of normal user settings.</p></details></section>
           </div>
         </div>
       </div>
@@ -230,9 +95,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../assets/supabase-config.js?v=supabase-auth-2"></script>
   <script src="../assets/auth.js?v=checkout-preserve-context-1"></script>
-  <script src="../assets/user-plan-resolver.js?v=effective-users-sheet-5-stacked"></script>
-  <script src="../assets/user-sync.js?v=no-paid-downgrade-1"></script>
+  <script src="../assets/user-plan-resolver.js?v=effective-users-sheet-6-stable"></script>
+  <script src="../assets/app-plan-stabilizer.js?v=stable-plan-1"></script>
+  <script src="../assets/user-sync.js?v=no-refresh-loop-2"></script>
   <script src="../assets/billing-config.js?v=billing-config-2"></script>
-  <script src="../assets/settings.js?v=settings-stacked-1"></script>
+  <script src="../assets/settings.js?v=settings-stable-plan-2"></script>
 </body>
 </html>

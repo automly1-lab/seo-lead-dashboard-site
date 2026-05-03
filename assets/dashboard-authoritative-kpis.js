@@ -24,9 +24,9 @@
   function leadStatus(l){var s=low(l.qualification_status||l.status||l.decision).replace(/[\s-]+/g,'_');if(s==='qualified')return'qualified';if(s==='qualified_locked'||s==='locked_qualified')return'qualified_locked';if(s==='rejected'||s==='filtered_out'||s==='filtered')return'rejected';return'review_needed';}
   function directEvidenceCount(l){return num(l.direct_evidence_count)+num(l.crawl_based_evidence_count)+num(l.seo_verified_issue_count)+num(l.seo_verified_signal_count);}
   function weakEvidenceCount(l){return num(l.weak_evidence_count)+num(l.seo_issue_count)+num(l.seo_evidence_signal_count);}
-  function hasEvidence(l){return truthy(l.seo_claims_verified)||truthy(l.verified_seo_evidence)||truthy(l.evidence_status)||truthy(l.crawl_accessible)||directEvidenceCount(l)>0||num(l.seo_evidence_signal_count)>0||meaningful(l.seo_verified_claims)||meaningful(l.seo_evidence_summary)||meaningful(l.seo_evidence_json)||meaningful(l.technical_facts_json)||num(l.crawl_confidence)>0.35;}
-  function partialEvidence(l){return !hasEvidence(l)&&(weakEvidenceCount(l)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||truthy(l.contact_cta_found)||truthy(l.target_city_found)||truthy(l.target_service_found)||truthy(l.local_business_schema_found)||truthy(l.reviews_signal_found)||truthy(l.blog_found)||meaningful(l.title_tag)||num(l.meta_description_length)>0);}
-  function crawled(l){return truthy(l.crawl_accessible)||num(l.http_status)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||meaningful(l.title_tag)||num(l.meta_description_length)>0||hasEvidence(l)||partialEvidence(l);}
+  function hasEvidence(l){return leadStatus(l)==='qualified'||leadStatus(l)==='qualified_locked'||truthy(l.seo_claims_verified)||truthy(l.verified_seo_evidence)||truthy(l.evidence_status)||truthy(l.crawl_accessible)||directEvidenceCount(l)>0||num(l.seo_evidence_signal_count)>0||meaningful(l.seo_verified_claims)||meaningful(l.seo_evidence_summary)||meaningful(l.seo_evidence_json)||meaningful(l.technical_facts_json)||num(l.crawl_confidence)>0.35;}
+  function partialEvidence(l){return !hasEvidence(l)&&(leadStatus(l)==='review_needed'||weakEvidenceCount(l)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||truthy(l.contact_cta_found)||truthy(l.target_city_found)||truthy(l.target_service_found)||truthy(l.local_business_schema_found)||truthy(l.reviews_signal_found)||truthy(l.blog_found)||meaningful(l.title_tag)||num(l.meta_description_length)>0);}
+  function crawled(l){return hasEvidence(l)||partialEvidence(l)||truthy(l.crawl_accessible)||num(l.http_status)>0||num(l.homepage_word_count)>0||num(l.service_page_count)>0||num(l.location_page_count)>0||meaningful(l.title_tag)||num(l.meta_description_length)>0;}
   function searchId(r){return clean(r.search_id||r.id||r.list_id||r.search_batch_id||r.batch_id||r.saved_list_id);}
   function leadSearchId(r){return clean(r.search_id||r.list_id||r.search_batch_id||r.batch_id||r.saved_list_id);}
   function searchName(r){return clean(r.search_name||r.name||r.batch_name||r.description)||'Search batch';}
@@ -43,10 +43,10 @@
     var crawledCount=leads.filter(crawled).length;
     var none=Math.max(0,leads.length-verified-partial);
     var rows=[
-      ['Crawled Successfully', crawledCount+' · '+pct(crawledCount,leads.length), 'Sites with usable homepage, page content, or technical facts.'],
-      ['Verified Evidence', verified+' · '+pct(verified,leads.length), 'Leads with enough crawl signals to support SEO claims.'],
-      ['Partial Evidence', partial+' · '+pct(partial,leads.length), 'Some crawl or SEO signals exist, but review is still useful.'],
-      ['No Verified Evidence', none+' · '+pct(none,leads.length), 'Kept in review because no strong SEO claim can be made.']
+      ['Crawled Successfully', crawledCount+' · '+pct(crawledCount,leads.length), 'Sites with usable homepage, page content, or qualification evidence.'],
+      ['Verified Evidence', verified+' · '+pct(verified,leads.length), 'Qualified leads and leads with enough crawl signals.'],
+      ['Partial Evidence', partial+' · '+pct(partial,leads.length), 'Review-needed leads or partial crawl/SEO signals.'],
+      ['No Verified Evidence', none+' · '+pct(none,leads.length), 'No qualified, review, or crawl evidence signal was found.']
     ];
     var el=document.getElementById('rfEvidenceRows');
     if(el)el.innerHTML=rows.map(function(r){return '<div class="rf-evidence-row"><span><strong>'+esc(r[0])+'</strong><br><small>'+esc(r[2])+'</small></span><strong>'+esc(r[1])+'</strong></div>';}).join('');

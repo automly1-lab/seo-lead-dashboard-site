@@ -1,5 +1,8 @@
 (function(){
   var API='https://lastaccount1907.app.n8n.cloud/webhook/rankforge-current-state';
+  var LAST_KEY='rankforge-current-state-last-sync-v1';
+  var COOLDOWN=5*60*1000;
+  var inFlight=false;
   function c(v){return String(v==null?'':v).trim()}
   function k(v){var x=c(v).toLowerCase().replace(/\s+/g,'_').replace(/-/g,'_');if(x==='pro'||x==='founding'||x==='founding_plan')return'growth';if(x==='start'||x==='basic'||x==='starter_plan')return'starter';if(x==='agency'||x==='enterprise')return'agency_intelligence';if(x.indexOf('admin')>-1||x.indexOf('unlimited')>-1)return'admin_unlimited';return x||'free'}
   function n(v,d){var x=Number(c(v).replace(/[^0-9.-]/g,''));return Number.isFinite(x)?Math.max(0,Math.round(x)):(d||0)}
@@ -11,7 +14,9 @@
   function paint(p){if(!p)return;var st=stateObj();if(st){st.plan=Object.assign({},st.plan||{},p);st.user=Object.assign({},st.user||{},{plan:p.name,billingStatus:p.billingStatus});window.state=st}localStorage.setItem('rankforge-user-plan-v1',JSON.stringify(p));localStorage.setItem('rankforge-selected-plan-v1',p.key);localStorage.setItem('rankforge-billing-status-v1',p.billingStatus||'');var u=document.getElementById('creditsUsed'),l=document.getElementById('creditsLimit'),b=document.getElementById('creditsBar'),box=document.querySelector('.usage');if(u)u.textContent=p.unlimited?'Unlimited':String(p.creditsUsed||0);if(l)l.textContent=p.unlimited?'':' / '+String(p.creditsLimit||0);if(b)b.style.width=p.unlimited?'100%':(p.creditsLimit?Math.min(100,(p.creditsUsed||0)/p.creditsLimit*100)+'%':'0%');if(box){var s=box.querySelector('small');if(s)s.textContent='Plan: '+p.name+(p.billingStatus?' · '+p.billingStatus:'')}var t=document.querySelector('.account strong');if(t)t.textContent=p.unlimited?'RankForge Admin':'RankForge '+p.name;var m=document.getElementById('rfCurrentStateSync');if(m){m.textContent='';m.style.display='none'}}
   function cached(){try{var x=JSON.parse(localStorage.getItem('rankforge-user-plan-v1')||'null');return x?plan(x):null}catch(e){return null}}
   function pending(){var u=document.getElementById('creditsUsed'),l=document.getElementById('creditsLimit'),box=document.querySelector('.usage');if(u)u.textContent='...';if(l)l.textContent='';if(box){var s=box.querySelector('small');if(s)s.textContent='Plan'}}
-  function load(){var s=sess()||{},body=new URLSearchParams();body.set('email',s.email||'');body.set('user_id',s.userId||s.id||'');body.set('event','get_current_state');return fetch(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:body.toString()}).then(function(r){return r.json()}).then(function(j){return plan(j.current_state||j.user||j.row||j.data||j)})}
-  function boot(){var p=cached();if(p&&p.creditsLimit>0)paint(p);else pending();load().then(paint).catch(function(){if(p)paint(p);else pending()});setTimeout(function(){var q=cached();if(q&&q.creditsLimit>0)paint(q)},800)}
+  function shouldSkip(force){if(force)return false;var last=Date.parse(localStorage.getItem(LAST_KEY)||'')||0;return last&&Date.now()-last<COOLDOWN}
+  function load(force){if(inFlight||shouldSkip(force))return Promise.resolve(cached());inFlight=true;var s=sess()||{},body=new URLSearchParams();body.set('email',s.email||'');body.set('user_id',s.userId||s.id||'');body.set('event','get_current_state');return fetch(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:body.toString()}).then(function(r){return r.json()}).then(function(j){localStorage.setItem(LAST_KEY,new Date().toISOString());return plan(j.current_state||j.user||j.row||j.data||j)}).finally(function(){inFlight=false})}
+  function boot(){var p=cached();if(p&&p.creditsLimit>0)paint(p);else pending();load(false).then(function(x){if(x)paint(x)}).catch(function(){if(p)paint(p);else pending()})}
+  window.rankforgeCurrentState={refresh:function(){return load(true).then(paint)},paint:paint};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

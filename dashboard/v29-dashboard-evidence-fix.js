@@ -1,6 +1,5 @@
 (function(){
   'use strict';
-  var ENDPOINT='https://lastaccount1907.app.n8n.cloud/webhook/rankforge-search-results';
   var appliedHash='';
   function c(v){return String(v==null?'':v).trim()}
   function n(v){var x=Number(c(v).replace(/[^0-9.-]/g,''));return Number.isFinite(x)?Math.max(0,Math.round(x)):0}
@@ -36,6 +35,7 @@
   }
   function userKey(){var s=sess()||{}, stateObj=st()||{}, email=c(s.email||(stateObj.user&&stateObj.user.email)).toLowerCase(), id=c(s.userId||s.id||(stateObj.user&&stateObj.user.userId));return id||email||'anonymous'}
   function storeKey(){return 'rankforge-dashboard-data-v2::'+userKey()}
+  function localAudits(){return (safe(localStorage.getItem(storeKey()),{})||{}).audits||[]}
   function persist(audits){
     var data=safe(localStorage.getItem(storeKey()),{searches:[],leads:[],audits:[]});
     data.audits=audits||data.audits||[];
@@ -53,20 +53,8 @@
     persist(audits);
     if(changed){try{if(typeof render==='function')render()}catch(e){}}
   }
-  async function sync(){
-    var s=sess()||{}, stateObj=st()||{}, searches=(stateObj.searches||[]).map(function(x){return x.search_id||x.id}).filter(Boolean), body=new URLSearchParams();
-    body.set('email',s.email||(stateObj.user&&stateObj.user.email)||'');
-    body.set('user_id',s.userId||s.id||(stateObj.user&&stateObj.user.userId)||'');
-    body.set('search_ids',searches.join(','));
-    body.set('event','get_search_results_for_dashboard_evidence');
-    try{
-      var res=await fetch(localStorage.getItem('rankforge-search-results-endpoint-v1')||ENDPOINT,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:body.toString()});
-      var json=await res.json();
-      var audits=[].concat(json.seo_audits||[],json.audits||[],json.data&&json.data.seo_audits||[],json.data&&json.data.audits||[]);
-      apply(audits);
-    }catch(e){console.warn('Dashboard evidence fix sync failed',e);apply((safe(localStorage.getItem(storeKey()),{})||{}).audits||[])}
-  }
-  function boot(){apply((safe(localStorage.getItem(storeKey()),{})||{}).audits||[]);setTimeout(sync,900);setTimeout(sync,5200)}
+  function sync(){apply(localAudits())}
+  function boot(){sync()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   window.rankforgeDashboardEvidenceFix={sync:sync,apply:apply};
 })();

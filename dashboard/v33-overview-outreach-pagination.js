@@ -2,6 +2,8 @@
   'use strict';
 
   var PAGE_SIZE = 50;
+  var patching = false;
+  var observerStarted = false;
   var STATUS_OPTIONS = [
     ['not_contacted','Not contacted'],
     ['contacted','Contacted'],
@@ -20,15 +22,13 @@
   function userKey(){
     var email = '';
     try { email = clean((state.user && state.user.email) || ''); } catch(e) {}
-    try {
-      var s = JSON.parse(localStorage.getItem('rankforge-auth-session-v1') || 'null');
-      email = clean((s && (s.userId || s.id || s.email)) || email);
-    } catch(e) {}
+    try { var s = JSON.parse(localStorage.getItem('rankforge-auth-session-v1') || 'null'); email = clean((s && (s.userId || s.id || s.email)) || email); } catch(e) {}
     return email || 'anonymous';
   }
   function storeKey(){ return 'rankforge-overview-outreach-status-v1::' + userKey(); }
   function readStatuses(){ try { return JSON.parse(localStorage.getItem(storeKey()) || '{}') || {}; } catch(e){ return {}; } }
   function writeStatuses(map){ try { localStorage.setItem(storeKey(), JSON.stringify(map || {})); } catch(e){} }
+  function findLeadById(id){ try { return (state.leads || []).find(function(l){ return leadId(l) === id; }) || null; } catch(e){ return null; } }
   function getOutreach(l){
     var id = leadId(l);
     var map = readStatuses();
@@ -38,20 +38,13 @@
     var map = readStatuses();
     map[id] = value;
     writeStatuses(map);
-    try {
-      var lead = (state.leads || []).find(function(l){ return leadId(l) === id; });
-      if (lead) lead.outreach_status = value;
-    } catch(e) {}
+    var lead = findLeadById(id);
+    if (lead) lead.outreach_status = value;
   }
-  function optionLabel(value){
-    var found = STATUS_OPTIONS.find(function(x){ return x[0] === value; });
-    return found ? found[1] : 'Not contacted';
-  }
+  function optionLabel(value){ var found = STATUS_OPTIONS.find(function(x){ return x[0] === value; }); return found ? found[1] : 'Not contacted'; }
   function selectHtml(l){
     var val = getOutreach(l);
-    return '<select class="rf33-outreach-select rf33-' + esc(val) + '" data-outreach-id="' + esc(leadId(l)) + '">' +
-      STATUS_OPTIONS.map(function(opt){ return '<option value="' + esc(opt[0]) + '" ' + (opt[0] === val ? 'selected' : '') + '>' + esc(opt[1]) + '</option>'; }).join('') +
-      '</select>';
+    return '<select class="rf33-outreach-select rf33-' + esc(val) + '" data-outreach-id="' + esc(leadId(l)) + '">' + STATUS_OPTIONS.map(function(opt){ return '<option value="' + esc(opt[0]) + '" ' + (opt[0] === val ? 'selected' : '') + '>' + esc(opt[1]) + '</option>'; }).join('') + '</select>';
   }
   function badge(s){ var label = clean(s) || 'No status'; return '<span class="badge ' + cls(label) + '">● ' + esc(label) + '</span>'; }
   function score(value){
@@ -73,18 +66,15 @@
   function ensureHeader(){
     var row = document.querySelector('#overview table thead tr');
     if (!row) return;
+    var ths = Array.from(row.children).map(function(th){ return clean(th.textContent).toLowerCase(); });
+    if (ths.indexOf('outreach') > -1 && row.children.length >= 9) return;
     row.innerHTML = '<th></th><th>Business</th><th>Location</th><th>SEO Score</th><th>Commercial Fit</th><th>Evidence</th><th>Status</th><th>Outreach</th><th>Added</th>';
   }
   function ensurePager(){
     var table = document.querySelector('#overview .table-panel table');
     if (!table) return null;
     var pager = document.getElementById('leadPager');
-    if (!pager) {
-      pager = document.createElement('div');
-      pager.id = 'leadPager';
-      pager.className = 'rf33-pager';
-      table.insertAdjacentElement('afterend', pager);
-    }
+    if (!pager) { pager = document.createElement('div'); pager.id = 'leadPager'; pager.className = 'rf33-pager'; table.insertAdjacentElement('afterend', pager); }
     return pager;
   }
   function emptyRow(message){ return '<tr><td colspan="9" class="empty-cell">' + esc(message) + '</td></tr>'; }
@@ -92,9 +82,7 @@
     var pager = ensurePager();
     if (!pager) return;
     if (total <= PAGE_SIZE) { pager.innerHTML = ''; return; }
-    var start = page * PAGE_SIZE + 1;
-    var end = Math.min(total, (page + 1) * PAGE_SIZE);
-    var buttons = [];
+    var start = page * PAGE_SIZE + 1, end = Math.min(total, (page + 1) * PAGE_SIZE), buttons = [];
     buttons.push('<button type="button" data-lead-page="prev" ' + (page <= 0 ? 'disabled' : '') + '>Previous</button>');
     var from = Math.max(0, page - 2), to = Math.min(pages - 1, page + 2);
     if (from > 0) buttons.push('<button type="button" data-lead-page="0">1</button><span>…</span>');
@@ -104,33 +92,46 @@
     pager.innerHTML = '<div class="rf33-page-info">Showing ' + start + '–' + end + ' of ' + total + ' leads</div><div class="rf33-page-buttons">' + buttons.join('') + '</div>';
   }
   function renderTable(){
-    ensureHeader();
+    if (patching) return;
+    patching = true;
+    try {
+      ensureHeader();
+      var body = document.getElementById('leadRows');
+      if (!body) return;
+      var rows = filteredLeads(), total = rows.length, pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      var page = Number(state.leadPage || 0);
+      if (!Number.isFinite(page) || page < 0) page = 0;
+      if (page > pages - 1) page = pages - 1;
+      state.leadPage = page;
+      var visible = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+      body.innerHTML = visible.length ? visible.map(function(l){
+        var id = leadId(l);
+        return '<tr data-id="' + esc(id) + '" class="' + (id === state.selected ? 'selected' : '') + '">' +
+          '<td><input class="pick" data-id="' + esc(id) + '" type="checkbox" ' + (state.exports && state.exports.has && state.exports.has(id) ? 'checked' : '') + '></td>' +
+          '<td><div class="biz"><span class="logo">' + esc(initials(l.business || l.company_name)) + '</span><div><strong>' + esc(l.business || l.company_name || 'Untitled lead') + '</strong><br><small>' + esc(l.domain || l.display_domain || 'No domain') + '</small></div></div></td>' +
+          '<td>' + esc(l.location || ([l.city,l.country].filter(Boolean).join(', ')) || '—') + '</td>' +
+          '<td>' + score(l.seo || l.seo_need_score) + '</td>' +
+          '<td>' + score(l.commercial || l.commercial_fit_score) + '</td>' +
+          '<td>' + esc(l.evidence || l.seo_evidence_signal_count || 0) + ' signals</td>' +
+          '<td>' + badge(l.status) + '</td>' +
+          '<td>' + selectHtml(l) + '</td>' +
+          '<td>' + esc(l.added || l.created_at || '—') + '</td>' +
+        '</tr>';
+      }).join('') : emptyRow('No leads yet. Create a search batch to start filling this table.');
+      renderPager(total, page, pages);
+    } finally { patching = false; }
+  }
+  function patchCurrentRowsOnly(){
+    if (patching) return;
     var body = document.getElementById('leadRows');
     if (!body) return;
-    var rows = filteredLeads();
-    var total = rows.length;
-    var pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    var page = Number(state.leadPage || 0);
-    if (!Number.isFinite(page) || page < 0) page = 0;
-    if (page > pages - 1) page = pages - 1;
-    state.leadPage = page;
-    var visible = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
-    body.innerHTML = visible.length ? visible.map(function(l){
-      var id = leadId(l);
-      return '<tr data-id="' + esc(id) + '" class="' + (id === state.selected ? 'selected' : '') + '">' +
-        '<td><input class="pick" data-id="' + esc(id) + '" type="checkbox" ' + (state.exports && state.exports.has && state.exports.has(id) ? 'checked' : '') + '></td>' +
-        '<td><div class="biz"><span class="logo">' + esc(initials(l.business || l.company_name)) + '</span><div><strong>' + esc(l.business || l.company_name || 'Untitled lead') + '</strong><br><small>' + esc(l.domain || l.display_domain || 'No domain') + '</small></div></div></td>' +
-        '<td>' + esc(l.location || ([l.city,l.country].filter(Boolean).join(', ')) || '—') + '</td>' +
-        '<td>' + score(l.seo || l.seo_need_score) + '</td>' +
-        '<td>' + score(l.commercial || l.commercial_fit_score) + '</td>' +
-        '<td>' + esc(l.evidence || l.seo_evidence_signal_count || 0) + ' signals</td>' +
-        '<td>' + badge(l.status) + '</td>' +
-        '<td>' + selectHtml(l) + '</td>' +
-        '<td>' + esc(l.added || l.created_at || '—') + '</td>' +
-      '</tr>';
-    }).join('') : emptyRow('No leads yet. Create a search batch to start filling this table.');
-    renderPager(total, page, pages);
+    var rows = Array.from(body.querySelectorAll('tr[data-id]'));
+    if (!rows.length) return;
+    var header = document.querySelector('#overview table thead tr');
+    var hasOutreach = header && Array.from(header.children).some(function(th){ return clean(th.textContent).toLowerCase() === 'outreach'; });
+    if (!hasOutreach || rows.some(function(row){ return !row.querySelector('.rf33-outreach-select'); })) renderTable();
   }
+  function schedulePatch(){ requestAnimationFrame(function(){ patchCurrentRowsOnly(); }); }
   function injectCss(){
     if (document.getElementById('rf33-css')) return;
     var style = document.createElement('style');
@@ -139,25 +140,17 @@
     document.head.appendChild(style);
   }
   function resetPageAndRender(){ state.leadPage = 0; renderTable(); }
-
   document.addEventListener('click', function(ev){
     var pageBtn = ev.target.closest && ev.target.closest('[data-lead-page]');
     if (pageBtn) {
       ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation();
-      var rows = filteredLeads();
-      var pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-      var current = Number(state.leadPage || 0) || 0;
+      var rows = filteredLeads(), pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE)), current = Number(state.leadPage || 0) || 0;
       var action = pageBtn.getAttribute('data-lead-page');
-      if (action === 'prev') current -= 1;
-      else if (action === 'next') current += 1;
-      else current = Number(action);
+      if (action === 'prev') current -= 1; else if (action === 'next') current += 1; else current = Number(action);
       state.leadPage = Math.max(0, Math.min(pages - 1, current));
-      renderTable();
-      return;
+      renderTable(); return;
     }
-    if (ev.target.closest && ev.target.closest('.rf33-outreach-select')) {
-      ev.stopPropagation();
-    }
+    if (ev.target.closest && ev.target.closest('.rf33-outreach-select')) ev.stopPropagation();
   }, true);
   document.addEventListener('change', function(ev){
     var sel = ev.target.closest && ev.target.closest('.rf33-outreach-select');
@@ -166,20 +159,25 @@
     setOutreach(sel.getAttribute('data-outreach-id'), sel.value);
     sel.className = 'rf33-outreach-select rf33-' + sel.value;
   }, true);
-  document.addEventListener('input', function(ev){
-    if (ev.target && ev.target.id === 'search') setTimeout(resetPageAndRender, 0);
-  }, true);
-  document.addEventListener('change', function(ev){
-    if (ev.target && ev.target.id === 'statusFilter') setTimeout(resetPageAndRender, 0);
-  }, true);
-  document.addEventListener('click', function(ev){
-    if (ev.target.closest && ev.target.closest('[data-tab]')) setTimeout(resetPageAndRender, 0);
-  }, true);
-
+  document.addEventListener('input', function(ev){ if (ev.target && ev.target.id === 'search') setTimeout(resetPageAndRender, 0); }, true);
+  document.addEventListener('change', function(ev){ if (ev.target && ev.target.id === 'statusFilter') setTimeout(resetPageAndRender, 0); }, true);
+  document.addEventListener('click', function(ev){ if (ev.target.closest && ev.target.closest('[data-tab]')) setTimeout(resetPageAndRender, 0); }, true);
+  function startObserver(){
+    if (observerStarted) return;
+    var body = document.getElementById('leadRows');
+    var head = document.querySelector('#overview table thead');
+    if (!body || !head) return;
+    observerStarted = true;
+    var obs = new MutationObserver(function(){ if (!patching) schedulePatch(); });
+    obs.observe(body, { childList:true });
+    obs.observe(head, { childList:true, subtree:true });
+  }
   function boot(){
     injectCss();
     window.table = renderTable;
     renderTable();
+    startObserver();
+    setTimeout(function(){ renderTable(); startObserver(); }, 300);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

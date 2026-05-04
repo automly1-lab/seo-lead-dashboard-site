@@ -1,82 +1,17 @@
 (function(){
-  'use strict';
-  function loadScript(src, marker){
-    if (document.querySelector('script[data-' + marker + '="true"]')) return;
-    var s = document.createElement('script');
-    s.src = src;
-    s.defer = true;
-    s.setAttribute('data-' + marker, 'true');
-    document.body.appendChild(s);
-  }
-  function cachedPlan(){
-    try { return JSON.parse(localStorage.getItem('rankforge-user-plan-v1') || 'null'); } catch(e) { return null; }
-  }
-  function planKey(plan){
-    return String((plan && (plan.key || plan.name)) || '').toLowerCase().replace(/\s+/g,'_').replace(/-/g,'_');
-  }
-  function isPaid(plan){
-    var key = planKey(plan);
-    return key && key !== 'free' && Number(plan && plan.creditsLimit || 0) > 10;
-  }
-  function label(value){
-    var key = String(value || '').toLowerCase().replace(/\s+/g,'_').replace(/-/g,'_');
-    if (key === 'growth') return 'Growth';
-    if (key === 'starter') return 'Starter';
-    if (key === 'agency_intelligence') return 'Agency Intelligence';
-    if (key.indexOf('admin') !== -1) return 'Admin';
-    return value || 'Free';
-  }
-  function hideSyncText(){
-    var msg = document.getElementById('rfCurrentStateSync');
-    if (msg) {
-      msg.textContent = '';
-      msg.style.display = 'none';
-    }
-  }
-  function watchSyncText(){
-    var usage = document.querySelector('.usage');
-    if (!usage || window.__rfPlanTextWatcher) return;
-    window.__rfPlanTextWatcher = true;
-    new MutationObserver(hideSyncText).observe(usage, { childList:true, subtree:true, characterData:true });
-  }
-  function paintPlan(plan){
-    var used = document.getElementById('creditsUsed');
-    var limit = document.getElementById('creditsLimit');
-    var bar = document.getElementById('creditsBar');
-    var usage = document.querySelector('.usage');
-    var unlimited = !!plan.unlimited || planKey(plan).indexOf('admin') !== -1;
-    if (used) used.textContent = unlimited ? 'Unlimited' : String(plan.creditsUsed || 0);
-    if (limit) limit.textContent = unlimited ? '' : ' / ' + String(plan.creditsLimit || 0);
-    if (bar) bar.style.width = unlimited ? '100%' : (plan.creditsLimit ? Math.min(100,(plan.creditsUsed || 0) / plan.creditsLimit * 100) + '%' : '0%');
-    if (usage) {
-      var small = usage.querySelector('small');
-      if (small) small.textContent = 'Plan: ' + label(plan.key || plan.name) + (plan.billingStatus ? ' · ' + plan.billingStatus : '');
-    }
-    var title = document.querySelector('.account strong');
-    if (title && plan.name) title.textContent = unlimited ? 'RankForge Admin' : 'RankForge ' + label(plan.key || plan.name);
-    hideSyncText();
-  }
-  function setPending(){
-    var plan = cachedPlan();
-    if (isPaid(plan)) { paintPlan(plan); return; }
-    var used = document.getElementById('creditsUsed');
-    var limit = document.getElementById('creditsLimit');
-    var usage = document.querySelector('.usage');
-    if (used) used.textContent = '…';
-    if (limit) limit.textContent = '';
-    if (usage) {
-      var small = usage.querySelector('small');
-      if (small) small.textContent = 'Plan';
-    }
-    hideSyncText();
-  }
-  function boot(){
-    watchSyncText();
-    setPending();
-    loadScript('./v10-current-state-endpoint.js?v=endpoint-4', 'rf-current-state-endpoint');
-    setTimeout(function(){ var plan = cachedPlan(); if (isPaid(plan)) paintPlan(plan); hideSyncText(); }, 400);
-    setTimeout(function(){ var plan = cachedPlan(); if (isPaid(plan)) paintPlan(plan); hideSyncText(); }, 1500);
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
+  var API='https://lastaccount1907.app.n8n.cloud/webhook/rankforge-current-state';
+  function c(v){return String(v==null?'':v).trim()}
+  function k(v){var x=c(v).toLowerCase().replace(/\s+/g,'_').replace(/-/g,'_');if(x==='pro'||x==='founding'||x==='founding_plan')return'growth';if(x==='start'||x==='basic'||x==='starter_plan')return'starter';if(x==='agency'||x==='enterprise')return'agency_intelligence';if(x.indexOf('admin')>-1||x.indexOf('unlimited')>-1)return'admin_unlimited';return x||'free'}
+  function n(v,d){var x=Number(c(v).replace(/[^0-9.-]/g,''));return Number.isFinite(x)?Math.max(0,Math.round(x)):(d||0)}
+  function name(x){return{free:'Free',starter:'Starter',growth:'Growth',agency_intelligence:'Agency Intelligence',admin_unlimited:'Admin'}[k(x)]||c(x)||'Free'}
+  function lim(x){return{free:[1,10,10],starter:[50,50,25],growth:[150,250,50],agency_intelligence:[9999,999999,50],admin_unlimited:[999999,999999,50]}[k(x)]||[1,10,10]}
+  function stateObj(){try{return state}catch(e){return window.state||null}}
+  function sess(){if(window.rankforgeAuth&&window.rankforgeAuth.getSession)return window.rankforgeAuth.getSession();try{return JSON.parse(localStorage.getItem('rankforge-auth-session-v1')||'null')}catch(e){return null}}
+  function plan(row){row=row||{};var key=k(row.key||row.plan||row.current_plan||row.plan_name||row.name||localStorage.getItem('rankforge-selected-plan-v1')),d=lim(key);return{key:key,name:name(key),billingStatus:c(row.billing_status||row.billingStatus||row.subscription_status||(key==='free'?'free':'active')),batchesLimit:n(row.effective_search_limit||row.search_batches_limit||row.search_batch_limit||row.batchesLimit,d[0]),batchesUsed:n(row.search_batches_used||row.batchesUsed,0),creditsLimit:n(row.effective_qualified_lead_limit||row.qualified_lead_credits_limit||row.qualified_leads_limit||row.creditsLimit,d[1]),creditsUsed:n(row.qualified_lead_credits_used||row.qualified_leads_used||row.creditsUsed,0),maxLeadsPerBatch:n(row.max_leads_per_batch||row.maxLeadsPerBatch,d[2]),csvExport:key!=='free',unlimited:key==='admin_unlimited'}}
+  function paint(p){if(!p)return;var st=stateObj();if(st){st.plan=Object.assign({},st.plan||{},p);st.user=Object.assign({},st.user||{},{plan:p.name,billingStatus:p.billingStatus});window.state=st}localStorage.setItem('rankforge-user-plan-v1',JSON.stringify(p));localStorage.setItem('rankforge-selected-plan-v1',p.key);localStorage.setItem('rankforge-billing-status-v1',p.billingStatus||'');var u=document.getElementById('creditsUsed'),l=document.getElementById('creditsLimit'),b=document.getElementById('creditsBar'),box=document.querySelector('.usage');if(u)u.textContent=p.unlimited?'Unlimited':String(p.creditsUsed||0);if(l)l.textContent=p.unlimited?'':' / '+String(p.creditsLimit||0);if(b)b.style.width=p.unlimited?'100%':(p.creditsLimit?Math.min(100,(p.creditsUsed||0)/p.creditsLimit*100)+'%':'0%');if(box){var s=box.querySelector('small');if(s)s.textContent='Plan: '+p.name+(p.billingStatus?' · '+p.billingStatus:'')}var t=document.querySelector('.account strong');if(t)t.textContent=p.unlimited?'RankForge Admin':'RankForge '+p.name;var m=document.getElementById('rfCurrentStateSync');if(m){m.textContent='';m.style.display='none'}}
+  function cached(){try{var x=JSON.parse(localStorage.getItem('rankforge-user-plan-v1')||'null');return x?plan(x):null}catch(e){return null}}
+  function pending(){var u=document.getElementById('creditsUsed'),l=document.getElementById('creditsLimit'),box=document.querySelector('.usage');if(u)u.textContent='...';if(l)l.textContent='';if(box){var s=box.querySelector('small');if(s)s.textContent='Plan'}}
+  function load(){var s=sess()||{},body=new URLSearchParams();body.set('email',s.email||'');body.set('user_id',s.userId||s.id||'');body.set('event','get_current_state');return fetch(API,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:body.toString()}).then(function(r){return r.json()}).then(function(j){return plan(j.current_state||j.user||j.row||j.data||j)})}
+  function boot(){var p=cached();if(p&&p.creditsLimit>0)paint(p);else pending();load().then(paint).catch(function(){if(p)paint(p);else pending()});setTimeout(function(){var q=cached();if(q&&q.creditsLimit>0)paint(q)},800)}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

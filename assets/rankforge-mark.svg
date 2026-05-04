@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 180" role="img" aria-label="RankForge">
+  <defs>
+    <linearGradient id="b" x1="18" y1="10" x2="142" y2="166" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset=".58" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#071B4A"/>
+    </linearGradient>
+    <linearGradient id="t" x1="98" y1="128" x2="130" y2="162" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2DD4BF"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="180" rx="34" fill="#0E1726"/>
+  <path d="M80 18 136 49v51c0 34-22 53-56 66-34-13-56-32-56-66V49L80 18Z" fill="none" stroke="url(#b)" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M47 101V73h16v28H47Zm26 0V54h16v47H73Zm26 0V38h16v63H99Z" fill="#2F6BFF"/>
+  <path d="M28 132C64 107 99 79 133 50" fill="none" stroke="#F8FAFC" stroke-width="18" stroke-linecap="round"/>
+  <path d="M42 145C73 119 103 92 135 63" fill="none" stroke="#08205A" stroke-width="18" stroke-linecap="round"/>
+  <path d="M98 160c8-17 19-31 35-43l-21 53c-5-2-10-5-14-10Z" fill="url(#t)"/>
+</svg>

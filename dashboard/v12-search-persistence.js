@@ -28,19 +28,14 @@
   }
   function storeKey(){ return 'rankforge-dashboard-data-v2::' + userKey(); }
   function allData(){ return safeJson(localStorage.getItem(storeKey()), { searches:[], leads:[], exports:[], updated_at:'' }); }
-  function saveData(data){
-    data.updated_at = new Date().toISOString();
-    localStorage.setItem(storeKey(), JSON.stringify(data));
-  }
+  function saveData(data){ data.updated_at = new Date().toISOString(); localStorage.setItem(storeKey(), JSON.stringify(data)); }
   function idOfSearch(item){ return clean(item && (item.id || item.search_id || item.searchId || item.name)); }
   function idOfLead(item){ return clean(item && (item.id || item.lead_id || item.leadId || item.business_id || item.domain || item.business)); }
   function mergeById(existing, incoming, idFn){
     var map = new Map();
     (existing || []).forEach(function(item){ var id = idFn(item); if (id) map.set(id, Object.assign({}, item)); });
     (incoming || []).forEach(function(item){ var id = idFn(item); if (id) map.set(id, Object.assign({}, map.get(id) || {}, item)); });
-    return Array.from(map.values()).sort(function(a,b){
-      return Date.parse(b.updated_at || b.created_at || b.created || 0) - Date.parse(a.updated_at || a.created_at || a.created || 0);
-    });
+    return Array.from(map.values()).sort(function(a,b){ return Date.parse(b.updated_at || b.created_at || b.created || 0) - Date.parse(a.updated_at || a.created_at || a.created || 0); });
   }
   function searchFromPayload(payload){
     return {
@@ -78,37 +73,44 @@
       exclude_terms: item.exclude_terms || item.exclude
     }));
   }
+  function numeric(){
+    for (var i=0;i<arguments.length;i++) {
+      var n = Number(arguments[i]);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return 0;
+  }
   function normalizeLead(item){
-    var business = clean(item.business || item.business_name || item.name || item.company || item.title);
-    var domain = clean(item.domain || item.website || item.url || item.business_domain);
+    var business = clean(item.business || item.business_name || item.name || item.company || item.title || item.company_name);
+    var domain = clean(item.domain || item.website || item.url || item.business_domain || item.display_domain || item.website_url);
     var status = clean(item.status || item.qualification_status || item.lead_status || 'Needs Review');
-    return {
-      id: clean(item.id || item.lead_id || item.business_id || domain || business || ('lead_' + Date.now() + Math.random())),
+    var lead = Object.assign({}, item, {
+      id: clean(item.id || item.lead_id || item.business_id || item.prospect_id || domain || business || ('lead_' + Date.now() + Math.random())),
       search_id: clean(item.search_id || item.searchId),
       business: business || 'Untitled lead',
-      source: clean(item.source || item.discovery_source || 'n8n'),
+      source: clean(item.source || item.discovery_source || item.source_type || 'n8n'),
       location: clean(item.location || [item.city,item.state,item.country].filter(Boolean).join(', ')),
       domain: domain || '—',
-      seo: Number(item.seo || item.seo_score || item.audit_score || 0),
-      commercial: Number(item.commercial || item.commercial_fit || item.lead_score || 0),
-      evidence: Number(item.evidence || item.evidence_count || item.signal_count || 0),
-      contact: Number(item.contact || item.contact_confidence || 0),
-      email: clean(item.email || item.best_email || item.contact_email),
-      phone: clean(item.phone || item.best_phone || item.contact_phone),
+      seo: numeric(item.seo, item.seo_score, item.audit_score, item.seo_need_score),
+      commercial: numeric(item.commercial, item.commercial_fit, item.lead_score, item.commercial_fit_score, item.overall_lead_score),
+      evidence: numeric(item.evidence, item.evidence_count, item.signal_count, item.seo_evidence_signal_count, item.seo_verified_issue_count, item.direct_evidence_count, item.crawl_based_evidence_count),
+      contact: numeric(item.contact, item.contact_confidence, item.contact_confidence_score, item.contact_email_confidence, item.contact_phone_confidence),
+      email: clean(item.email || item.best_email || item.contact_email || item.decision_maker_email || item.contact_primary_email),
+      phone: clean(item.phone || item.best_phone || item.contact_phone || item.decision_maker_phone || item.contact_primary_phone),
       status: status,
       stage: clean(item.stage || 'New'),
       owner: clean(item.owner || 'Unassigned'),
-      priority: clean(item.priority || 'Medium'),
-      reason: clean(item.reason || item.qualification_reason || item.summary),
-      problem: clean(item.problem || item.primary_problem),
-      angle: clean(item.angle || item.outreach_angle || item.recommendation),
+      priority: clean(item.priority || item.lead_priority || 'Medium'),
+      reason: clean(item.reason || item.qualification_reason || item.summary || item.seo_evidence_summary),
+      problem: clean(item.problem || item.primary_problem || item.secondary_problem),
+      angle: clean(item.angle || item.outreach_angle || item.recommendation || item.recommended_offer),
       added: clean(item.added || item.created_at || item.updated_at || 'now'),
       updated_at: clean(item.updated_at || item.created_at || new Date().toISOString())
-    };
+    });
+    return lead;
   }
   function applyLocalData(){
-    var stateObj = st();
-    if (!stateObj) return;
+    var stateObj = st(); if (!stateObj) return;
     var data = allData();
     if (Array.isArray(data.searches) && data.searches.length) stateObj.searches = mergeById(stateObj.searches || [], data.searches.map(normalizeSearch), idOfSearch);
     if (Array.isArray(data.leads) && data.leads.length) {
@@ -117,10 +119,10 @@
     }
     try { if (typeof render === 'function') render(); } catch(e) {}
     try { if (typeof searches === 'function') searches(); } catch(e) {}
+    try { if (typeof window.rankforgeRenderLeadDetail === 'function') window.rankforgeRenderLeadDetail(); } catch(e) {}
   }
   function persistCurrent(){
-    var stateObj = st();
-    if (!stateObj) return;
+    var stateObj = st(); if (!stateObj) return;
     var data = allData();
     data.searches = mergeById(data.searches || [], stateObj.searches || [], idOfSearch);
     data.leads = mergeById(data.leads || [], stateObj.leads || [], idOfLead);
@@ -175,11 +177,19 @@
       saveData(data);
       localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
       try { if (typeof render === 'function') render(); } catch(e) {}
-    } catch(error) {
-      console.warn('RankForge search results sync failed', error);
-    }
+      try { if (typeof window.rankforgeRenderLeadDetail === 'function') window.rankforgeRenderLeadDetail(); } catch(e) {}
+    } catch(error) { console.warn('RankForge search results sync failed', error); }
+  }
+  function loadLeadDetail(){
+    if (document.querySelector('script[data-rf-rich-lead-detail="true"]')) return;
+    var script = document.createElement('script');
+    script.src = './v14-lead-detail-rich.js?v=detail-1';
+    script.defer = true;
+    script.setAttribute('data-rf-rich-lead-detail','true');
+    document.body.appendChild(script);
   }
   function boot(){
+    loadLeadDetail();
     applyLocalData();
     setTimeout(applyLocalData, 250);
     setTimeout(syncResults, 900);

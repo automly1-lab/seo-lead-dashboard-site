@@ -4,17 +4,24 @@
 /* Prevent the old/empty Overview first paint while app.js and fast hydrate settle. */
 body:not(.rf-ready) #overview .table-panel{visibility:hidden}
 
+/* Overview is a full-width table. Lead Detail lives on the Lead Detail page, not as a side panel. */
+#overview .workspace{display:block!important;grid-template-columns:none!important}
+#overview #detail{display:none!important}
+#overview .table-panel{width:100%;max-width:100%;overflow-x:auto}
+#overview .panel-head{align-items:flex-start;gap:16px;flex-wrap:wrap}
+#overview .panel-head>div:last-child{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;max-width:100%}
+#overview .panel-head>div:last-child button{margin-left:0!important;white-space:nowrap}
+
 /* Native Overview table layout: show the final 9-column table on first paint. */
-#overview .table-panel{overflow-x:auto}
-#overview .table-panel table{table-layout:fixed;min-width:1320px}
+#overview .table-panel table{table-layout:fixed;width:100%;min-width:1320px}
 #overview .table-panel th:first-child,#overview .table-panel td:first-child{width:44px;text-align:center}
-#overview .table-panel th:nth-child(2),#overview .table-panel td:nth-child(2){width:25%}
-#overview .table-panel th:nth-child(3),#overview .table-panel td:nth-child(3){width:14%}
+#overview .table-panel th:nth-child(2),#overview .table-panel td:nth-child(2){width:26%}
+#overview .table-panel th:nth-child(3),#overview .table-panel td:nth-child(3){width:15%}
 #overview .table-panel th:nth-child(4),#overview .table-panel td:nth-child(4){width:10%}
 #overview .table-panel th:nth-child(5),#overview .table-panel td:nth-child(5){width:12%}
 #overview .table-panel th:nth-child(6),#overview .table-panel td:nth-child(6){width:10%}
 #overview .table-panel th:nth-child(7),#overview .table-panel td:nth-child(7){width:10%;text-align:left}
-#overview .table-panel th:nth-child(8),#overview .table-panel td:nth-child(8){display:table-cell!important;width:150px}
-#overview .table-panel th:nth-child(9),#overview .table-panel td:nth-child(9){display:table-cell!important;width:170px;max-width:none;overflow:visible;text-overflow:clip;white-space:nowrap}
+#overview .table-panel th:nth-child(8),#overview .table-panel td:nth-child(8){display:table-cell!important;width:155px}
+#overview .table-panel th:nth-child(9),#overview .table-panel td:nth-child(9){display:table-cell!important;width:190px;max-width:none;overflow:visible;text-overflow:clip;white-space:nowrap}
 #overview .table-panel .outreach-select{max-width:100%}
-@media(max-width:1200px){#overview .table-panel table{min-width:1320px}}
+@media(max-width:1200px){#overview .table-panel table{min-width:1320px}#overview .panel-head>div:last-child{justify-content:flex-start}}

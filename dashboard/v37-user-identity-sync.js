@@ -3,6 +3,14 @@
 
   function clean(v){return String(v==null?'':v).trim()}
   function safeJson(v,f){try{return JSON.parse(v||'')||f}catch(e){return f}}
+  function loadBrand(){
+    if(document.querySelector('link[data-rf-brand-refresh="true"]'))return;
+    var link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='../assets/brand-refresh.css?v=brand-2';
+    link.setAttribute('data-rf-brand-refresh','true');
+    document.head.appendChild(link);
+  }
   function titleFromEmail(email){
     var local=clean(email).split('@')[0]||'Workspace';
     return local.replace(/[._-]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()});
@@ -37,6 +45,7 @@
     return {email:email,name:name||'Workspace',avatar:initialsFrom(email,name)};
   }
   function apply(){
+    loadBrand();
     var id=identity();
     if(!id.email)return;
 
@@ -64,7 +73,7 @@
     var topAvatar=document.querySelector('.top .avatar');
     if(topAvatar)topAvatar.textContent=id.avatar;
   }
-  function boot(){apply();setTimeout(apply,250);setTimeout(apply,900);setTimeout(apply,1800)}
+  function boot(){loadBrand();apply();setTimeout(apply,250);setTimeout(apply,900);setTimeout(apply,1800)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   window.addEventListener('rankforge:dashboard-session',boot);
   window.addEventListener('storage',function(e){if(e.key==='rankforge-auth-session-v1')boot()});

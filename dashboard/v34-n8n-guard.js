@@ -27,8 +27,43 @@
   function patchLeadRemove(){try{if(typeof filtered==='function'&&!filtered.__rfHidden){var f=filtered;filtered=function(){return f().filter(function(l){return !isHidden(leadId(l))})};filtered.__rfHidden=1}if(typeof table==='function'&&!table.__rfHidden){var tb=table;table=function(){purgeHidden();tb();decorateRows()};table.__rfHidden=1}if(typeof render==='function'&&!render.__rfHidden){var r=render;render=function(){purgeHidden();r();decorateRows()};render.__rfHidden=1}purgeHidden();if(typeof table==='function')table();decorateRows()}catch(e){}}
   document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-remove-lead]');if(!b)return;e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();var id=trim(b.dataset.removeLead);if(!id)return;if(!confirm('Remove this lead from your dashboard?'))return;hideLead(id);purgeHidden();try{if(typeof render==='function')render();else if(typeof table==='function')table()}catch(x){}},true);
 
-  function boot(){css();patchLeadRemove()}
+  function boot(){css();patchLeadRemove();setupWorkspaceMenu()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();setTimeout(boot,500);setTimeout(boot,1500);
   window.rankforgeN8nGuard={allow:allow,isAllowed:ok};
   window.rankforgeHiddenLeads={read:readHidden,hide:hideLead,purge:purgeHidden};
+
+  function workspaceMenuCss(){
+    if(document.getElementById('rf-workspace-menu-css'))return;
+    var style=document.createElement('style');
+    style.id='rf-workspace-menu-css';
+    style.textContent='.sidebar .logout{display:none!important}.workspace-menu{position:relative;margin-top:14px}.workspace-toggle{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:1px solid rgba(148,163,184,.14);background:rgba(15,31,52,.82);color:#e5eefc;text-align:left;cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}.workspace-toggle:hover,.workspace-toggle:focus-visible{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.45);box-shadow:0 0 0 3px rgba(37,99,235,.14);outline:none}.workspace-toggle[aria-expanded="true"]{background:rgba(37,99,235,.16);border-color:rgba(37,99,235,.55)}.workspace-avatar{width:38px;height:38px;border-radius:999px;display:grid;place-items:center;flex:0 0 auto;background:linear-gradient(135deg,#1d4ed8,#0f766e);color:#fff;font-weight:900;font-size:13px;letter-spacing:.02em}.workspace-identity{min-width:0;flex:1}.workspace-identity strong{display:block;color:#fff;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace-identity small{display:block;color:#8ea6c8;font-size:12px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.workspace-chevron{width:18px;height:18px;display:grid;place-items:center;color:#93a8c6;transition:transform .18s ease,color .18s ease}.workspace-toggle[aria-expanded="true"] .workspace-chevron{transform:rotate(180deg);color:#bfdbfe}.workspace-dropdown{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:40;padding:8px;border-radius:16px;border:1px solid rgba(148,163,184,.14);background:#071426;box-shadow:0 18px 45px rgba(0,0,0,.35);opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none;transition:opacity .18s ease,transform .18s ease}.workspace-menu.open .workspace-dropdown{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}.workspace-dropdown-item{width:100%;height:40px;display:flex;align-items:center;gap:10px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:#dbeafe;font-weight:750;text-align:left;cursor:pointer;transition:background .16s ease,color .16s ease}.workspace-dropdown-item:hover,.workspace-dropdown-item:focus-visible{background:rgba(37,99,235,.16);color:#fff;outline:none}.workspace-dropdown-divider{height:1px;margin:7px 4px;background:rgba(148,163,184,.14)}.workspace-dropdown-item.logout-item{color:#fca5a5}.workspace-dropdown-item.logout-item:hover,.workspace-dropdown-item.logout-item:focus-visible{background:rgba(248,113,113,.11);color:#fecaca}@media(max-width:760px){.workspace-dropdown{position:static;margin-top:8px}.workspace-menu{margin-bottom:12px}}';
+    document.head.appendChild(style);
+  }
+  function setupWorkspaceMenu(){
+    workspaceMenuCss();
+    var sidebar=document.querySelector('.sidebar');
+    var account=document.querySelector('.sidebar .account');
+    if(!sidebar||document.querySelector('.workspace-menu'))return;
+    if(!account)return;
+    var logout=document.getElementById('logoutBtn')||document.querySelector('.sidebar .logout');
+    var avatar=trim((account.querySelector('span')||{}).textContent)||'CO';
+    var workspace=trim((account.querySelector('strong')||{}).textContent)||'Workspace';
+    var email=trim((account.querySelector('small')||{}).textContent)||'';
+    var menu=document.createElement('div');
+    menu.className='workspace-menu';
+    menu.innerHTML='<button class="workspace-toggle" id="workspaceToggle" type="button" aria-expanded="false" aria-controls="workspaceDropdown"><span class="workspace-avatar">'+avatar+'</span><span class="workspace-identity"><strong>'+workspace+'</strong><small>'+email+'</small></span><span class="workspace-chevron" aria-hidden="true">⌄</span></button><div class="workspace-dropdown" id="workspaceDropdown" role="menu" aria-labelledby="workspaceToggle"><button class="workspace-dropdown-item" type="button" role="menuitem" data-workspace-action="workspace-settings">Workspace settings</button><button class="workspace-dropdown-item" type="button" role="menuitem" data-workspace-action="account-settings">Account settings</button><button class="workspace-dropdown-item" type="button" role="menuitem" data-workspace-action="billing-plan">Billing &amp; Plan</button><button class="workspace-dropdown-item" type="button" role="menuitem" data-workspace-action="activity-logs">Activity Logs</button><div class="workspace-dropdown-divider" role="separator"></div><button class="workspace-dropdown-item logout-item" type="button" role="menuitem" data-workspace-action="logout">Log out</button></div>';
+    account.replaceWith(menu);
+    if(logout)logout.remove();
+    var toggle=menu.querySelector('.workspace-toggle');
+    var dropdown=menu.querySelector('.workspace-dropdown');
+    var items=[].slice.call(menu.querySelectorAll('.workspace-dropdown-item'));
+    function setOpen(open,focusFirst){menu.classList.toggle('open',open);toggle.setAttribute('aria-expanded',open?'true':'false');if(open&&focusFirst&&items[0])items[0].focus()}
+    function close(focusToggle){setOpen(false,false);if(focusToggle)toggle.focus()}
+    toggle.addEventListener('click',function(e){e.stopPropagation();setOpen(!menu.classList.contains('open'),false)});
+    toggle.addEventListener('keydown',function(e){if(e.key==='ArrowDown'||e.key==='Enter'||e.key===' '){e.preventDefault();setOpen(true,true)}if(e.key==='Escape')close(false)});
+    dropdown.addEventListener('keydown',function(e){var i=items.indexOf(document.activeElement);if(e.key==='Escape'){e.preventDefault();close(true)}else if(e.key==='ArrowDown'){e.preventDefault();items[(i+1+items.length)%items.length].focus()}else if(e.key==='ArrowUp'){e.preventDefault();items[(i-1+items.length)%items.length].focus()}else if(e.key==='Home'){e.preventDefault();items[0].focus()}else if(e.key==='End'){e.preventDefault();items[items.length-1].focus()}});
+    document.addEventListener('click',function(e){if(!menu.contains(e.target))close(false)});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&menu.classList.contains('open'))close(true)});
+    menu.addEventListener('click',function(e){var item=e.target.closest('[data-workspace-action]');if(!item)return;var action=item.dataset.workspaceAction;close(false);if(action==='logout'){alert('Demo logout: connect this to auth sign-out');return}var settings=document.querySelector('[data-view="settings"]');if(settings)settings.click();if(action==='activity-logs'){setTimeout(function(){var logs=document.getElementById('activityList');if(logs)logs.scrollIntoView({behavior:'smooth',block:'center'})},80)}if(action==='billing-plan'){setTimeout(function(){var usage=document.querySelector('.usage');if(usage)usage.scrollIntoView({behavior:'smooth',block:'center'})},80)}});
+  }
 })();

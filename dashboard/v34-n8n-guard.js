@@ -1,16 +1,19 @@
 (function(){
 'use strict';
-var ALLOW_MS=30000,HOST='lastaccount1907'+'.app.n8n.cloud',LOGOUT_FLAG='rankforge-explicit-logout-v1';
+var ALLOW_MS=30000,HOST='rankforge1907'+'.app.n8n.cloud',OLD_HOST='lastaccount1907'+'.app.n8n.cloud',LOGOUT_FLAG='rankforge-explicit-logout-v1';
 function now(){return Date.now()}
 function s(v){return String(v==null?'':v).trim()}
+function newUrl(u){return String(u||'').replace(OLD_HOST,HOST)}
 function allow(reason){window.rankforgeN8nAllowUntil=now()+ALLOW_MS;window.rankforgeN8nAllowReason=reason||'user_action'}
 function allowed(){return Number(window.rankforgeN8nAllowUntil||0)>now()}
 function urlOf(x){try{return typeof x==='string'?x:(x&&x.url)||''}catch(e){return''}}
-function isRfN8n(u){return u.indexOf(HOST)>-1&&u.indexOf('/webhook/rankforge-')>-1}
+function isRfN8n(u){return (u.indexOf(HOST)>-1||u.indexOf(OLD_HOST)>-1)&&u.indexOf('/webhook/rankforge-')>-1}
 function isCreateSearch(u){return u.indexOf('/webhook/rankforge-create-search')>-1}
+try{localStorage.setItem('rankforge-search-results-endpoint-v1','https://'+HOST+'/webhook/rankforge-search-results');localStorage.setItem('rankforge-search-submit-webhook-v1','https://'+HOST+'/webhook/rankforge-create-search')}catch(e){}
 
 document.addEventListener('click',function(e){var x=e.target;if(!x||!x.closest)return;if(x.closest('#refreshResultsBtn'))allow('manual_refresh');if(x.closest('#createBatch'))allow('new_search')},true);
-if(window.fetch&&!window.fetch.__rfN8nGuarded){var nativeFetch=window.fetch.bind(window);var guarded=function(input,init){var u=urlOf(input);if(!isRfN8n(u)||isCreateSearch(u)||allowed())return nativeFetch(input,init);console.warn('RankForge blocked automatic n8n call:',u);return Promise.reject(new Error('rankforge_auto_n8n_blocked'))};guarded.__rfN8nGuarded=true;window.fetch=guarded}
+if(window.fetch&&!window.fetch.__rfN8nGuarded){var nativeFetch=window.fetch.bind(window);var guarded=function(input,init){var u=urlOf(input),rewritten=newUrl(u);if(typeof input==='string'&&rewritten!==input)input=rewritten;else if(input&&input.url&&rewritten!==input.url){try{input=new Request(rewritten,input)}catch(e){}}
+if(!isRfN8n(rewritten)||isCreateSearch(rewritten)||allowed())return nativeFetch(input,init);console.warn('RankForge blocked automatic n8n call:',rewritten);return Promise.reject(new Error('rankforge_auto_n8n_blocked'))};guarded.__rfN8nGuarded=true;window.fetch=guarded}
 
 function clearAuthStores(){
   function cleanStore(store){

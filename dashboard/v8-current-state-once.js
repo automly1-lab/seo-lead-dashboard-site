@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  var API='https://lastaccount1907.app.n8n.cloud/webhook/rankforge-current-state';
+  var API='https://rankforge1907.app.n8n.cloud/webhook/rankforge-current-state';
   var LAST_KEY='rankforge-current-state-last-sync-v1';
   var COOLDOWN=30*1000;
   var inFlight=false;

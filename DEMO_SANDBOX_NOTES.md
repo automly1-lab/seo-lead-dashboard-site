@@ -4,7 +4,7 @@ Branch: `demo/sandbox-hardening`
 
 ## Demo frontend config
 
-The dashboard uses `dashboard/rankforge-config.js` as the single demo environment source of truth.
+The dashboard uses `dashboard/rankforge-config.js` as the single demo environment source of truth. `dashboard/index.html` loads `rankforge-config.js` and `rankforge-sandbox-hardening.js` before the webhook/current-state/search scripts.
 
 ```js
 window.RANKFORGE_CONFIG = {
@@ -34,11 +34,21 @@ Google Sheet ID for demo, confirmed by owner:
 
 - `1mFDJKBexMfMn8NZSq7xhES7pHWt4LCEY2Gq-zATHuco`
 
+A separate demo spreadsheet or `demo_*` tabs are not required. The same production Google Sheet may be used for the demo because there are not yet customer users.
+
+Demo-created rows should be easy to clean up:
+
+- `search_id` must use the `srch_demo_` prefix.
+- Use `demo_sandbox: true` where a compatible column exists.
+- Use `source_environment: demo` where a compatible column exists.
+- If a tab lacks those columns, do not break existing column mapping. Put demo markers in a compatible field such as `details_json`, `notes`, or `credit_note` when available.
+
 The demo workflow should remain inactive until explicitly enabled in n8n.
 
 ## Security notes
 
 - Do not edit the production n8n workflow.
+- Do not edit production webhook path settings.
 - Do not push API keys, tokens, service role keys, or bearer values into this repository.
 - Existing n8n credential references should be preserved when duplicating the workflow inside n8n.
 - If an exported workflow contains hardcoded secret values, do not commit them. Report only: `secret value exists in node; not printed`.
@@ -48,15 +58,24 @@ The demo workflow should remain inactive until explicitly enabled in n8n.
 `dashboard/rankforge-sandbox-hardening.js` enforces demo routing and dashboard isolation:
 
 - Rewrites RankForge webhook calls to the demo webhook paths.
+- Uses event-driven hardening via `DOMContentLoaded`, `rankforge:dashboard-session`, `rankforge:auth-changed`, `rankforge:rendered`, and relevant `storage` events.
 - Stores sandbox data in user-scoped keys:
   - `rankforge:${user_id}:leads`
   - `rankforge:${user_id}:searches`
   - `rankforge:${user_id}:outreach`
 - Rejects current-state/search-results payloads that do not match the current `user_id`, `email`, or known `search_id`.
-- Clears RankForge session keys and Supabase `sb-*` tokens during logout.
+- Shows no private data when identity is missing.
+- Clears RankForge session keys and Supabase `sb-*` tokens during logout while preserving `rankforge-explicit-logout-v1`.
 - Shows admin UI only for `automly1@gmail.com`.
 - Displays admin usage as unlimited.
 - Keeps the credit rule visible: `Credits are consumed ONLY when a lead is marked as Qualified.`
+
+## Search submit behavior
+
+- `v13-search-submit.js` does not use `mode: 'no-cors'`.
+- New search batches are stored locally as `Pending` first.
+- After a successful demo webhook response, the batch is updated to `Running`.
+- If the webhook fails, the user sees an error instead of a false success.
 
 ## Credit guard
 
@@ -70,3 +89,23 @@ Credit usage rule:
 - Qualified = 1 credit
 - Needs Review = 0 credit
 - Rejected = 0 credit
+
+## Runtime test checklist
+
+Run these manually in a browser against the demo branch before marking complete:
+
+- DevTools Network shows only demo webhook calls for dashboard actions.
+- Create Search calls `/webhook/rankforge-demo-create-search`.
+- Refresh Results calls `/webhook/rankforge-demo-search-results`.
+- Current State calls `/webhook/rankforge-demo-current-state`.
+- Created rows use `srch_demo_` search_id prefix.
+- Created rows include `demo_sandbox=true` and/or `source_environment=demo` when the sheet mapping supports those fields.
+- User A creates a search, logs out, then User B does not see User A data.
+- localStorage keys are user scoped.
+- Supabase `sb-*` tokens are removed after logout.
+- `rankforge-explicit-logout-v1` remains after logout cleanup.
+- Admin `automly1@gmail.com` sees Admin UI and unlimited usage.
+- Non-admin users do not see Admin UI.
+- Row click does not conflict with checkbox/select/export actions.
+- Dashboard flicker is not increased.
+- Mobile dashboard layout still works.

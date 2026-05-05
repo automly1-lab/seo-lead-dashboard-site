@@ -54,6 +54,25 @@ Demo-created rows should be easy to clean up:
 
 The demo workflow should remain inactive until explicitly enabled in n8n.
 
+## n8n no-candidates safeguard
+
+The demo workflow import includes a no-candidates fallback for the discovery gate:
+
+- `Code - Filter Directories and Dedupe` returns one placeholder item instead of zero items when no prospect passes filtering.
+- `Code - Fan Out Valid Prospects` also preserves that placeholder instead of returning zero items.
+- Both nodes have `alwaysOutputData` enabled in their node settings.
+- Placeholder rows include:
+  - `no_candidates_found: true`
+  - `skip_audit: true`
+  - `candidate_count: 0`
+  - `status: no_candidates`
+  - `discovery_status: no_candidates_after_directory_filter`
+  - `demo_sandbox: true`
+  - `source_environment: demo`
+  - `search_id` with `srch_demo_` prefix
+
+This prevents n8n from stopping the workflow at the discovery dedupe step when directories or maps return no viable candidates.
+
 ## Security notes
 
 - Do not edit the production n8n workflow.
@@ -109,6 +128,7 @@ Run these manually in a browser against the demo branch before marking complete:
 - Current State calls `/webhook/rankforge-demo-current-state`.
 - Any lead feedback/admin/user/billing/Stripe workflow test calls use only `rankforge-demo-*` paths.
 - Created rows use `srch_demo_` search_id prefix.
+- If discovery returns no viable prospects, `Code - Filter Directories and Dedupe` still outputs one `no_candidates_found=true` placeholder item.
 - Created rows include `demo_sandbox=true` and/or `source_environment=demo` when the sheet mapping supports those fields.
 - User A creates a search, logs out, then User B does not see User A data.
 - localStorage keys are user scoped.

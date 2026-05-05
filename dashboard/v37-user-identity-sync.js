@@ -3,14 +3,16 @@
 
   function clean(v){return String(v==null?'':v).trim()}
   function safeJson(v,f){try{return JSON.parse(v||'')||f}catch(e){return f}}
-  function loadBrand(){
-    if(document.querySelector('link[data-rf-brand-refresh="true"]'))return;
+  function loadCssOnce(href,marker){
+    if(document.querySelector('link[data-'+marker+'="true"]')||document.querySelector('link[href*="'+href.split('?')[0]+'"]'))return;
     var link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='../assets/brand-refresh.css?v=brand-2';
-    link.setAttribute('data-rf-brand-refresh','true');
+    link.href=href;
+    link.setAttribute('data-'+marker,'true');
     document.head.appendChild(link);
   }
+  function loadBrand(){loadCssOnce('../assets/brand-refresh.css?v=brand-3','rf-brand-refresh')}
+  function loadMobile(){loadCssOnce('./v38-dashboard-mobile.css?v=dashboard-mobile-1','rf-dashboard-mobile')}
   function titleFromEmail(email){
     var local=clean(email).split('@')[0]||'Workspace';
     return local.replace(/[._-]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()});
@@ -46,6 +48,7 @@
   }
   function apply(){
     loadBrand();
+    loadMobile();
     var id=identity();
     if(!id.email)return;
 
@@ -73,7 +76,7 @@
     var topAvatar=document.querySelector('.top .avatar');
     if(topAvatar)topAvatar.textContent=id.avatar;
   }
-  function boot(){loadBrand();apply();setTimeout(apply,250);setTimeout(apply,900);setTimeout(apply,1800)}
+  function boot(){loadBrand();loadMobile();apply();setTimeout(apply,250);setTimeout(apply,900);setTimeout(apply,1800)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   window.addEventListener('rankforge:dashboard-session',boot);
   window.addEventListener('storage',function(e){if(e.key==='rankforge-auth-session-v1')boot()});

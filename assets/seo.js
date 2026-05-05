@@ -1,12 +1,12 @@
 (function(){
   'use strict';
-  var BASE='https://automly1-lab.github.io/seo-lead-dashboard-site/';
+  var BASE='https://crestlineops.com/';
   var OG=BASE+'assets/og/rankforge-og.png';
   var path=(location.pathname||'/').replace(/\/+/g,'/');
-  function isRepoRoot(){return path==='/'||/\/seo-lead-dashboard-site\/?$/.test(path);}
+  function isRoot(){return path==='/'||path==='';}
   function has(seg){return path.indexOf('/'+seg+'/')!==-1;}
   function pageKey(){
-    if(isRepoRoot())return'home';
+    if(isRoot())return'home';
     if(has('product'))return'product';
     if(has('features'))return'features';
     if(has('pricing'))return'pricing';

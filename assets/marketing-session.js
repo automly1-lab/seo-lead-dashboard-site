@@ -19,6 +19,7 @@
   function loadBrandRefresh() { loadStylesheetOnce(urlFromRoot("assets/brand-refresh.css?v=brand-3"), "rf-brand-refresh-css"); }
   function loadMobileResponsive() { loadStylesheetOnce(urlFromRoot("assets/mobile-responsive.css?v=mobile-1"), "rf-mobile-responsive-css"); }
   function loadMobileAppPolish() { loadStylesheetOnce(urlFromRoot("assets/mobile-app-polish.css?v=mobile-app-1"), "rf-mobile-app-polish-css"); loadScriptOnce(urlFromRoot("assets/mobile-app-polish.js?v=mobile-app-1"), "rf-mobile-app-polish"); }
+  function loadMenuFix() { loadScriptOnce(urlFromRoot("assets/menu-fix.js?v=menu-fix-1"), "rf-menu-fix"); }
   function loadMarketingShell() { loadStylesheetOnce(urlFromRoot("assets/marketing-shell.css?v=marketing-shell-6"), "rf-marketing-shell-css"); loadStylesheetOnce(urlFromRoot("assets/hero-title-normalize.css?v=hero-title-1"), "rf-hero-title-css"); loadScriptOnce(urlFromRoot("assets/marketing-shell.js?v=marketing-shell-6"), "rf-marketing-shell"); }
   function loadPageReset() { loadScriptOnce(urlFromRoot("assets/page-reset.js?v=page-reset-1"), "rf-page-reset"); }
   function loadSeo() { loadScriptOnce(urlFromRoot("assets/seo.js?v=seo-1"), "rf-seo"); }
@@ -79,6 +80,7 @@
     loadBrandRefresh();
     loadMobileResponsive();
     loadMobileAppPolish();
+    loadMenuFix();
     const refreshedMarketing = usesRefreshedMarketingShell();
     if (!refreshedMarketing) {
       loadPageReset();

@@ -11,20 +11,6 @@
     link.setAttribute('data-'+marker,'true');
     document.head.appendChild(link);
   }
-  function loadScriptOnce(src,marker,after){
-    if(document.querySelector('script[data-'+marker+'="true"]')||document.querySelector('script[src*="'+src.split('?')[0]+'"]')){ if(after) after(); return; }
-    var script=document.createElement('script');
-    script.src=src;
-    script.defer=true;
-    script.setAttribute('data-'+marker,'true');
-    if(after) script.onload=after;
-    document.body.appendChild(script);
-  }
-  function loadSandboxHardening(){
-    loadScriptOnce('./rankforge-config.js?v=demo-sandbox-1','rf-demo-config',function(){
-      loadScriptOnce('./rankforge-sandbox-hardening.js?v=demo-sandbox-1','rf-demo-hardening');
-    });
-  }
   function loadBrand(){loadCssOnce('../assets/brand-refresh.css?v=brand-3','rf-brand-refresh')}
   function loadMobile(){loadCssOnce('./v38-dashboard-mobile.css?v=dashboard-mobile-1','rf-dashboard-mobile');loadCssOnce('./v39-mobile-app.css?v=dashboard-app-1','rf-dashboard-mobile-app')}
   function titleFromEmail(email){
@@ -63,7 +49,6 @@
   function apply(){
     loadBrand();
     loadMobile();
-    loadSandboxHardening();
     var id=identity();
     if(!id.email)return;
 
@@ -90,11 +75,12 @@
 
     var topAvatar=document.querySelector('.top .avatar');
     if(topAvatar)topAvatar.textContent=id.avatar;
+    document.dispatchEvent(new CustomEvent('rankforge:rendered',{detail:{reason:'identity-sync'}}));
   }
-  function boot(){loadBrand();loadMobile();loadSandboxHardening();apply();setTimeout(apply,250);setTimeout(apply,900);setTimeout(apply,1800)}
+  function boot(){loadBrand();loadMobile();apply();setTimeout(apply,250);setTimeout(apply,900);setTimeout(apply,1800)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   window.addEventListener('rankforge:dashboard-session',boot);
-  window.addEventListener('storage',function(e){if(e.key==='rankforge-auth-session-v1')boot()});
+  window.addEventListener('storage',function(e){if(e.key==='rankforge-auth-session-v1'){window.dispatchEvent(new CustomEvent('rankforge:auth-changed'));boot()}});
   setInterval(apply,3000);
-  window.rankforgeUserIdentitySync={apply:apply,identity:identity,loadSandboxHardening:loadSandboxHardening};
+  window.rankforgeUserIdentitySync={apply:apply,identity:identity};
 })();

@@ -24,11 +24,20 @@ window.RANKFORGE_CONFIG = {
 
 Workflow name: `[DEMO] RankForge MVP Memory Safe`
 
-Webhook paths:
+Primary dashboard webhook paths:
 
 - `/webhook/rankforge-demo-create-search`
 - `/webhook/rankforge-demo-current-state`
 - `/webhook/rankforge-demo-search-results`
+
+All other workflow webhook triggers must also use demo paths to avoid activation conflicts with production:
+
+- `/webhook/rankforge-demo-lead-feedback`
+- `/webhook/rankforge-demo-admin-user-override`
+- `/webhook/rankforge-demo-user-sync`
+- `/webhook/rankforge-demo-user-profile-upsert`
+- `/webhook/rankforge-demo-billing-activation`
+- `/webhook/rankforge-demo-stripe-webhook`
 
 Google Sheet ID for demo, confirmed by owner:
 
@@ -98,6 +107,7 @@ Run these manually in a browser against the demo branch before marking complete:
 - Create Search calls `/webhook/rankforge-demo-create-search`.
 - Refresh Results calls `/webhook/rankforge-demo-search-results`.
 - Current State calls `/webhook/rankforge-demo-current-state`.
+- Any lead feedback/admin/user/billing/Stripe workflow test calls use only `rankforge-demo-*` paths.
 - Created rows use `srch_demo_` search_id prefix.
 - Created rows include `demo_sandbox=true` and/or `source_environment=demo` when the sheet mapping supports those fields.
 - User A creates a search, logs out, then User B does not see User A data.

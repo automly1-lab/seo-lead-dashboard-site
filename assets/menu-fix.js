@@ -1,0 +1,8 @@
+(function(){
+'use strict';
+function nested(){return /\/(product|features|resources|company|contact|pricing|status|privacy|terms|refund-policy|login|signup|checkout-success|checkout-cancelled|checkout-pending)\//.test(location.pathname||'')}
+function base(){return nested()?'../':'./'}
+function hasSession(){try{var s=JSON.parse(localStorage.getItem('rankforge-auth-session-v1')||'{}');return !!(s.email||s.userId||s.id)}catch(e){return false}}
+function apply(){var h=document.querySelector('header.nav');if(!h)return;var links=h.querySelector('.nav-links'),actions=h.querySelector('.nav-actions');if(links&&!Array.from(links.querySelectorAll('a')).some(function(a){return a.textContent.trim().toLowerCase()==='home'})){var home=document.createElement('a');home.href=base();home.textContent='Home';if(location.pathname==='/'||/\/index\.html$/.test(location.pathname))home.className='active';links.insertBefore(home,links.firstChild)}if(actions){var logged=hasSession();var all=Array.from(actions.querySelectorAll('a'));var dash=all.find(function(a){return /dashboard/i.test(a.textContent)||/dashboard/.test(a.getAttribute('href')||'')});var login=all.find(function(a){return /log in/i.test(a.textContent)||/login/.test(a.getAttribute('href')||'')});if(dash){dash.textContent='Dashboard';dash.href=logged?base()+'dashboard/':base()+'login/?next=dashboard'}if(login){login.href=base()+'login/';login.style.display=logged?'none':''}}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();window.addEventListener('rankforge:session-ready',apply);setTimeout(apply,500);setTimeout(apply,1500);window.rankforgeMenuFix=apply;
+})();

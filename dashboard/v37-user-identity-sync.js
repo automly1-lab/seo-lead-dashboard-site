@@ -12,7 +12,7 @@
     document.head.appendChild(link);
   }
   function loadBrand(){loadCssOnce('../assets/brand-refresh.css?v=brand-3','rf-brand-refresh')}
-  function loadMobile(){loadCssOnce('./v38-dashboard-mobile.css?v=dashboard-mobile-1','rf-dashboard-mobile')}
+  function loadMobile(){loadCssOnce('./v38-dashboard-mobile.css?v=dashboard-mobile-1','rf-dashboard-mobile');loadCssOnce('./v39-mobile-app.css?v=dashboard-app-1','rf-dashboard-mobile-app')}
   function titleFromEmail(email){
     var local=clean(email).split('@')[0]||'Workspace';
     return local.replace(/[._-]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase()});

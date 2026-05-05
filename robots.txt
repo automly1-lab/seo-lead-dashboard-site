@@ -1,13 +1,24 @@
 User-agent: *
 Allow: /seo-lead-dashboard-site/
+
+# Private application surfaces
 Disallow: /seo-lead-dashboard-site/dashboard/
+Disallow: /seo-lead-dashboard-site/admin/
 Disallow: /seo-lead-dashboard-site/searches/
 Disallow: /seo-lead-dashboard-site/leads/
 Disallow: /seo-lead-dashboard-site/lead-detail/
 Disallow: /seo-lead-dashboard-site/settings/
 Disallow: /seo-lead-dashboard-site/quality/
+
+# Authentication and transactional pages
+Disallow: /seo-lead-dashboard-site/login/
+Disallow: /seo-lead-dashboard-site/signup/
 Disallow: /seo-lead-dashboard-site/checkout-success/
 Disallow: /seo-lead-dashboard-site/checkout-cancelled/
 Disallow: /seo-lead-dashboard-site/checkout-pending/
+
+# Search / query URLs
+Disallow: /*?*
+Allow: /seo-lead-dashboard-site/signup/?plan=*
 
 Sitemap: https://automly1-lab.github.io/seo-lead-dashboard-site/sitemap.xml

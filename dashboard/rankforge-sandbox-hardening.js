@@ -6,6 +6,7 @@
   var WEBHOOKS = CFG.WEBHOOKS || {};
   var ADMIN_EMAIL = String(CFG.ADMIN_EMAIL || 'automly1@gmail.com').toLowerCase();
   var CREDIT_RULE = CFG.CREDIT_RULE || 'Credits are consumed ONLY when a lead is marked as Qualified.';
+  var LOGOUT_MARKER = 'rankforge-explicit-logout-v1';
   var PROD_HOSTS = ['lastaccount1907.app.n8n.cloud', 'rankforge1907.app.n8n.cloud'];
   var PROD_PATHS = {
     '/webhook/rankforge-create-search': WEBHOOKS.CREATE_SEARCH || '/webhook/rankforge-demo-create-search',
@@ -46,13 +47,11 @@
   }
   function currentIdentity(){
     var s = session() || {};
-    return {
-      userId: clean(s.userId || s.id || s.user_id),
-      email: lower(s.email || s.user_email || s.owner_email)
-    };
+    return { userId: clean(s.userId || s.id || s.user_id), email: lower(s.email || s.user_email || s.owner_email) };
   }
   function hasUser(){ var id = currentIdentity(); return !!(id.userId || id.email); }
   function isAdminEmail(email){ return lower(email) === ADMIN_EMAIL; }
+  function isAdmin(){ return isAdminEmail(currentIdentity().email); }
   function scopedKey(kind){
     var id = currentIdentity();
     var userKey = clean(id.userId || id.email);
@@ -79,11 +78,14 @@
     return ids;
   }
   function keepAllowed(rows){
+    if (!hasUser()) return [];
     var ids = allowedSearchIds();
     return (Array.isArray(rows) ? rows : []).filter(function(row){ return rowMatchesUser(row) || rowMatchesSearch(row, ids); });
   }
+  function emptyLike(json){ return Array.isArray(json) ? [] : {}; }
   function filterPayload(json){
-    if (!json || typeof json !== 'object' || !hasUser()) return json;
+    if (!json || typeof json !== 'object') return json;
+    if (!hasUser()) return emptyLike(json);
     var out = Array.isArray(json) ? keepAllowed(json) : Object.assign({}, json);
     if (Array.isArray(json)) return out;
     ['searches','batches','search_batches','leads','prospects','results','raw_prospects','final_leads','rows'].forEach(function(key){
@@ -122,19 +124,21 @@
     } catch(e) {}
   }
   function clearRankForgeStores(){
+    var markerValue = new Date().toISOString();
     function cleanStore(store){
       if (!store) return;
       var remove = [];
       for (var i = 0; i < store.length; i++) {
         var k = store.key(i) || '';
         var low = k.toLowerCase();
+        if (k === LOGOUT_MARKER) continue;
         if (k.indexOf('rankforge:') === 0 || k.indexOf('rankforge-') === 0 || k.indexOf('sb-') === 0 || low.indexOf('supabase') > -1) remove.push(k);
       }
       remove.forEach(function(k){ try { store.removeItem(k); } catch(e) {} });
     }
-    try { localStorage.setItem('rankforge-explicit-logout-v1', new Date().toISOString()); } catch(e) {}
     try { cleanStore(localStorage); } catch(e) {}
     try { cleanStore(sessionStorage); } catch(e) {}
+    try { localStorage.setItem(LOGOUT_MARKER, markerValue); } catch(e) {}
   }
   function patchFetch(){
     if (!window.fetch || window.fetch.__rfDemoSandbox) return;
@@ -167,8 +171,7 @@
     window.XMLHttpRequest.__rfDemoSandbox = true;
   }
   function patchAdminUi(){
-    var id = currentIdentity();
-    var admin = isAdminEmail(id.email);
+    var admin = isAdmin();
     document.body.classList.toggle('rf-is-admin', admin);
     Array.prototype.slice.call(document.querySelectorAll('.nav.admin')).forEach(function(node){ node.style.display = admin ? '' : 'none'; });
     var activeAdmin = document.getElementById('admin');
@@ -261,7 +264,8 @@
     currentIdentity: currentIdentity,
     keepAllowed: keepAllowed,
     clearRankForgeStores: clearRankForgeStores,
-    forceDemoEndpointKeys: forceDemoEndpointKeys
+    forceDemoEndpointKeys: forceDemoEndpointKeys,
+    harden: harden
   };
 
   forceDemoEndpointKeys();
@@ -270,8 +274,9 @@
   syncStateUser();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', harden); else harden();
   window.addEventListener('rankforge:dashboard-session', function(){ setTimeout(harden, 50); });
+  window.addEventListener('rankforge:auth-changed', function(){ setTimeout(harden, 50); });
+  document.addEventListener('rankforge:rendered', function(){ harden(); });
   window.addEventListener('storage', function(e){ if (!e || e.key === 'rankforge-auth-session-v1' || /^sb-/.test(e.key || '')) harden(); });
   setTimeout(harden, 250);
   setTimeout(harden, 1200);
-  setInterval(harden, 2500);
 })();

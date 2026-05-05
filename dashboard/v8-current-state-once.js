@@ -3,6 +3,7 @@
   var CFG=window.RANKFORGE_CONFIG||{WEBHOOKS:{}};
   var BASE=String(CFG.N8N_BASE_URL||'https://rankforge1907.app.n8n.cloud').replace(/\/$/,'');
   var API=BASE+(CFG.WEBHOOKS&&CFG.WEBHOOKS.CURRENT_STATE||'/webhook/rankforge-demo-current-state');
+  var ADMIN_EMAIL=String(CFG.ADMIN_EMAIL||'automly1@gmail.com').toLowerCase();
   var LAST_KEY='rankforge-current-state-last-sync-v1';
   var COOLDOWN=30*1000;
   var inFlight=false;
@@ -15,9 +16,10 @@
   function stateObj(){try{return state}catch(e){return window.state||null}}
   function sess(){if(window.rankforgeAuth&&window.rankforgeAuth.getSession)return window.rankforgeAuth.getSession();try{return JSON.parse(localStorage.getItem('rankforge-auth-session-v1')||'null')}catch(e){return null}}
   function identity(){var s=sess()||{},st=stateObj()||{};return{userId:c(s.userId||s.id||(st.user&&st.user.userId)),email:c(s.email||(st.user&&st.user.email)).toLowerCase()}}
-  function matchesRequest(row){row=unwrap(row);var id=identity(),uid=c(row.user_id||row.owner_user_id||row.created_by),em=c(row.email||row.user_email||row.owner_email||row.email_user).toLowerCase();if(uid||em)return(!!uid&&!!id.userId&&uid===id.userId)||(!!em&&!!id.email&&em===id.email);return true}
+  function isAdminIdentity(id){return !!(id&&id.email===ADMIN_EMAIL)}
   function unwrap(j){var row=j&&((Array.isArray(j.current_state)?j.current_state[0]:j.current_state)||(Array.isArray(j.user)?j.user[0]:j.user)||(Array.isArray(j.row)?j.row[0]:j.row)||(Array.isArray(j.data)?j.data[0]:j.data)||j);return Array.isArray(row)?row[0]||{}:row||{}}
-  function plan(row){row=unwrap(row);if(!matchesRequest(row))row={};var key=k(row.key||row.plan||row.current_plan||row.plan_name||row.name||localStorage.getItem('rankforge-selected-plan-v1')),d=lim(key);return{key:key,name:name(key),billingStatus:c(row.billing_status||row.billingStatus||row.subscription_status||(key==='free'?'free':'active')),batchesLimit:n(row.effective_search_limit||row.search_batches_limit||row.search_batch_limit||row.batchesLimit,d[0]),batchesUsed:n(row.search_batches_used||row.batchesUsed,0),creditsLimit:n(row.effective_qualified_lead_limit||row.qualified_lead_credits_limit||row.qualified_leads_limit||row.creditsLimit,d[1]),creditsUsed:n(row.qualified_lead_credits_used||row.qualified_leads_used||row.creditsUsed,0),maxLeadsPerBatch:n(row.max_leads_per_batch||row.maxLeadsPerBatch,d[2]),csvExport:key!=='free',unlimited:key==='admin_unlimited'||identity().email===(CFG.ADMIN_EMAIL||'automly1@gmail.com').toLowerCase()}}
+  function matchesRequest(row){row=unwrap(row);var id=identity(),uid=c(row.user_id||row.owner_user_id||row.created_by),em=c(row.email||row.user_email||row.owner_email||row.email_user).toLowerCase();if(!id.userId&&!id.email)return false;if(!uid&&!em)return false;if(uid&&id.userId&&uid===id.userId)return true;if(em&&id.email&&em===id.email)return true;if(isAdminIdentity(id)&&em===ADMIN_EMAIL)return true;return false}
+  function plan(row){row=unwrap(row);var accepted=matchesRequest(row);if(!accepted)row={};var key=accepted?k(row.key||row.plan||row.current_plan||row.plan_name||row.name):'free',d=lim(key);return{key:key,name:name(key),billingStatus:c(row.billing_status||row.billingStatus||row.subscription_status||(key==='free'?'free':'active')),batchesLimit:n(row.effective_search_limit||row.search_batches_limit||row.search_batch_limit||row.batchesLimit,d[0]),batchesUsed:n(row.search_batches_used||row.batchesUsed,0),creditsLimit:n(row.effective_qualified_lead_limit||row.qualified_lead_credits_limit||row.qualified_leads_limit||row.creditsLimit,d[1]),creditsUsed:n(row.qualified_lead_credits_used||row.qualified_leads_used||row.creditsUsed,0),maxLeadsPerBatch:n(row.max_leads_per_batch||row.maxLeadsPerBatch,d[2]),csvExport:key!=='free',unlimited:accepted&&(key==='admin_unlimited'||identity().email===ADMIN_EMAIL)}}
   function isFreePlan(p){return p&&p.key==='free'}
   function updateUpgradeButton(p){var b=document.querySelector('.usage button');if(b)b.style.display=isFreePlan(p)?'':'none'}
   function paint(p){
@@ -46,7 +48,7 @@
   function sync(force){var p=cached();if(p&&p.creditsLimit>0)paint(p);else pending();return load(!!force).then(function(x){if(x)paint(x);return x}).catch(function(e){console.warn('RankForge current state sync failed',e);if(p)paint(p);return p})}
   function boot(){sync(true);setTimeout(function(){sync(true)},2500)}
 
-  window.rankforgeCurrentState={refresh:function(){return sync(true)},paint:paint,sync:sync};
+  window.rankforgeCurrentState={refresh:function(){return sync(true)},paint:paint,sync:sync,matchesRequest:matchesRequest};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
   document.addEventListener('visibilitychange',function(){if(!document.hidden)sync(true)});
   window.addEventListener('focus',function(){sync(true)});

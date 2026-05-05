@@ -1,6 +1,8 @@
 (function(){
   'use strict';
-  var API='https://rankforge1907.app.n8n.cloud/webhook/rankforge-current-state';
+  var CFG=window.RANKFORGE_CONFIG||{WEBHOOKS:{}};
+  var BASE=String(CFG.N8N_BASE_URL||'https://rankforge1907.app.n8n.cloud').replace(/\/$/,'');
+  var API=BASE+(CFG.WEBHOOKS&&CFG.WEBHOOKS.CURRENT_STATE||'/webhook/rankforge-demo-current-state');
   var LAST_KEY='rankforge-current-state-last-sync-v1';
   var COOLDOWN=30*1000;
   var inFlight=false;
@@ -12,8 +14,10 @@
   function lim(x){return{free:[1,10,10],starter:[50,50,25],growth:[150,250,50],agency_intelligence:[9999,999999,50],admin_unlimited:[999999,999999,50]}[k(x)]||[1,10,10]}
   function stateObj(){try{return state}catch(e){return window.state||null}}
   function sess(){if(window.rankforgeAuth&&window.rankforgeAuth.getSession)return window.rankforgeAuth.getSession();try{return JSON.parse(localStorage.getItem('rankforge-auth-session-v1')||'null')}catch(e){return null}}
+  function identity(){var s=sess()||{},st=stateObj()||{};return{userId:c(s.userId||s.id||(st.user&&st.user.userId)),email:c(s.email||(st.user&&st.user.email)).toLowerCase()}}
+  function matchesRequest(row){row=unwrap(row);var id=identity(),uid=c(row.user_id||row.owner_user_id||row.created_by),em=c(row.email||row.user_email||row.owner_email||row.email_user).toLowerCase();if(uid||em)return(!!uid&&!!id.userId&&uid===id.userId)||(!!em&&!!id.email&&em===id.email);return true}
   function unwrap(j){var row=j&&((Array.isArray(j.current_state)?j.current_state[0]:j.current_state)||(Array.isArray(j.user)?j.user[0]:j.user)||(Array.isArray(j.row)?j.row[0]:j.row)||(Array.isArray(j.data)?j.data[0]:j.data)||j);return Array.isArray(row)?row[0]||{}:row||{}}
-  function plan(row){row=unwrap(row);var key=k(row.key||row.plan||row.current_plan||row.plan_name||row.name||localStorage.getItem('rankforge-selected-plan-v1')),d=lim(key);return{key:key,name:name(key),billingStatus:c(row.billing_status||row.billingStatus||row.subscription_status||(key==='free'?'free':'active')),batchesLimit:n(row.effective_search_limit||row.search_batches_limit||row.search_batch_limit||row.batchesLimit,d[0]),batchesUsed:n(row.search_batches_used||row.batchesUsed,0),creditsLimit:n(row.effective_qualified_lead_limit||row.qualified_lead_credits_limit||row.qualified_leads_limit||row.creditsLimit,d[1]),creditsUsed:n(row.qualified_lead_credits_used||row.qualified_leads_used||row.creditsUsed,0),maxLeadsPerBatch:n(row.max_leads_per_batch||row.maxLeadsPerBatch,d[2]),csvExport:key!=='free',unlimited:key==='admin_unlimited'}}
+  function plan(row){row=unwrap(row);if(!matchesRequest(row))row={};var key=k(row.key||row.plan||row.current_plan||row.plan_name||row.name||localStorage.getItem('rankforge-selected-plan-v1')),d=lim(key);return{key:key,name:name(key),billingStatus:c(row.billing_status||row.billingStatus||row.subscription_status||(key==='free'?'free':'active')),batchesLimit:n(row.effective_search_limit||row.search_batches_limit||row.search_batch_limit||row.batchesLimit,d[0]),batchesUsed:n(row.search_batches_used||row.batchesUsed,0),creditsLimit:n(row.effective_qualified_lead_limit||row.qualified_lead_credits_limit||row.qualified_leads_limit||row.creditsLimit,d[1]),creditsUsed:n(row.qualified_lead_credits_used||row.qualified_leads_used||row.creditsUsed,0),maxLeadsPerBatch:n(row.max_leads_per_batch||row.maxLeadsPerBatch,d[2]),csvExport:key!=='free',unlimited:key==='admin_unlimited'||identity().email===(CFG.ADMIN_EMAIL||'automly1@gmail.com').toLowerCase()}}
   function isFreePlan(p){return p&&p.key==='free'}
   function updateUpgradeButton(p){var b=document.querySelector('.usage button');if(b)b.style.display=isFreePlan(p)?'':'none'}
   function paint(p){
@@ -29,7 +33,7 @@
     if(b)b.style.width=p.unlimited?'100%':(p.creditsLimit?Math.min(100,(p.creditsUsed||0)/p.creditsLimit*100)+'%':'0%');
     if(box){var sm=box.querySelector('small');if(sm)sm.textContent='Plan: '+p.name+(p.billingStatus?' · '+p.billingStatus:'')}
     var accountTitle=document.querySelector('.account strong');if(accountTitle)accountTitle.textContent=p.unlimited?'RankForge Admin':'RankForge '+p.name;
-    var workspaceSmall=document.querySelector('.workspace-identity small');if(workspaceSmall&&workspaceSmall.textContent==='Checking session')workspaceSmall.textContent=(st&&st.user&&st.user.email)||'automly1@gmail.com';
+    var workspaceSmall=document.querySelector('.workspace-identity small');if(workspaceSmall&&workspaceSmall.textContent==='Checking session')workspaceSmall.textContent=(st&&st.user&&st.user.email)||'';
     updateUpgradeButton(p);
     try{if(typeof metrics==='function')metrics()}catch(e){}
   }

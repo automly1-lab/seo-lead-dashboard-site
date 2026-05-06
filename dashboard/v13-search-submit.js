@@ -8,6 +8,8 @@
   var CURRENT_STATE=BASE+(CFG.WEBHOOKS&&CFG.WEBHOOKS.CURRENT_STATE||'/webhook/rankforge-demo-current-state');
   var CREDIT_RULE=CFG.CREDIT_RULE||'Credits are consumed ONLY when a lead is marked as Qualified.';
   var ADMIN_EMAIL=String(CFG.ADMIN_EMAIL||'automly1@gmail.com').toLowerCase();
+  var submitting=false;
+  var lastSubmitAt=0;
 
   function clean(v){return String(v==null?'':v).trim()}
   function n(v,d){var x=Number(clean(v).replace(/[^0-9.-]/g,''));return Number.isFinite(x)?Math.max(0,Math.round(x)):(d||0)}
@@ -31,23 +33,34 @@
   function bodyFrom(payload){var body=new URLSearchParams();Object.keys(payload).forEach(function(k){body.set(k,payload[k]==null?'':String(payload[k]))});return body.toString()}
   async function send(payload){
     var body=bodyFrom(payload);
-    try{
-      var res=await fetch(SEARCH_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','Accept':'application/json'},body:body});
-      if(!res.ok)throw new Error('create_search_'+res.status);
-      return {confirmed:true,response:res};
-    }catch(corsOrNetworkError){
-      console.warn('Create search CORS/response check failed; retrying as no-cors fire-and-forget',corsOrNetworkError);
-      try{
-        await fetch(SEARCH_WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body});
-        return {confirmed:false,corsFallback:true};
-      }catch(fireAndForgetError){
-        throw fireAndForgetError;
-      }
-    }
+    await fetch(SEARCH_WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body});
+    return {confirmed:false,noCors:true};
   }
   function setStatus(msg,tone){var node=byId('createSearchStatus');if(!node)return;node.textContent=msg||'';node.style.display=msg?'':'none';node.classList.remove('is-error','is-success','is-loading');if(tone)node.classList.add('is-'+tone)}
   function injectRule(){var summary=byId('createSummary');if(summary&&!summary.querySelector('.rf-credit-rule'))summary.insertAdjacentHTML('beforeend','<span class="rf-credit-rule">'+CREDIT_RULE+'</span>')}
-  async function submit(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();setStatus('','');var btn=byId('createBatch');if(btn){btn.disabled=true;btn.textContent='Starting...'}try{var p=await freshPlan();if(!p.unlimited&&n(p.batchesLimit,0)<=n(p.batchesUsed,0)){setStatus('Your search batch allowance is used up for this plan.','error');return}if(!p.unlimited&&n(p.creditsLimit,0)<=n(p.creditsUsed,0)){setStatus('Your qualified lead credits are used up for this plan.','error');return}var pl=payload(p);if(!pl.user_id&&!pl.email){setStatus('Please sign in before creating a private search batch.','error');return}if(!pl.search_name||!pl.niche||!pl.city||!pl.country||!pl.primary_keyword){setStatus('Please fill Market name, Niche, City, Country, and Primary keyword.','error');return}upsertSearch(pl,'Pending');if(typeof render==='function')render();var sent=await send(pl);if(sent&&sent.confirmed){upsertSearch(pl,'Running');}else{upsertSearch(pl,'Pending');setStatus('Search submitted. Waiting for demo workflow confirmation on refresh.','success');}state.plan.batchesUsed=Number(state.plan.batchesUsed||0)+1;if(typeof render==='function')render();var modal=byId('modal');if(modal)modal.classList.remove('open');document.querySelector('[data-view="searches"]')&&document.querySelector('[data-view="searches"]').click();setTimeout(function(){if(window.rankforgeDashboardData&&window.rankforgeDashboardData.syncResults)window.rankforgeDashboardData.syncResults({force:true,reason:'new-search'})},6500)}catch(err){console.error(err);setStatus('Search could not be started. Please try again.','error')}finally{if(btn){btn.disabled=false;btn.textContent='Start Search Batch'}}}
-  function bind(){injectRule();var b=byId('createBatch');if(b&&!b.dataset.v13Bound){b.dataset.v13Bound='true';b.addEventListener('click',submit,true)}document.body.addEventListener('click',function(e){if(e.target&&e.target.id==='createBatch')submit(e)},true)}
+  async function submit(e){
+    if(e){e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
+    if(submitting||Date.now()-lastSubmitAt<2500){return;}
+    submitting=true;lastSubmitAt=Date.now();setStatus('','');
+    var btn=byId('createBatch');if(btn){btn.disabled=true;btn.textContent='Starting...'}
+    try{
+      var p=await freshPlan();
+      if(!p.unlimited&&n(p.batchesLimit,0)<=n(p.batchesUsed,0)){setStatus('Your search batch allowance is used up for this plan.','error');return}
+      if(!p.unlimited&&n(p.creditsLimit,0)<=n(p.creditsUsed,0)){setStatus('Your qualified lead credits are used up for this plan.','error');return}
+      var pl=payload(p);
+      if(!pl.user_id&&!pl.email){setStatus('Please sign in before creating a private search batch.','error');return}
+      if(!pl.search_name||!pl.niche||!pl.city||!pl.country||!pl.primary_keyword){setStatus('Please fill Market name, Niche, City, Country, and Primary keyword.','error');return}
+      upsertSearch(pl,'Pending');
+      if(typeof render==='function')render();
+      await send(pl);
+      setStatus('Search submitted. Use Refresh Results to check the demo workflow output.','success');
+      state.plan.batchesUsed=Number(state.plan.batchesUsed||0)+1;
+      if(typeof render==='function')render();
+      var modal=byId('modal');if(modal)modal.classList.remove('open');
+      var tab=document.querySelector('[data-view="searches"]');if(tab)tab.click();
+    }catch(err){console.error(err);setStatus('Search could not be started. Please try again.','error')}
+    finally{setTimeout(function(){submitting=false;if(btn){btn.disabled=false;btn.textContent='Start Search Batch'}},800)}
+  }
+  function bind(){injectRule();var b=byId('createBatch');if(b&&!b.dataset.v13Bound){b.dataset.v13Bound='true';b.addEventListener('click',submit,true)}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();

@@ -5,7 +5,6 @@
   var API=BASE+(CFG.WEBHOOKS&&CFG.WEBHOOKS.CURRENT_STATE||'/webhook/rankforge-demo-current-state');
   var ADMIN_EMAIL=String(CFG.ADMIN_EMAIL||'automly1@gmail.com').toLowerCase();
   var LAST_KEY='rankforge-current-state-last-sync-v1';
-  var COOLDOWN=30*1000;
   var inFlight=false;
 
   function c(v){return String(v==null?'':v).trim()}
@@ -41,17 +40,12 @@
   }
   function cached(){try{var x=JSON.parse(localStorage.getItem('rankforge-user-plan-v1')||'null');return x?plan(x):null}catch(e){return null}}
   function pending(){var u=document.getElementById('creditsUsed'),l=document.getElementById('creditsLimit'),box=document.querySelector('.usage');if(u&&u.textContent==='0')u.textContent='...';if(l&&l.textContent===' / 0')l.textContent='';if(box){var sm=box.querySelector('small');if(sm&&/^Credits Used$|^Plan$/.test(c(sm.textContent)))sm.textContent='Checking plan'}}
-  function shouldSkip(force){if(force)return false;var last=Date.parse(localStorage.getItem(LAST_KEY)||'')||0;return last&&Date.now()-last<COOLDOWN}
-  function bodyParams(){var s=sess()||{},st=stateObj()||{},body=new URLSearchParams();body.set('email',s.email||(st.user&&st.user.email)||'');body.set('user_id',s.userId||s.id||(st.user&&st.user.userId)||'');body.set('event','get_current_state');body.set('reason','dashboard_credit_sync');return body.toString()}
+  function bodyParams(){var s=sess()||{},st=stateObj()||{},body=new URLSearchParams();body.set('email',s.email||(st.user&&st.user.email)||'');body.set('user_id',s.userId||s.id||(st.user&&st.user.userId)||'');body.set('event','get_current_state');body.set('reason','manual_dashboard_refresh');return body.toString()}
   function xhrJson(url,body){return new Promise(function(resolve,reject){var x=new XMLHttpRequest();x.open('POST',url,true);x.setRequestHeader('Content-Type','application/x-www-form-urlencoded;charset=UTF-8');x.setRequestHeader('Accept','application/json');x.onreadystatechange=function(){if(x.readyState!==4)return;if(x.status>=200&&x.status<300){try{resolve(JSON.parse(x.responseText||'{}'))}catch(e){reject(e)}}else reject(new Error('current_state_'+x.status))};x.onerror=function(){reject(new Error('current_state_network'))};x.send(body)})}
-  function load(force){if(inFlight||shouldSkip(force))return Promise.resolve(cached());inFlight=true;return xhrJson(API,bodyParams()).then(function(j){localStorage.setItem(LAST_KEY,new Date().toISOString());return plan(j)}).finally(function(){inFlight=false})}
-  function sync(force){var p=cached();if(p&&p.creditsLimit>0)paint(p);else pending();return load(!!force).then(function(x){if(x)paint(x);return x}).catch(function(e){console.warn('RankForge current state sync failed',e);if(p)paint(p);return p})}
-  function boot(){sync(true);setTimeout(function(){sync(true)},2500)}
+  function load(force){if(inFlight)return Promise.resolve(cached());inFlight=true;return xhrJson(API,bodyParams()).then(function(j){localStorage.setItem(LAST_KEY,new Date().toISOString());return plan(j)}).finally(function(){inFlight=false})}
+  function sync(force){var p=cached();if(p&&p.creditsLimit>0)paint(p);else pending();if(!force)return Promise.resolve(p);return load(true).then(function(x){if(x)paint(x);return x}).catch(function(e){console.warn('RankForge current state sync failed',e);if(p)paint(p);return p})}
+  function boot(){var p=cached();if(p)paint(p)}
 
   window.rankforgeCurrentState={refresh:function(){return sync(true)},paint:paint,sync:sync,matchesRequest:matchesRequest};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)sync(true)});
-  window.addEventListener('focus',function(){sync(true)});
-  setInterval(function(){if(!document.hidden)sync(false)},60000);
-  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#refreshResultsBtn,#createBatch,[data-qualify]'))setTimeout(function(){sync(true)},1800)},true);
 })();

@@ -3,8 +3,9 @@
 
   var SELECTED='rankforge-last-lead';
   var COPY_OK_MS=1400;
-  var pollCount=0;
-  var pollTimer=null;
+  var retryTimer=null;
+  var retryCount=0;
+  var lastSignature='';
 
   function clean(v){return String(v==null?'':v).trim()}
   function lower(v){return clean(v).toLowerCase()}
@@ -95,13 +96,19 @@
     var l=selectedLead()||domLead();
     if(!l)return false;
     var data=build(l),existing=root.querySelector('#agencyLeadBrief');
-    var html='<section class="rf25-card agency-lead-brief" id="agencyLeadBrief"><div class="agency-brief-head"><div><h3>Agency Lead Brief</h3><p>Evidence-backed outreach summary</p></div><span>'+esc(data.status||'Needs Review')+'</span></div><div class="agency-brief-grid">'
+    var signature=[data.business,data.status,data.evidence.join('|'),data.angle,data.opener,data.action].join('::');
+    if(existing&&existing.getAttribute('data-brief-signature')===signature){
+      window.RankForgeAgencyLeadBrief={data:data,render:render,build:build};
+      return true;
+    }
+    var html='<section class="rf25-card agency-lead-brief" id="agencyLeadBrief" data-brief-signature="'+esc(signature)+'"><div class="agency-brief-head"><div><h3>Agency Lead Brief</h3><p>Evidence-backed outreach summary</p></div><span>'+esc(data.status||'Needs Review')+'</span></div><div class="agency-brief-grid">'
       +block('Evidence Summary','<ul>'+data.evidence.map(function(x){return'<li>'+esc(x)+'</li>'}).join('')+'</ul>')
       +block('Safe Outreach Angle','<p>'+esc(data.angle)+'</p>')
       +block('Suggested Opener','<p>'+esc(data.opener)+'</p>')
       +block('Recommended Next Action','<p>'+esc(data.action)+'</p>')
       +'</div><div class="agency-brief-actions"><button type="button" data-agency-copy="opener">Copy opener</button><button type="button" data-agency-copy="brief">Copy lead brief</button><small id="agencyBriefCopied" aria-live="polite"></small></div><p class="agency-brief-note">Use evidence-backed language and verify details before outreach.</p></section>';
     if(existing)existing.outerHTML=html;else scores.insertAdjacentHTML('afterend',html);
+    lastSignature=signature;
     window.RankForgeAgencyLeadBrief={data:data,render:render,build:build};
     return true;
   }
@@ -117,13 +124,18 @@
       copyText(text).then(function(){var n=document.getElementById('agencyBriefCopied');if(n){n.textContent='Copied';setTimeout(function(){n.textContent=''},COPY_OK_MS)}}).catch(function(){var n=document.getElementById('agencyBriefCopied');if(n)n.textContent='Copy failed'});
       return;
     }
-    if(ev.target&&ev.target.closest&&ev.target.closest('[data-view="leadDetail"],#openLeadDetailBtn,tr[data-id]'))schedule(120);
+    if(ev.target&&ev.target.closest&&ev.target.closest('[data-view="leadDetail"],#openLeadDetailBtn,tr[data-id]'))startRetry();
   },true);
-  function schedule(delay){setTimeout(render,delay||60)}
-  function startPoll(){if(pollTimer)return;pollTimer=setInterval(function(){pollCount++;var ok=render();if(ok||pollCount>40){clearInterval(pollTimer);pollTimer=null}},500)}
-  document.addEventListener('rankforge:rendered',function(){schedule(80);startPoll()});
-  window.addEventListener('rankforge:dashboard-session',function(){schedule(80);startPoll()});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){schedule(80);startPoll()});else{schedule(80);startPoll()}
-  var mo=new MutationObserver(function(){schedule(80)});
-  if(document.body)mo.observe(document.body,{childList:true,subtree:true});
+  function startRetry(){
+    if(retryTimer)clearInterval(retryTimer);
+    retryCount=0;
+    retryTimer=setInterval(function(){
+      retryCount++;
+      var ok=render();
+      if(ok||retryCount>=8){clearInterval(retryTimer);retryTimer=null;}
+    },250);
+  }
+  document.addEventListener('rankforge:rendered',function(){setTimeout(render,100)});
+  window.addEventListener('rankforge:dashboard-session',startRetry);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startRetry);else startRetry();
 })();

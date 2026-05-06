@@ -5,7 +5,6 @@
   var COPY_OK_MS=1400;
   var retryTimer=null;
   var retryCount=0;
-  var lastSignature='';
 
   function clean(v){return String(v==null?'':v).trim()}
   function lower(v){return clean(v).toLowerCase()}
@@ -44,20 +43,20 @@
       review_count:textAfterLabel('Reviews'),
       homepage_primary_email:textAfterLabel('Email'),
       homepage_primary_phone:textAfterLabel('Website Phone')||textAfterLabel('Business Phone'),
-      website_accessible:textAfterLabel('Website')?'not returned':'',
+      website_accessible:textAfterLabel('Website')?'confirmed':'',
       status:clean((document.querySelector('#statusFilter option:checked')||{}).textContent)||'Needs Review'
     };
   }
   function industry(niche){var x=lower(niche),map={roofer:'roofing',plumber:'plumbing',dentist:'dental','hvac contractor':'HVAC',hvac:'HVAC',lawyer:'legal',attorney:'legal','personal injury lawyer':'personal injury legal','estate agent':'real estate'};return map[x]||clean(niche)||'local service'}
-  function boolText(v){var x=lower(v);if(['true','yes','1','found','accessible','indexable','200'].indexOf(x)>-1)return'confirmed';if(['false','no','0','none','missing','blocked','not found'].indexOf(x)>-1)return'not confirmed';return clean(v)||'not returned'}
+  function boolText(v){var x=lower(v);if(['true','yes','1','found','accessible','indexable','200','confirmed'].indexOf(x)>-1)return'confirmed';if(['false','no','0','none','missing','blocked','not found'].indexOf(x)>-1)return'not confirmed';return clean(v)||'not returned'}
   function serviceLocationLine(l){
     var servicePages=num(l,['service_page_count','service_pages_count']);
     var locationPages=num(l,['location_page_count','location_pages_count']);
     var topIssues=lower([get(l,['seo_top_issues'],''),get(l,['seo_actionable_issues'],''),get(l,['seo_need_reasons'],''),get(l,['seo_evidence_summary'],'')].join(' '));
-    var serviceIssue=/no_service|service page|target service|main service|service not found/.test(topIssues);
-    var locationIssue=/no_location|location page|service area|target city|city not found|location targeting/.test(topIssues);
-    if(servicePages>0||locationPages>0){return 'Available crawl fields show '+servicePages+' service page(s) and '+locationPages+' location page(s).'}
-    if(serviceIssue&&locationIssue)return 'Dedicated service and location pages were not confirmed in the available crawl evidence.';
+    var serviceIssue=/no_service|service page|target service|main service|service not found|dedicated service/i.test(topIssues);
+    var locationIssue=/no_location|location page|service area|target city|city not found|location targeting|dedicated location/i.test(topIssues);
+    if(servicePages>0||locationPages>0)return 'Available crawl fields show '+servicePages+' service page(s) and '+locationPages+' location page(s).';
+    if(serviceIssue&&locationIssue)return 'Dedicated service or location pages were not confirmed in the available crawl evidence.';
     if(serviceIssue)return 'Dedicated service pages were not confirmed in the available crawl evidence.';
     if(locationIssue)return 'Dedicated location or service-area pages were not confirmed in the available crawl evidence.';
     return 'Service/location page coverage was not confirmed in the available fields.';
@@ -72,22 +71,26 @@
   }
   function trustLine(l){
     var rating=get(l,['rating','google_rating','place_rating'],''),reviews=get(l,['review_count','reviews','google_reviews','place_reviews'],'');
-    if(rating&&reviews)return 'Local trust signal available: rating '+rating+' with '+reviews+' review(s).';
-    if(rating)return 'Local trust signal available: rating '+rating+'; review count was not returned.';
-    if(reviews)return 'Local trust signal available: '+reviews+' review(s); rating was not returned.';
+    if(rating&&reviews)return 'Google Business Profile/local trust signal returned: rating '+rating+' with '+reviews+' review(s).';
+    if(rating)return 'Local trust signal returned: rating '+rating+'; review count was not returned.';
+    if(reviews)return 'Local trust signal returned: '+reviews+' review(s); rating was not returned.';
     return 'Local rating/review signal was not returned.';
   }
   function nextAction(status){var s=lower(status);if(s==='qualified')return'Review evidence, then start outreach.';if(s==='rejected')return'Do not contact unless manually requalified.';return'Manually verify evidence before outreach.'}
+  function metric(label,value){return {label:label,value:value}}
   function build(l){
-    var business=get(l,['company_name','business','business_name','name'],'this business'),city=get(l,['city'],''),country=get(l,['country'],''),niche=get(l,['niche','industry','business_type'],'local service'),market=[city,country].filter(Boolean).join(', '),industryText=industry(niche),signals=num(l,['evidence','evidence_count','seo_evidence_signal_count','seo_verified_issue_count','seo_issue_count','signal_count']),website=boolText(get(l,['website_accessible','crawl_accessible','http_status','indexability_status'],'')),serviceLine=serviceLocationLine(l),contact=contactPath(l),trust=trustLine(l),status=get(l,['status','qualification_status','lead_status'],'Needs Review');
+    var business=get(l,['company_name','business','business_name','name'],'this business'),city=get(l,['city'],''),country=get(l,['country'],''),niche=get(l,['niche','industry','business_type'],'local service'),market=[city,country].filter(Boolean).join(', '),industryText=industry(niche),signals=num(l,['evidence','evidence_count','seo_evidence_signal_count','seo_verified_issue_count','seo_issue_count','signal_count']),website=boolText(get(l,['website_accessible','crawl_accessible','http_status','indexability_status'],'')),serviceLine=serviceLocationLine(l),contact=contactPath(l),trust=trustLine(l),status=get(l,['status','qualification_status','lead_status'],'Needs Review'),servicePages=num(l,['service_page_count','service_pages_count']),locationPages=num(l,['location_page_count','location_pages_count']),reviews=num(l,['review_count','reviews','google_reviews','place_reviews']),gbp=num(l,['gbp_signal_count','google_business_profile_signal_count','local_profile_signal_count']);
+    var safeSay=[serviceLine,'Contact path: '+contact+'.',trust,'Website accessibility/crawl status: '+website+'.'];
     var evidence=['Evidence signals available: '+signals+'.',serviceLine,'Website accessibility/crawl status: '+website+'.','Contact path: '+contact+'.',trust];
+    var metrics=[metric('Website crawl',signals?signals+' signals':website),metric('Google Business Profile',gbp?gbp+' signals':(reviews?reviews+' reviews':'not returned')),metric('On-page signals',(servicePages+locationPages)||signals?String(Math.max(servicePages+locationPages,signals||0))+' signals':'not confirmed'),metric('Local presence',market||'not returned'),metric('Reviews & reputation',reviews?reviews+' reviews':'not returned')];
     var angle='Available crawl evidence suggests there may be a local SEO outreach opportunity for '+business+(market?' in '+market:'')+'. '+serviceLine+' Manual review recommended before outreach.';
     var opener='Hi, I noticed '+business+' serves the '+(city||'local')+' '+industryText+' market. While reviewing visible website signals, I couldn’t confirm dedicated service or location pages. Would it be worth sending over a quick local SEO opportunity snapshot?';
     var action=nextAction(status);
-    var brief='Agency Lead Brief\n\nEvidence Summary:\n- '+evidence.join('\n- ')+'\n\nSafe Outreach Angle:\n'+angle+'\n\nSuggested Opener:\n'+opener+'\n\nRecommended Next Action:\n'+action+'\n\nNote: Use evidence-backed language and verify details before outreach.';
-    return {business:business,evidence:evidence,angle:angle,opener:opener,action:action,brief:brief,status:status};
+    var brief='Agency Lead Brief\n\nWhat we can safely say:\n- '+safeSay.join('\n- ')+'\n\nEvidence Summary:\n- '+evidence.join('\n- ')+'\n\nSuggested Outreach Opener:\n'+opener+'\n\nRecommended Next Action:\n'+action+'\n\nNote: Use evidence-backed language and verify details before outreach.';
+    return {business:business,safeSay:safeSay,evidence:evidence,metrics:metrics,angle:angle,opener:opener,action:action,brief:brief,status:status};
   }
-  function block(title,body){return '<div class="agency-brief-block"><h4>'+esc(title)+'</h4>'+body+'</div>'}
+  function renderList(items){return '<ul>'+items.map(function(x){return'<li>'+esc(x)+'</li>'}).join('')+'</ul>'}
+  function renderMetrics(items){return '<div class="agency-brief-metrics">'+items.map(function(x){return'<div><span>'+esc(x.label)+'</span><b>'+esc(x.value)+'</b></div>'}).join('')+'</div>'}
   function render(){
     var root=document.getElementById('leadDetailPage');
     if(!root)return false;
@@ -96,45 +99,20 @@
     var l=selectedLead()||domLead();
     if(!l)return false;
     var data=build(l),existing=root.querySelector('#agencyLeadBrief');
-    var signature=[data.business,data.status,data.evidence.join('|'),data.angle,data.opener,data.action].join('::');
-    if(existing&&existing.getAttribute('data-brief-signature')===signature){
-      window.RankForgeAgencyLeadBrief={data:data,render:render,build:build};
-      return true;
-    }
-    var html='<section class="rf25-card agency-lead-brief" id="agencyLeadBrief" data-brief-signature="'+esc(signature)+'"><div class="agency-brief-head"><div><h3>Agency Lead Brief</h3><p>Evidence-backed outreach summary</p></div><span>'+esc(data.status||'Needs Review')+'</span></div><div class="agency-brief-grid">'
-      +block('Evidence Summary','<ul>'+data.evidence.map(function(x){return'<li>'+esc(x)+'</li>'}).join('')+'</ul>')
-      +block('Safe Outreach Angle','<p>'+esc(data.angle)+'</p>')
-      +block('Suggested Opener','<p>'+esc(data.opener)+'</p>')
-      +block('Recommended Next Action','<p>'+esc(data.action)+'</p>')
-      +'</div><div class="agency-brief-actions"><button type="button" data-agency-copy="opener">Copy opener</button><button type="button" data-agency-copy="brief">Copy lead brief</button><small id="agencyBriefCopied" aria-live="polite"></small></div><p class="agency-brief-note">Use evidence-backed language and verify details before outreach.</p></section>';
+    var signature=[data.business,data.status,data.safeSay.join('|'),data.metrics.map(function(m){return m.label+m.value}).join('|'),data.opener,data.action].join('::');
+    if(existing&&existing.getAttribute('data-brief-signature')===signature){window.RankForgeAgencyLeadBrief={data:data,render:render,build:build};return true;}
+    var html='<section class="rf25-card agency-lead-brief agency-brief-v2" id="agencyLeadBrief" data-brief-signature="'+esc(signature)+'"><div class="agency-brief-head"><div><h3>🔎 Agency Lead Brief</h3><p>Evidence-backed outreach summary</p></div><span>Evidence-Backed</span></div><div class="agency-brief-topgrid"><div class="agency-brief-panel safe"><h4>✅ What we can safely say</h4>'+renderList(data.safeSay)+'</div><div class="agency-brief-panel evidence"><h4>🔢 Evidence Summary</h4>'+renderMetrics(data.metrics)+'</div></div><div class="agency-brief-wide opener"><div><h4>💬 Suggested Outreach Opener</h4><p>'+esc(data.opener)+'</p></div><button type="button" data-agency-copy="opener">Copy Outreach Opener</button></div><div class="agency-brief-wide action"><div><h4>🟨 Recommended Next Action</h4><p>'+esc(data.action)+'</p></div><button type="button" data-agency-copy="brief">Copy Lead Brief</button></div><p class="agency-brief-note">Use evidence-backed language and verify details before outreach.</p><small id="agencyBriefCopied" aria-live="polite" class="agency-brief-copied"></small></section>';
     if(existing)existing.outerHTML=html;else scores.insertAdjacentHTML('afterend',html);
-    lastSignature=signature;
     window.RankForgeAgencyLeadBrief={data:data,render:render,build:build};
     return true;
   }
-  function copyText(text){
-    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(text);
-    var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);return Promise.resolve();
-  }
+  function copyText(text){if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(text);var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);return Promise.resolve()}
   document.addEventListener('click',function(ev){
     var btn=ev.target&&ev.target.closest&&ev.target.closest('[data-agency-copy]');
-    if(btn){
-      var data=window.RankForgeAgencyLeadBrief&&window.RankForgeAgencyLeadBrief.data;if(!data)return;
-      var text=btn.dataset.agencyCopy==='brief'?data.brief:data.opener;
-      copyText(text).then(function(){var n=document.getElementById('agencyBriefCopied');if(n){n.textContent='Copied';setTimeout(function(){n.textContent=''},COPY_OK_MS)}}).catch(function(){var n=document.getElementById('agencyBriefCopied');if(n)n.textContent='Copy failed'});
-      return;
-    }
+    if(btn){var data=window.RankForgeAgencyLeadBrief&&window.RankForgeAgencyLeadBrief.data;if(!data)return;var text=btn.dataset.agencyCopy==='brief'?data.brief:data.opener;copyText(text).then(function(){var n=document.getElementById('agencyBriefCopied');if(n){n.textContent='Copied';setTimeout(function(){n.textContent=''},COPY_OK_MS)}}).catch(function(){var n=document.getElementById('agencyBriefCopied');if(n)n.textContent='Copy failed'});return;}
     if(ev.target&&ev.target.closest&&ev.target.closest('[data-view="leadDetail"],#openLeadDetailBtn,tr[data-id]'))startRetry();
   },true);
-  function startRetry(){
-    if(retryTimer)clearInterval(retryTimer);
-    retryCount=0;
-    retryTimer=setInterval(function(){
-      retryCount++;
-      var ok=render();
-      if(ok||retryCount>=8){clearInterval(retryTimer);retryTimer=null;}
-    },250);
-  }
+  function startRetry(){if(retryTimer)clearInterval(retryTimer);retryCount=0;retryTimer=setInterval(function(){retryCount++;var ok=render();if(ok||retryCount>=8){clearInterval(retryTimer);retryTimer=null;}},250)}
   document.addEventListener('rankforge:rendered',function(){setTimeout(render,100)});
   window.addEventListener('rankforge:dashboard-session',startRetry);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startRetry);else startRetry();

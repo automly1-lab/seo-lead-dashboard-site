@@ -33,6 +33,14 @@
   function bodyFrom(payload){var body=new URLSearchParams();Object.keys(payload).forEach(function(k){body.set(k,payload[k]==null?'':String(payload[k]))});return body.toString()}
   async function send(payload){
     var body=bodyFrom(payload);
+    var sent=false;
+    try{
+      if(navigator.sendBeacon){
+        var blob=new Blob([body],{type:'application/x-www-form-urlencoded;charset=UTF-8'});
+        sent=navigator.sendBeacon(SEARCH_WEBHOOK,blob);
+      }
+    }catch(e){sent=false}
+    if(sent)return {confirmed:false,beacon:true};
     await fetch(SEARCH_WEBHOOK,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body});
     return {confirmed:false,noCors:true};
   }
@@ -61,6 +69,6 @@
     }catch(err){console.error(err);setStatus('Search could not be started. Please try again.','error')}
     finally{setTimeout(function(){submitting=false;if(btn){btn.disabled=false;btn.textContent='Start Search Batch'}},800)}
   }
-  function bind(){injectRule();var b=byId('createBatch');if(b&&!b.dataset.v13Bound){b.dataset.v13Bound='true';b.addEventListener('click',submit,true)}}
+  function bind(){injectRule();if(document.body&&!document.body.dataset.v13SearchDelegated){document.body.dataset.v13SearchDelegated='true';document.body.addEventListener('click',function(e){var target=e.target&&e.target.closest&&e.target.closest('#createBatch');if(target)submit(e)},true)}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
 })();

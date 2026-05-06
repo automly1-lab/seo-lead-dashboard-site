@@ -54,13 +54,14 @@ Demo-created rows should be easy to clean up:
 
 The demo workflow should remain inactive until explicitly enabled in n8n.
 
-## n8n no-candidates safeguard
+## n8n no-candidates completion safeguard
 
 The demo workflow import includes a no-candidates fallback for the discovery gate:
 
 - `Code - Filter Directories and Dedupe` returns one placeholder item instead of zero items when no prospect passes filtering.
-- `Code - Fan Out Valid Prospects` also preserves that placeholder instead of returning zero items.
-- Both nodes have `alwaysOutputData` enabled in their node settings.
+- `Code - Fan Out Valid Prospects` preserves that placeholder instead of returning zero items.
+- `IF - Has Audit URL?` now sends the false branch to `Code - Pick Raw Prospect Row`, then `Google Sheets - Append Raw Prospects`, so the no-candidates case still writes a terminal row and execution can complete.
+- Search-results response builder excludes the no-candidates placeholder from the visible leads list and marks the search as completed when the matching raw prospect row has `no_candidates_found=true` / `status=no_candidates`.
 - Placeholder rows include:
   - `no_candidates_found: true`
   - `skip_audit: true`
@@ -71,7 +72,7 @@ The demo workflow import includes a no-candidates fallback for the discovery gat
   - `source_environment: demo`
   - `search_id` with `srch_demo_` prefix
 
-This prevents n8n from stopping the workflow at the discovery dedupe step when directories or maps return no viable candidates.
+This prevents n8n from stopping at the discovery dedupe/audit-url gate when directories or maps return no viable candidates.
 
 ## Security notes
 
@@ -128,7 +129,7 @@ Run these manually in a browser against the demo branch before marking complete:
 - Current State calls `/webhook/rankforge-demo-current-state`.
 - Any lead feedback/admin/user/billing/Stripe workflow test calls use only `rankforge-demo-*` paths.
 - Created rows use `srch_demo_` search_id prefix.
-- If discovery returns no viable prospects, `Code - Filter Directories and Dedupe` still outputs one `no_candidates_found=true` placeholder item.
+- If discovery returns no viable prospects, the workflow appends one raw prospect placeholder and the dashboard search status stops staying indefinitely in Running.
 - Created rows include `demo_sandbox=true` and/or `source_environment=demo` when the sheet mapping supports those fields.
 - User A creates a search, logs out, then User B does not see User A data.
 - localStorage keys are user scoped.
